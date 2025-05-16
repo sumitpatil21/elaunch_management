@@ -18,13 +18,19 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   }
 
 
+
   Future<void> fetchEmployeesData(
       FetchEmployees event,
       Emitter<EmployeeState> emit,
       ) async {
-    final employees = await DbHelper.dbHelper.employeeFetch();
+    final employees = await DbHelper.dbHelper.employeeFetchFilter(
+      departmentId: event.departmentId,
+      managerName: event.managerName,
+    );
     emit(EmployeeState(employees: employees));
   }
+
+
 
   Future<void> insertEmployeeData(
       AddEmployee event,

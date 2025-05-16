@@ -250,7 +250,7 @@ class DbHelper {
   }
 
 
-  Future<List<EmployeeModal>> employeeFetchFilter() async {
+  Future<List<EmployeeModal>> employeeFetchFilter({int? departmentId, String? managerName}) async {
     final db = await database;
     String query = '''
     SELECT employee.*, manager.managerName, department.departmentName 
@@ -258,9 +258,30 @@ class DbHelper {
     INNER JOIN manager ON employee.id_manager = manager.id 
     INNER JOIN department ON manager.id_department = department.id
   ''';
-    List<Map<String, dynamic>> data = await db.rawQuery(query);
+    List<dynamic> args = [];
+
+    if (departmentId != null || managerName != null) {
+      query += ' WHERE ';
+    }
+
+    if (departmentId != null) {
+      query += 'department.id = ?';
+      args.add(departmentId);
+    }
+
+    if (departmentId != null && managerName != null) {
+      query += ' AND ';
+    }
+
+    if (managerName != null) {
+      query += 'manager.managerName = ?';
+      args.add(managerName);
+    }
+
+    List<Map<String, dynamic>> data = await db.rawQuery(query, args);
     return data.map((e) => EmployeeModal.fromJson(e)).toList();
   }
+
 
 
   Future<List<DepartmentModal>> departmentFetch(int adminId) async {

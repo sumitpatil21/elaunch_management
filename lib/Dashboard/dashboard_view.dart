@@ -1,7 +1,4 @@
-import 'dart:developer';
-
 import 'package:elaunch_management/Dashboard/dashboard_bloc.dart';
-import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
 import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:elaunch_management/Manager/manager_view.dart';
@@ -162,7 +159,14 @@ class _DashboardViewState extends State<DashboardView> {
               leading: Icon(Icons.person),
               title: Text("Manager"),
               onTap: () {
-                Navigator.pushNamed(context, ManagerScreen.routeName);
+                Navigator.pushNamed(
+                  context,
+                  ManagerScreen.routeName,
+                  arguments: ManagerScreenArguments(
+                    adminId: admin.id ?? 1,
+                    departmentId: 0,
+                  ),
+                );
               },
             ),
             ListTile(
@@ -205,7 +209,7 @@ class _DashboardViewState extends State<DashboardView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Welcome, ${admin.name}",
+                    "Welcome, ${admin.name} 👋",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -224,7 +228,7 @@ class _DashboardViewState extends State<DashboardView> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            Container(
+            SizedBox(
               height: 130,
               child: Row(
                 children: [
@@ -446,7 +450,7 @@ class _DashboardViewState extends State<DashboardView> {
                               context.read<AdminBloc>().state.adminList.first,
                         );
                       },
-                      child: Container(
+                      child: SizedBox(
                         width: 250,
                         height: 350,
                         child: Card(
@@ -527,7 +531,7 @@ class _DashboardViewState extends State<DashboardView> {
                           ),
                         );
                       },
-                      child: Container(
+                      child: SizedBox(
                         width: 250,
                         height: 350,
                         child: Card(
@@ -602,7 +606,7 @@ class _DashboardViewState extends State<DashboardView> {
                       onTap: () {
                         Navigator.pushNamed(context, EmployeeScreen.routeName);
                       },
-                      child: Container(
+                      child: SizedBox(
                         width: 250,
                         height: 350,
                         child: Card(

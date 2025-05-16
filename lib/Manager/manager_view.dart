@@ -54,14 +54,14 @@ class _ManagerScreenState extends State<ManagerScreen> {
   @override
   Widget build(BuildContext context) {
     final departments = context.watch<DepartmentBloc>().state.departments;
-
+    final arguments = ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green.withOpacity(0.2),
         title: Text(
           selectedDepartment != null
               ? "Managers - ${selectedDepartment!.name}"
-              : "Managers",
+              : "Managers  ${arguments?.department?.name??""}",
         ),
         actions: [
           PopupMenuButton<int?>(

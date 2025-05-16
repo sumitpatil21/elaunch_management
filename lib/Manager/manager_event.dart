@@ -20,10 +20,11 @@ class FetchManagers extends ManagerEvent {
 class ManagerScreenArguments extends ManagerEvent {
   final int adminId;
   final int departmentId;
+  final DepartmentModal? department;
 
-  ManagerScreenArguments({required this.adminId, required this.departmentId});
+  ManagerScreenArguments({required this.adminId, required this.departmentId, this.department});
   @override
-  List<Object?> get props => [adminId,departmentId];
+  List<Object?> get props => [adminId,departmentId,department];
 }
 
 

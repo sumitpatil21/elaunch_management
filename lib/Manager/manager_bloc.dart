@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
+import 'package:elaunch_management/Service/department_modal.dart';
 import 'package:equatable/equatable.dart';
 
 import '../Service/db_helper.dart';

@@ -134,7 +134,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                           Navigator.pushNamed(
                             context,
                             ManagerScreen.routeName,
-                            arguments: ManagerScreenArguments(adminId: state.departments[index].id_admin, departmentId:state.departments[index].id),
+                            arguments: ManagerScreenArguments(adminId: state.departments[index].id_admin, departmentId:state.departments[index].id,department: state.departments[index]),
                           );
 
                         },

@@ -61,7 +61,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     super.initState();
     searchController.addListener(() {
       setState(() {
-        context.read<EmployeeBloc>()..add(FetchEmployees(
+        context.read<EmployeeBloc>().add(FetchEmployees(
           departmentId: currentDepartmentId,
           managerName: currentManagerName,
           departmentName: currentDepartmentName,
