@@ -48,20 +48,22 @@ class ManagerScreen extends StatefulWidget {
 
 class _ManagerScreenState extends State<ManagerScreen> {
   final TextEditingController _searchController = TextEditingController();
+
   String get searchText => _searchController.text.trim();
   DepartmentModal? selectedDepartment;
 
   @override
   Widget build(BuildContext context) {
     final departments = context.watch<DepartmentBloc>().state.departments;
-    final arguments = ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
+    final arguments =
+        ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green.withOpacity(0.2),
         title: Text(
           selectedDepartment != null
               ? "Managers - ${selectedDepartment!.name}"
-              : "Managers  ${arguments?.department?.name??""}",
+              : "Managers  ${arguments?.department?.name ?? ""}",
         ),
         actions: [
           PopupMenuButton<int?>(

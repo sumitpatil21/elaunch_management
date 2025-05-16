@@ -2,6 +2,7 @@ part of 'employee_bloc.dart';
 
 class EmployeeEvent extends Equatable {
   const EmployeeEvent();
+
   @override
   List<Object> get props => [];
 }
@@ -11,10 +12,18 @@ class FetchEmployees extends EmployeeEvent {
   final String? managerName;
   final String? departmentName;
 
-  const FetchEmployees({this.departmentId, this.managerName, this.departmentName});
+  const FetchEmployees({
+    this.departmentId,
+    this.managerName,
+    this.departmentName,
+  });
 
   @override
-  List<Object> get props => [departmentId ?? 0, managerName ?? "", departmentName ?? ""];
+  List<Object> get props => [
+    departmentId ?? 0,
+    managerName ?? "",
+    departmentName ?? "",
+  ];
 }
 
 class AddEmployee extends EmployeeEvent {
@@ -105,5 +114,10 @@ class DeleteEmployee extends EmployeeEvent {
   });
 
   @override
-  List<Object> get props => [id, departmentId ?? 0, managerName ?? "", departmentName ?? ""];
+  List<Object> get props => [
+    id,
+    departmentId ?? 0,
+    managerName ?? "",
+    departmentName ?? "",
+  ];
 }

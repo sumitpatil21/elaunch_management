@@ -1,5 +1,5 @@
 class MangerModal {
-  final int id,departmentId;
+  final int id, departmentId;
   final String managerName;
   final String email;
   final String address;
@@ -19,7 +19,7 @@ class MangerModal {
   factory MangerModal.fromJson(Map<String, dynamic> json) {
     return MangerModal(
       id: json['id'],
-      departmentId: json['id_department']??0,
+      departmentId: json['id_department'] ?? 0,
       managerName: json['managerName'] ?? '',
       email: json['email'] ?? '',
       address: json['address'] ?? '',

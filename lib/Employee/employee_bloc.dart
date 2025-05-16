@@ -7,6 +7,7 @@ import '../Service/db_helper.dart';
 import '../Service/employee_modal.dart';
 
 part 'employee_event.dart';
+
 part 'employee_state.dart';
 
 class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
@@ -17,12 +18,10 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     on<DeleteEmployee>(deleteEmployeeData);
   }
 
-
-
   Future<void> fetchEmployeesData(
-      FetchEmployees event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    FetchEmployees event,
+    Emitter<EmployeeState> emit,
+  ) async {
     final employees = await DbHelper.dbHelper.employeeFetchFilter(
       departmentId: event.departmentId,
       managerName: event.managerName,
@@ -30,12 +29,10 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     emit(EmployeeState(employees: employees));
   }
 
-
-
   Future<void> insertEmployeeData(
-      AddEmployee event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    AddEmployee event,
+    Emitter<EmployeeState> emit,
+  ) async {
     await DbHelper.dbHelper.insertIntoEmployee(
       name: event.name,
       email: event.email,
@@ -45,17 +42,19 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       manager: event.managerName,
       department: event.department,
     );
-    add(FetchEmployees(
-      departmentId: event.departmentId,
-      managerName: event.managerName,
-      departmentName: event.department,
-    ));
+    add(
+      FetchEmployees(
+        departmentId: event.departmentId,
+        managerName: event.managerName,
+        departmentName: event.department,
+      ),
+    );
   }
 
   Future<void> updateEmployeeData(
-      UpdateEmployee event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    UpdateEmployee event,
+    Emitter<EmployeeState> emit,
+  ) async {
     await DbHelper.dbHelper.updateEmployee(
       id: event.id,
       name: event.name,
@@ -64,22 +63,26 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       dob: event.dob,
       managerId: event.managerId,
     );
-    add(FetchEmployees(
-      departmentId: event.departmentId,
-      managerName: event.managerName,
-      departmentName: event.department,
-    ));
+    add(
+      FetchEmployees(
+        departmentId: event.departmentId,
+        managerName: event.managerName,
+        departmentName: event.department,
+      ),
+    );
   }
 
   Future<void> deleteEmployeeData(
-      DeleteEmployee event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    DeleteEmployee event,
+    Emitter<EmployeeState> emit,
+  ) async {
     await DbHelper.dbHelper.deleteEmp(event.id);
-    add(FetchEmployees(
-      departmentId: event.departmentId,
-      managerName: event.managerName,
-      departmentName: event.departmentName,
-    ));
+    add(
+      FetchEmployees(
+        departmentId: event.departmentId,
+        managerName: event.managerName,
+        departmentName: event.departmentName,
+      ),
+    );
   }
 }

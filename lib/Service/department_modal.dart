@@ -13,9 +13,8 @@ class DepartmentModal {
     return DepartmentModal(
       name: m1['departmentName'] ?? "",
       date: m1['date'] ?? "",
-      id: m1['id']??0,
-      id_admin: m1['id_admin']??0,
+      id: m1['id'] ?? 0,
+      id_admin: m1['id_admin'] ?? 0,
     );
   }
 }
-

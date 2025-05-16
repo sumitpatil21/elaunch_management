@@ -24,7 +24,7 @@ class EmployeeScreen extends StatefulWidget {
               (context) => EmployeeBloc(EmployeeState())..add(
                 manager != null
                     ? FetchEmployees(
-                      departmentId: manager.id,
+                      departmentId: manager.id  ,
                       managerName: manager.managerName,
                       departmentName: manager.departmentName,
                     )
@@ -631,12 +631,7 @@ void showEmployeeDialog({
                       if (val == null || val.isEmpty) {
                         return 'Enter email';
                       }
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                      ).hasMatch(val)) {
-                        return 'Enter a valid email';
-                      }
-                      return null;
+
                     },
                   ),
                   const SizedBox(height: 16),

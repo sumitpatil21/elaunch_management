@@ -173,7 +173,6 @@ class DbHelper {
     log("Manager added successfully");
   }
 
-
   Future<void> updateAdmin({
     required String email,
     required String check,
@@ -203,7 +202,6 @@ class DbHelper {
     await db.rawUpdate(query, args);
   }
 
-
   Future<void> updateEmployee({
     required int id,
     required String name,
@@ -227,7 +225,10 @@ class DbHelper {
     await db.rawUpdate(query, args);
   }
 
-  Future<List<MangerModal>> fetchAllManager({int? adminId, int? departmentId}) async {
+  Future<List<MangerModal>> fetchAllManager({
+    int? adminId,
+    int? departmentId,
+  }) async {
     final db = await database;
     String query = ''' 
     SELECT manager.*, department.departmentName 
@@ -249,8 +250,10 @@ class DbHelper {
     return data.map((e) => MangerModal.fromJson(e)).toList();
   }
 
-
-  Future<List<EmployeeModal>> employeeFetchFilter({int? departmentId, String? managerName}) async {
+  Future<List<EmployeeModal>> employeeFetchFilter({
+    int? departmentId,
+    String? managerName,
+  }) async {
     final db = await database;
     String query = '''
     SELECT employee.*, manager.managerName, department.departmentName 
@@ -281,8 +284,6 @@ class DbHelper {
     List<Map<String, dynamic>> data = await db.rawQuery(query, args);
     return data.map((e) => EmployeeModal.fromJson(e)).toList();
   }
-
-
 
   Future<List<DepartmentModal>> departmentFetch(int adminId) async {
     final db = await database;

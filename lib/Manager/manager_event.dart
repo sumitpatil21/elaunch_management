@@ -22,11 +22,15 @@ class ManagerScreenArguments extends ManagerEvent {
   final int departmentId;
   final DepartmentModal? department;
 
-  ManagerScreenArguments({required this.adminId, required this.departmentId, this.department});
-  @override
-  List<Object?> get props => [adminId,departmentId,department];
-}
+  ManagerScreenArguments({
+    required this.adminId,
+    required this.departmentId,
+    this.department,
+  });
 
+  @override
+  List<Object?> get props => [adminId, departmentId, department];
+}
 
 class AddManager extends ManagerEvent {
   final String name;
@@ -48,7 +52,15 @@ class AddManager extends ManagerEvent {
   });
 
   @override
-  List<Object?> get props => [name, email, address, dob, departmentId, adminId, departmentName];
+  List<Object?> get props => [
+    name,
+    email,
+    address,
+    dob,
+    departmentId,
+    adminId,
+    departmentName,
+  ];
 }
 
 class UpdateManager extends ManagerEvent {
@@ -71,7 +83,15 @@ class UpdateManager extends ManagerEvent {
   });
 
   @override
-  List<Object?> get props => [id, name, email, address, dob, departmentId, adminId];
+  List<Object?> get props => [
+    id,
+    name,
+    email,
+    address,
+    dob,
+    departmentId,
+    adminId,
+  ];
 }
 
 class DeleteManager extends ManagerEvent {
