@@ -129,16 +129,28 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         state.departments[index].name,
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      trailing: IconButton(
-                        onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            ManagerScreen.routeName,
-                            arguments: ManagerScreenArguments(adminId: state.departments[index].id_admin, departmentId:state.departments[index].id,department: state.departments[index]),
-                          );
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              _showDepartmentDialog(dept: state.departments[index]);
 
-                        },
-                        icon: Icon(Icons.arrow_forward_ios_rounded),
+                            },
+                            icon: Icon(Icons.edit),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                ManagerScreen.routeName,
+                                arguments: ManagerScreenArguments(adminId: state.departments[index].id_admin, departmentId:state.departments[index].id,department: state.departments[index],departmentList: state.departments),
+                              );
+
+                            },
+                            icon: Icon(Icons.arrow_forward_ios_rounded),
+                          ),
+                        ],
                       ),
                       subtitle: Text('Department'),
                     ),
@@ -157,7 +169,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     );
   }
 
-  void _showDepartmentDialog([DepartmentModal? dept]) {
+  void _showDepartmentDialog({DepartmentModal? dept}) {
     late AdminModal admin =
         ModalRoute.of(context)!.settings.arguments as AdminModal;
     final _formKey = GlobalKey<FormState>();

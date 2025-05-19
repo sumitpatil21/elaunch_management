@@ -31,7 +31,7 @@ class ManagerBloc extends Bloc<ManagerEvent, ManagerState> {
       address: event.address,
     );
     add(
-      FetchManagers(departmentId: event.departmentId, adminId: event.adminId),
+      FetchManagers(departmentId: event.departmentId, adminId: event.adminId??1),
     );
   }
 
@@ -40,8 +40,8 @@ class ManagerBloc extends Bloc<ManagerEvent, ManagerState> {
     Emitter<ManagerState> emit,
   ) async {
     final managers = await DbHelper.dbHelper.fetchAllManager(
-      adminId: event.adminId,
-      departmentId: event.departmentId,
+       event.adminId,
+       event.departmentId,
     );
     emit(state.copyWith(managers: managers));
   }
@@ -59,7 +59,7 @@ class ManagerBloc extends Bloc<ManagerEvent, ManagerState> {
       departmentId: event.departmentId,
     );
     add(
-      FetchManagers(departmentId: event.departmentId, adminId: event.adminId),
+      FetchManagers(departmentId: event.departmentId, adminId: event.adminId??1),
     );
   }
 
@@ -69,7 +69,7 @@ class ManagerBloc extends Bloc<ManagerEvent, ManagerState> {
   ) async {
     await DbHelper.dbHelper.deleteManager(event.id);
     add(
-      FetchManagers(departmentId: event.departmentId, adminId: event.adminId),
+      FetchManagers(departmentId: event.departmentId, adminId: event.adminId??1),
     );
   }
 }

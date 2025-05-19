@@ -9,27 +9,31 @@ abstract class ManagerEvent extends Equatable {
 
 class FetchManagers extends ManagerEvent {
   final int? departmentId;
-  final int? adminId;
+  final int adminId;
 
-  const FetchManagers({this.departmentId, this.adminId});
+  const FetchManagers({this.departmentId, required this.adminId});
 
   @override
   List<Object?> get props => [departmentId, adminId];
 }
 
 class ManagerScreenArguments extends ManagerEvent {
-  final int adminId;
-  final int departmentId;
+  final int? adminId;
+  final int? departmentId;
   final DepartmentModal? department;
+  final MangerModal? manager;
+  final List<DepartmentModal>? departmentList;
 
-  ManagerScreenArguments({
-    required this.adminId,
-    required this.departmentId,
+  const ManagerScreenArguments({
+    this.adminId,
+     this.departmentId,
     this.department,
+    this.manager,
+    this.departmentList,
   });
 
   @override
-  List<Object?> get props => [adminId, departmentId, department];
+  List<Object?> get props => [adminId, departmentId, department,departmentList,manager];
 }
 
 class AddManager extends ManagerEvent {
@@ -93,6 +97,10 @@ class UpdateManager extends ManagerEvent {
     adminId,
   ];
 }
+
+
+
+
 
 class DeleteManager extends ManagerEvent {
   final int id;

@@ -225,10 +225,10 @@ class DbHelper {
     await db.rawUpdate(query, args);
   }
 
-  Future<List<MangerModal>> fetchAllManager({
+  Future<List<MangerModal>> fetchAllManager(
     int? adminId,
     int? departmentId,
-  }) async {
+  ) async {
     final db = await database;
     String query = ''' 
     SELECT manager.*, department.departmentName 
@@ -251,33 +251,27 @@ class DbHelper {
   }
 
   Future<List<EmployeeModal>> employeeFetchFilter({
-    int? departmentId,
+    required int? adminId,
     String? managerName,
+    String? departmentName,
   }) async {
     final db = await database;
     String query = '''
-    SELECT employee.*, manager.managerName, department.departmentName 
-    FROM employee 
-    INNER JOIN manager ON employee.id_manager = manager.id 
-    INNER JOIN department ON manager.id_department = department.id
-  ''';
-    List<dynamic> args = [];
+  SELECT employee.*, manager.managerName, department.departmentName 
+  FROM employee 
+  INNER JOIN manager ON employee.id_manager = manager.id 
+  INNER JOIN department ON manager.id_department = department.id
+  WHERE department.id_admin = ?
+''';
+    List<dynamic> args = [adminId];
 
-    if (departmentId != null || managerName != null) {
-      query += ' WHERE ';
-    }
-
-    if (departmentId != null) {
-      query += 'department.id = ?';
-      args.add(departmentId);
-    }
-
-    if (departmentId != null && managerName != null) {
-      query += ' AND ';
+    if (departmentName != null) {
+      query += ' AND department.departmentName = ?';
+      args.add(departmentName);
     }
 
     if (managerName != null) {
-      query += 'manager.managerName = ?';
+      query += ' AND manager.managerName = ?';
       args.add(managerName);
     }
 

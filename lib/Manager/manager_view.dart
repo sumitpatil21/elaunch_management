@@ -27,7 +27,7 @@ class ManagerScreen extends StatefulWidget {
               (context) => ManagerBloc(ManagerState())..add(
                 FetchManagers(
                   departmentId: arguments.departmentId,
-                  adminId: arguments.adminId,
+                  adminId: arguments.adminId??1,
                 ),
               ),
         ),
@@ -59,6 +59,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
         ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
     return Scaffold(
       appBar: AppBar(
+
         backgroundColor: Colors.green.withOpacity(0.2),
         title: Text(
           selectedDepartment != null
@@ -94,7 +95,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
               context.read<ManagerBloc>().add(
                 FetchManagers(
                   departmentId: departmentId,
-                  adminId: selectedDepartment?.id_admin,
+                  adminId: selectedDepartment!.id_admin,
                 ),
               );
             },
@@ -169,7 +170,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                             context.read<ManagerBloc>().add(
                               FetchManagers(
                                 departmentId: selectedDepartment?.id,
-                                adminId: selectedDepartment?.id_admin,
+                                adminId: selectedDepartment!.id_admin,
                               ),
                             );
                           },
@@ -316,7 +317,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                   Navigator.pushNamed(
                                     context,
                                     EmployeeScreen.routeName,
-                                    arguments: manager,
+                                    arguments: ManagerScreenArguments(departmentList: departments,manager: manager),
                                   );
                                 },
                                 icon: Icon(Icons.arrow_forward_ios_rounded),

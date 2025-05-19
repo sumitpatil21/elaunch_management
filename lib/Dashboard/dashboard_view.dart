@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Department/department_bloc.dart';
 import '../Employee/employee_bloc.dart';
+
 import '../Manager/manager_bloc.dart';
 import '../Service/admin_modal.dart';
 import '../SuperAdminLogin/admin_view.dart';
@@ -31,8 +32,18 @@ class DashboardView extends StatefulWidget {
         ),
         BlocProvider(create: (context) => AdminBloc(AdminState())),
         BlocProvider(create: (context) => DepartmentBloc(DepartmentState())),
-        BlocProvider(create: (context) => EmployeeBloc(EmployeeState())),
-        BlocProvider(create: (context) => ManagerBloc(ManagerState())),
+        BlocProvider(
+          create:
+              (context) =>
+                  EmployeeBloc(EmployeeState())
+                    ..add(FetchEmployees(adminId: admin.id)),
+        ),
+        BlocProvider(
+          create:
+              (context) =>
+                  ManagerBloc(ManagerState())
+                    ..add(FetchManagers(adminId: admin.id ?? 1)),
+        ),
       ],
       child: DashboardView(),
     );
@@ -46,9 +57,7 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
     context.read<AdminBloc>().add(AdminFetch());
-    context.read<ManagerBloc>().add(FetchManagers());
-    context.read<EmployeeBloc>().add(FetchEmployees());
-    context.read<DashboardBloc>().add(FetchEmployee());
+
     super.initState();
   }
 
@@ -69,6 +78,14 @@ class _DashboardViewState extends State<DashboardView> {
           ),
         ),
         actions: [
+          IconButton(onPressed: () {
+            context.read<AdminBloc>().add(AdminFetch());
+            context.read<EmployeeBloc>().add(FetchEmployees(adminId: admin.id));
+          context.read<ManagerBloc>().add(FetchManagers(adminId: admin.id??1));
+            context.read<DashboardBloc>()
+                .add(FetchDepartment(admin.id ?? 1));
+            context.read<DashboardBloc>().add(FetchEmployee());
+          }, icon: Icon(Icons.refresh)),
           Padding(
             padding: const EdgeInsets.only(top: 12, left: 10, right: 13),
             child: CircleAvatar(
@@ -173,9 +190,15 @@ class _DashboardViewState extends State<DashboardView> {
               leading: Icon(Icons.group),
               title: Text("Employee"),
               onTap: () {
-                Navigator.pushReplacementNamed(
+                final dept = context.read<DashboardBloc>().state.department;
+                Navigator.pushNamed(
                   context,
                   EmployeeScreen.routeName,
+                  arguments: ManagerScreenArguments(
+                    adminId: admin.id ?? 1,
+                    departmentId: 0,
+                    departmentList: dept,
+                  ),
                 );
               },
             ),
@@ -366,7 +389,17 @@ class _DashboardViewState extends State<DashboardView> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, EmployeeScreen.routeName);
+                        final dept =
+                            context.read<DashboardBloc>().state.department;
+                        Navigator.pushNamed(
+                          context,
+                          EmployeeScreen.routeName,
+                          arguments: ManagerScreenArguments(
+                            adminId: admin.id ?? 1,
+                            departmentId: 0,
+                            departmentList: dept,
+                          ),
+                        );
                       },
                       child: Card(
                         elevation: 4,
@@ -440,235 +473,241 @@ class _DashboardViewState extends State<DashboardView> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Department Overview Card
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          DepartmentScreen.routeName,
-                          arguments:
-                              context.read<AdminBloc>().state.adminList.first,
-                        );
-                      },
-                      child: SizedBox(
-                        width: 250,
-                        height: 350,
-                        child: Card(
-                          elevation: 2,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                color: Colors.blue,
-                                width: double.infinity,
-                                child: Text(
-                                  'Department Overview',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                  textAlign: TextAlign.center,
+                   
+                    SizedBox(
+                      width: 250,
+                      height: 350,
+                      child: Card(
+                        elevation: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              color: Colors.blue,
+                              width: double.infinity,
+                              child: Text(
+                                'Department Overview',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
-                              Expanded(
-                                child:
-                                    BlocBuilder<DashboardBloc, DashboardState>(
-                                      builder: (context, state) {
-                                        if (state.department.isEmpty) {
-                                          return Center(
-                                            child: CircularProgressIndicator(),
-                                          );
-                                        } else if (state
-                                            .department
-                                            .isNotEmpty) {
-                                          return ListView.builder(
-                                            padding: EdgeInsets.zero,
-                                            itemCount: state.department.length,
-                                            itemBuilder: (context, index) {
-                                              return ListTile(
-                                                leading: CircleAvatar(
-                                                  backgroundColor: Colors.blue
-                                                      .withOpacity(0.2),
-                                                  child: Icon(
-                                                    Icons.business,
-                                                    size: 16,
+                            ),
+                            Expanded(
+                              child:
+                                  BlocBuilder<DashboardBloc, DashboardState>(
+                                    builder: (context, state) {
+                                      if (state.department.isEmpty) {
+                                        return Center(
+                                          child: CircularProgressIndicator(),
+                                        );
+                                      } else if (state
+                                          .department
+                                          .isNotEmpty) {
+                                        return ListView.builder(
+
+                                          padding: EdgeInsets.zero,
+                                          itemCount: state.department.length,
+                                          itemBuilder: (context, index) {
+                                            return ListTile(
+                                              trailing: GestureDetector(onTap: () {
+                                                Navigator.pushNamed(
+                                                  context,
+                                                  ManagerScreen.routeName,
+                                                  arguments: ManagerScreenArguments(
+                                                      adminId: state.department[index].id_admin, departmentId:state.department[index].id,department: state.department[index],departmentList: state.department
                                                   ),
+                                                );
+                                              },child: Icon(Icons.arrow_forward_ios_rounded,size: 17,),),
+                                              leading: CircleAvatar(
+                                                backgroundColor: Colors.blue
+                                                    .withOpacity(0.2),
+                                                child: Icon(
+                                                  Icons.business,
+                                                  size: 16,
                                                 ),
-                                                title: Text(
-                                                  state.department[index].name,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
+                                              ),
+                                              title: Text(
+                                                state.department[index].name,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w500,
                                                 ),
-                                                subtitle: Text('Department'),
-                                              );
-                                            },
-                                          );
-                                        } else {
-                                          return Center(
-                                            child: Text('No departments found'),
-                                          );
-                                        }
-                                      },
-                                    ),
-                              ),
-                            ],
-                          ),
+                                              ),
+                                              subtitle: Text('Department'),
+                                            );
+                                          },
+                                        );
+                                      } else {
+                                        return Center(
+                                          child: Text('No departments found'),
+                                        );
+                                      }
+                                    },
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                     SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          ManagerScreen.routeName,
-                          arguments: ManagerScreenArguments(
-                            adminId: admin.id ?? 1,
-                            departmentId: 0,
-                          ),
-                        );
-                      },
-                      child: SizedBox(
-                        width: 250,
-                        height: 350,
-                        child: Card(
-                          elevation: 2,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                color: Colors.green,
-                                width: double.infinity,
-                                child: Text(
-                                  'Manager Overview',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                  textAlign: TextAlign.center,
+                    SizedBox(
+                      width: 250,
+                      height: 350,
+                      child: Card(
+                        elevation: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              color: Colors.green,
+                              width: double.infinity,
+                              child: Text(
+                                'Manager Overview',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
-                              Expanded(
-                                child: BlocBuilder<ManagerBloc, ManagerState>(
-                                  builder: (context, state) {
-                                    if (state.managers.isEmpty) {
-                                      return Center(
-                                        child: CircularProgressIndicator(),
-                                      );
-                                    } else if (state.managers.isNotEmpty) {
-                                      return ListView.builder(
-                                        padding: EdgeInsets.zero,
-                                        itemCount: state.managers.length,
-                                        itemBuilder: (context, index) {
-                                          return ListTile(
-                                            leading: CircleAvatar(
-                                              backgroundColor: Colors.green
-                                                  .withOpacity(0.2),
-                                              child: Text(
-                                                state
-                                                    .managers[index]
-                                                    .managerName[0]
-                                                    .toUpperCase(),
+                            ),
+                            Expanded(
+                              child: BlocBuilder<ManagerBloc, ManagerState>(
+                                builder: (context, state) {
+                                  if (state.managers.isEmpty) {
+                                    return Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  } else if (state.managers.isNotEmpty) {
+                                    return ListView.builder(
+                                      padding: EdgeInsets.zero,
+                                      itemCount: state.managers.length,
+                                      itemBuilder: (context, index) {
+                                        return ListTile(
+                                          trailing: GestureDetector(onTap: () {
+                                            Navigator.pushNamed(
+                                              context,
+                                              EmployeeScreen.routeName,
+                                              arguments: ManagerScreenArguments(
+                                                departmentList: context.read<DashboardBloc>().state.department,
+                                                  manager: state.managers[index]
                                               ),
+                                            );
+                                          },child: Icon(Icons.arrow_forward_ios_rounded,size: 17,)),
+                                          leading: CircleAvatar(
+                                            backgroundColor: Colors.green
+                                                .withOpacity(0.2),
+                                            child: Text(
+                                              state
+                                                  .managers[index]
+                                                  .managerName[0]
+                                                  .toUpperCase(),
                                             ),
-                                            title: Text(
-                                              state.managers[index].managerName,
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w500,
-                                              ),
+                                          ),
+                                          title: Text(
+                                            state.managers[index].managerName,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
                                             ),
-                                            subtitle: Text('Manager'),
-                                          );
-                                        },
-                                      );
-                                    } else {
-                                      return Center(
-                                        child: Text('No managers found'),
-                                      );
-                                    }
-                                  },
-                                ),
+                                          ),
+                                          subtitle: Text('Manager'),
+                                        );
+                                      },
+                                    );
+                                  } else {
+                                    return Center(
+                                      child: Text('No managers found'),
+                                    );
+                                  }
+                                },
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                     SizedBox(width: 10),
 
                     // Employee Overview Card
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, EmployeeScreen.routeName);
-                      },
-                      child: SizedBox(
-                        width: 250,
-                        height: 350,
-                        child: Card(
-                          elevation: 2,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                color: Colors.red,
-                                width: double.infinity,
-                                child: Text(
-                                  'Employee Overview',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                  textAlign: TextAlign.center,
+                    SizedBox(
+                      width: 250,
+                      height: 350,
+                      child: Card(
+                        elevation: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              color: Colors.red,
+                              width: double.infinity,
+                              child: Text(
+                                'Employee Overview',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
-                              Expanded(
-                                child: BlocBuilder<EmployeeBloc, EmployeeState>(
-                                  builder: (context, state) {
-                                    if (state.employees.isEmpty) {
-                                      return Center(
-                                        child: CircularProgressIndicator(),
-                                      );
-                                    } else if (state.employees.isNotEmpty) {
-                                      return ListView.builder(
-                                        padding: EdgeInsets.zero,
-                                        itemCount: state.employees.length,
-                                        itemBuilder: (context, index) {
-                                          return ListTile(
-                                            leading: CircleAvatar(
-                                              backgroundColor: Colors.red
-                                                  .withOpacity(0.2),
-                                              child: Text(
-                                                state.employees[index].name[0]
-                                                    .toUpperCase(),
+                            ),
+                            Expanded(
+                              child: BlocBuilder<EmployeeBloc, EmployeeState>(
+                                builder: (context, state) {
+                                  if (state.employees.isEmpty) {
+                                    return Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  } else if (state.employees.isNotEmpty) {
+                                    return ListView.builder(
+                                      padding: EdgeInsets.zero,
+                                      itemCount: state.employees.length,
+                                      itemBuilder: (context, index) {
+                                        return ListTile(
+                                          trailing: GestureDetector(onTap: () {
+                                            final dept =
+                                                context.read<DashboardBloc>().state.department;
+                                            Navigator.pushNamed(
+                                              context,
+                                              EmployeeScreen.routeName,
+                                              arguments: ManagerScreenArguments(
+                                                adminId: admin.id ?? 1,
+                                                departmentId: 0,
+                                                departmentList: dept,
                                               ),
+                                            );
+                                          },child: Icon(Icons.arrow_forward_ios_outlined,size: 17,)),
+                                          leading: CircleAvatar(
+                                            backgroundColor: Colors.red
+                                                .withOpacity(0.2),
+                                            child: Text(
+                                              state.employees[index].name[0]
+                                                  .toUpperCase(),
                                             ),
-                                            title: Text(
-                                              state.employees[index].name,
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w500,
-                                              ),
+                                          ),
+                                          title: Text(
+                                            state.employees[index].name,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
                                             ),
-                                            subtitle: Text('Employee'),
-                                          );
-                                        },
-                                      );
-                                    } else {
-                                      return Center(
-                                        child: Text('No employees found'),
-                                      );
-                                    }
-                                  },
-                                ),
+                                          ),
+                                          subtitle: Text('Employee'),
+                                        );
+                                      },
+                                    );
+                                  } else {
+                                    return Center(
+                                      child: Text('No employees found'),
+                                    );
+                                  }
+                                },
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

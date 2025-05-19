@@ -23,7 +23,8 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     Emitter<EmployeeState> emit,
   ) async {
     final employees = await DbHelper.dbHelper.employeeFetchFilter(
-      departmentId: event.departmentId,
+      adminId: event.adminId??1,
+      departmentName: event.departmentName,
       managerName: event.managerName,
     );
     emit(EmployeeState(employees: employees));
@@ -44,9 +45,10 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
     add(
       FetchEmployees(
-        departmentId: event.departmentId,
-        managerName: event.managerName,
+        adminId: event.adminId,
         departmentName: event.department,
+        managerName: event.managerName,
+
       ),
     );
   }
@@ -65,9 +67,10 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
     add(
       FetchEmployees(
-        departmentId: event.departmentId,
+        adminId: event.adminId,
+        departmentName: event.name,
         managerName: event.managerName,
-        departmentName: event.department,
+        // departmentName: event.department,
       ),
     );
   }
@@ -79,9 +82,10 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     await DbHelper.dbHelper.deleteEmp(event.id);
     add(
       FetchEmployees(
-        departmentId: event.departmentId,
-        managerName: event.managerName,
+        adminId: event.adminId,
         departmentName: event.departmentName,
+        managerName: event.managerName,
+        // departmentName: event.departmentName,
       ),
     );
   }
