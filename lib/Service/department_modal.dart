@@ -17,4 +17,14 @@ class DepartmentModal {
       id_admin: m1['id_admin'] ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'departmentName': name,
+      'date': date,
+      'id_admin': id_admin,
+
+    };
+  }
 }

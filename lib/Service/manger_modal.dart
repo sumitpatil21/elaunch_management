@@ -4,7 +4,7 @@ class MangerModal {
   final String email;
   final String address;
   final String dob;
-  final String? departmentName;
+  late final String? departmentName;
 
   MangerModal({
     required this.id,
@@ -26,5 +26,16 @@ class MangerModal {
       dob: json['dob'] ?? '',
       departmentName: json['departmentName'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'managerName': managerName,
+      'email': email,
+      'address': address,
+      'dob': dob,
+      'departmentName': departmentName,
+    };
   }
 }

@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:bloc/bloc.dart';
 import 'package:elaunch_management/Service/admin_modal.dart';
 import 'package:elaunch_management/Service/db_helper.dart';
+import 'package:elaunch_management/Service/firebaseDatabase.dart';
 import 'package:equatable/equatable.dart';
 
 part 'admin_event.dart';
@@ -43,6 +44,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
 
   fetchAdmin(AdminFetch event, Emitter<AdminState> emit) async {
     List<AdminModal> adminList = await DbHelper.dbHelper.adminFetch();
+    adminList.map((e) => FirebaseDbHelper.firebaseDbHelper.insertAdmin(e),);
     List<AdminModal> data = adminList.where((element) => element.check == "isLogin").toList();
     emit(state.copyWith(adminList: data));
   }

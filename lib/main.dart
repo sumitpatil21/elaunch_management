@@ -1,4 +1,6 @@
-
+import 'package:elaunch_management/Service/firebaseDatabase.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
 import 'package:elaunch_management/Manager/manager_view.dart';
@@ -9,9 +11,11 @@ import 'Dashboard/dashboard_view.dart';
 import 'Employee/employee_view.dart';
 import 'Service/db_helper.dart';
 
-void main() {
+void main()  {
 
   WidgetsFlutterBinding.ensureInitialized();
+   Firebase.initializeApp();
+   FirebaseDbHelper.firebaseDbHelper;
   DbHelper.dbHelper.createDatabase();
   runApp(MyApp());
 }

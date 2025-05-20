@@ -21,10 +21,10 @@ class ManagerScreenArguments extends ManagerEvent {
   final int? adminId;
   final int? departmentId;
   final DepartmentModal? department;
-  final MangerModal? manager;
+   MangerModal? manager;
   final List<DepartmentModal>? departmentList;
 
-  const ManagerScreenArguments({
+   ManagerScreenArguments({
     this.adminId,
      this.departmentId,
     this.department,

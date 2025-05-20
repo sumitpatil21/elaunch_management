@@ -28,4 +28,15 @@ class AdminModal {
       field: json['field'],
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'adminName': name,
+      'email': email,
+      'pass': pass,
+      'isChecked': check,
+      'companyName': companyName,
+      'field': field,
+    };
+  }
 }

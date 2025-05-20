@@ -1,5 +1,3 @@
-// Example of what the EmployeeModal class should look like
-// You should update your actual model file with similar structure
 
 class EmployeeModal {
   int? id;
