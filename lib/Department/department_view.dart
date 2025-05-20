@@ -170,16 +170,13 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   }
 
   void _showDepartmentDialog({DepartmentModal? dept}) {
-    late AdminModal admin =
-        ModalRoute.of(context)!.settings.arguments as AdminModal;
-    final _formKey = GlobalKey<FormState>();
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController dobController = TextEditingController();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args == null || args is! AdminModal) return;
+    final admin = args;
 
-    if (dept != null) {
-      nameController.text = dept.name;
-      dobController.text = dept.date;
-    }
+    final _formKey = GlobalKey<FormState>();
+    final TextEditingController nameController = TextEditingController(text: dept?.name ?? '');
+    final TextEditingController dobController = TextEditingController(text: dept?.date ?? '');
 
     showDialog(
       context: context,
@@ -196,11 +193,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               children: [
                 TextFormField(
                   controller: nameController,
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Please enter a department name'
-                              : null,
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Please enter a department name' : null,
                   decoration: const InputDecoration(
                     labelText: "Department Name",
                     border: OutlineInputBorder(),
@@ -210,7 +204,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                 TextFormField(
                   controller: dobController,
                   decoration: const InputDecoration(
-                    labelText: "field",
+                    labelText: "Department Field or Date",
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -220,9 +214,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
           actions: [
             TextButton(
               child: const Text("Cancel"),
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
             ),
             ElevatedButton(
               child: Text(dept != null ? "Update" : "Add"),
@@ -242,16 +234,13 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                       AddDepartment(
                         departmentName: nameController.text,
                         dob: dobController.text,
-                        id: admin.id ?? 0,
+                        id: admin.id??1,
                       ),
                     );
                   }
-
                   Navigator.pop(context);
+                  context.read<DepartmentBloc>().add(FetchDepartments(adminId: admin.id));
                 }
-                context.read<DepartmentBloc>().add(
-                  FetchDepartments(adminId: admin.id),
-                );
               },
             ),
           ],
@@ -259,4 +248,5 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
       },
     );
   }
+
 }

@@ -19,9 +19,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   }
 
   Future<void> fetchEmployeesData(
-    FetchEmployees event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FetchEmployees event,
+      Emitter<EmployeeState> emit,
+      ) async {
     final employees = await DbHelper.dbHelper.employeeFetchFilter(
       adminId: event.adminId??1,
       departmentName: event.departmentName,
@@ -31,9 +31,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   }
 
   Future<void> insertEmployeeData(
-    AddEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      AddEmployee event,
+      Emitter<EmployeeState> emit,
+      ) async {
     await DbHelper.dbHelper.insertIntoEmployee(
       name: event.name,
       email: event.email,
@@ -48,15 +48,14 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
         adminId: event.adminId,
         departmentName: event.department,
         managerName: event.managerName,
-
       ),
     );
   }
 
   Future<void> updateEmployeeData(
-    UpdateEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      UpdateEmployee event,
+      Emitter<EmployeeState> emit,
+      ) async {
     await DbHelper.dbHelper.updateEmployee(
       id: event.id,
       name: event.name,
@@ -68,24 +67,22 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     add(
       FetchEmployees(
         adminId: event.adminId,
-        departmentName: event.name,
+        departmentName: event.department,
         managerName: event.managerName,
-        // departmentName: event.department,
       ),
     );
   }
 
   Future<void> deleteEmployeeData(
-    DeleteEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      DeleteEmployee event,
+      Emitter<EmployeeState> emit,
+      ) async {
     await DbHelper.dbHelper.deleteEmp(event.id);
     add(
       FetchEmployees(
         adminId: event.adminId,
         departmentName: event.departmentName,
         managerName: event.managerName,
-        // departmentName: event.departmentName,
       ),
     );
   }

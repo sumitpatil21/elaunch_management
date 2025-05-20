@@ -14,7 +14,7 @@ class ManagerScreen extends StatefulWidget {
 
   static Widget builder(BuildContext context) {
     final arguments =
-        ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
+    ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
 
     if (arguments == null) {
       return const Scaffold(body: Center(child: Text('Invalid arguments')));
@@ -25,17 +25,17 @@ class ManagerScreen extends StatefulWidget {
         BlocProvider(
           create:
               (context) => ManagerBloc(ManagerState())..add(
-                FetchManagers(
-                  departmentId: arguments.departmentId,
-                  adminId: arguments.adminId??1,
-                ),
-              ),
+            FetchManagers(
+              departmentId: arguments.departmentId,
+              adminId: arguments.adminId??1,
+            ),
+          ),
         ),
         BlocProvider(
           create:
               (context) =>
-                  DepartmentBloc(DepartmentState())
-                    ..add(FetchDepartments(adminId: arguments.adminId)),
+          DepartmentBloc(DepartmentState())
+            ..add(FetchDepartments(adminId: arguments.adminId)),
         ),
       ],
       child: const ManagerScreen(),
@@ -56,10 +56,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
   Widget build(BuildContext context) {
     final departments = context.watch<DepartmentBloc>().state.departments;
     final arguments =
-        ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
+    ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
     return Scaffold(
       appBar: AppBar(
-
         backgroundColor: Colors.green.withOpacity(0.2),
         title: Text(
           selectedDepartment != null
@@ -71,31 +70,32 @@ class _ManagerScreenState extends State<ManagerScreen> {
             icon: const Icon(Icons.filter_list),
             itemBuilder:
                 (_) => [
-                  const PopupMenuItem<int?>(
-                    value: null,
-                    child: Text('All Managers'),
-                  ),
-                  ...departments
-                      .map(
-                        (dept) => PopupMenuItem<int?>(
-                          value: dept.id,
-                          child: Text(dept.name),
-                        ),
-                      )
-                      .toList(),
-                ],
+              const PopupMenuItem<int?>(
+                value: null,
+                child: Text('All Managers'),
+              ),
+              ...departments
+                  .map(
+                    (dept) => PopupMenuItem<int?>(
+                  value: dept.id,
+                  child: Text(dept.name),
+                ),
+              )
+                  .toList(),
+            ],
             onSelected: (departmentId) {
               setState(() {
-                selectedDepartment =
-                    departmentId != null
-                        ? departments.firstWhere((d) => d.id == departmentId)
-                        : null;
+                selectedDepartment = departmentId != null
+                    ? departments.firstWhere((d) => d.id == departmentId)
+                    : null;
               });
 
+              // Fixed the filter functionality
               context.read<ManagerBloc>().add(
                 FetchManagers(
                   departmentId: departmentId,
-                  adminId: selectedDepartment!.id_admin,
+                  // Use arguments.adminId when selectedDepartment is null
+                  adminId: selectedDepartment?.id_admin ?? arguments?.adminId ?? 1,
                 ),
               );
             },
@@ -167,10 +167,11 @@ class _ManagerScreenState extends State<ManagerScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
+                            final arguments = ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
                             context.read<ManagerBloc>().add(
                               FetchManagers(
                                 departmentId: selectedDepartment?.id,
-                                adminId: selectedDepartment!.id_admin,
+                                adminId: selectedDepartment?.id_admin ?? arguments?.adminId ?? 1,
                               ),
                             );
                           },
@@ -182,23 +183,23 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 }
 
                 final filteredManagers =
-                    searchText.isEmpty
-                        ? state.managers
-                        : state.managers
-                            .where(
-                              (manager) =>
-                                  manager.managerName.toLowerCase().contains(
-                                    searchText.toLowerCase(),
-                                  ) ||
-                                  (manager.email.toLowerCase().contains(
-                                    searchText.toLowerCase(),
-                                  )) ||
-                                  (manager.departmentName
-                                          ?.toLowerCase()
-                                          .contains(searchText.toLowerCase()) ??
-                                      false),
-                            )
-                            .toList();
+                searchText.isEmpty
+                    ? state.managers
+                    : state.managers
+                    .where(
+                      (manager) =>
+                  manager.managerName.toLowerCase().contains(
+                    searchText.toLowerCase(),
+                  ) ||
+                      (manager.email.toLowerCase().contains(
+                        searchText.toLowerCase(),
+                      )) ||
+                      (manager.departmentName
+                          ?.toLowerCase()
+                          .contains(searchText.toLowerCase()) ??
+                          false),
+                )
+                    .toList();
 
                 if (filteredManagers.isEmpty) {
                   return Center(
@@ -245,30 +246,30 @@ class _ManagerScreenState extends State<ManagerScreen> {
                       direction: DismissDirection.endToStart,
                       confirmDismiss:
                           (_) => showDialog(
-                            context: context,
-                            builder:
-                                (_) => AlertDialog(
-                                  title: const Text("Confirm Delete"),
-                                  content: Text(
-                                    "Are you sure you want to delete ${manager.managerName}?",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(context, false),
-                                      child: const Text("CANCEL"),
-                                    ),
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      onPressed:
-                                          () => Navigator.pop(context, true),
-                                      child: const Text("DELETE"),
-                                    ),
-                                  ],
-                                ),
+                        context: context,
+                        builder:
+                            (_) => AlertDialog(
+                          title: const Text("Confirm Delete"),
+                          content: Text(
+                            "Are you sure you want to delete ${manager.managerName}?",
                           ),
+                          actions: [
+                            TextButton(
+                              onPressed:
+                                  () => Navigator.pop(context, false),
+                              child: const Text("CANCEL"),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              onPressed:
+                                  () => Navigator.pop(context, true),
+                              child: const Text("DELETE"),
+                            ),
+                          ],
+                        ),
+                      ),
                       onDismissed: (_) {
                         context.read<ManagerBloc>().add(
                           DeleteManager(manager.id),
@@ -308,9 +309,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                 icon: const Icon(Icons.edit),
                                 onPressed:
                                     () => showManagerDialog(
-                                      context,
-                                      manager: manager,
-                                    ),
+                                  context,
+                                  manager: manager,
+                                ),
                               ),
                               IconButton(
                                 onPressed: () {
@@ -341,9 +342,10 @@ class _ManagerScreenState extends State<ManagerScreen> {
     final departmentBloc = context.read<DepartmentBloc>();
     final departments = departmentBloc.state.departments;
     final managerBloc = context.read<ManagerBloc>();
+    final arguments = ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
 
     DepartmentModal? selectedDepartment =
-        departments.isNotEmpty ? departments.first : null;
+    departments.isNotEmpty ? departments.first : null;
 
     final formKey = GlobalKey<FormState>();
     final TextEditingController nameController = TextEditingController();
@@ -357,7 +359,8 @@ class _ManagerScreenState extends State<ManagerScreen> {
       addressController.text = manager.address;
       dobController.text = manager.dob;
       selectedDepartment = departments.firstWhere(
-        (dept) => dept.id == manager.departmentId,
+            (dept) => dept.id == manager.departmentId,
+        orElse: () => departments.isNotEmpty ? departments.first : null!,
       );
     }
 
@@ -385,12 +388,12 @@ class _ManagerScreenState extends State<ManagerScreen> {
                             border: OutlineInputBorder(),
                           ),
                           items:
-                              departments.map((dept) {
-                                return DropdownMenuItem<DepartmentModal>(
-                                  value: dept,
-                                  child: Text(dept.name),
-                                );
-                              }).toList(),
+                          departments.map((dept) {
+                            return DropdownMenuItem<DepartmentModal>(
+                              value: dept,
+                              child: Text(dept.name),
+                            );
+                          }).toList(),
                           onChanged: (value) {
                             setState(() {
                               selectedDepartment = value;
@@ -398,18 +401,18 @@ class _ManagerScreenState extends State<ManagerScreen> {
                           },
                           validator:
                               (value) =>
-                                  value == null
-                                      ? 'Please select a department'
-                                      : null,
+                          value == null
+                              ? 'Please select a department'
+                              : null,
                         ),
                       if (departments.isNotEmpty) const SizedBox(height: 12),
                       TextFormField(
                         controller: nameController,
                         validator:
                             (value) =>
-                                value == null || value.isEmpty
-                                    ? 'Please enter a manager name'
-                                    : null,
+                        value == null || value.isEmpty
+                            ? 'Please enter a manager name'
+                            : null,
                         decoration: const InputDecoration(
                           labelText: "Manager Name",
                           border: OutlineInputBorder(),
@@ -420,9 +423,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
                         controller: emailController,
                         validator:
                             (value) =>
-                                value == null || value.isEmpty
-                                    ? 'Please enter a manager email'
-                                    : null,
+                        value == null || value.isEmpty
+                            ? 'Please enter a manager email'
+                            : null,
                         decoration: const InputDecoration(
                           labelText: "Email",
                           border: OutlineInputBorder(),
