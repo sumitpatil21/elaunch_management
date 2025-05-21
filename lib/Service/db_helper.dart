@@ -1,8 +1,10 @@
 import 'dart:developer';
+import 'package:elaunch_management/Service/system_view.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'admin_modal.dart';
 import 'department_modal.dart';
+import 'device_modal.dart';
 import 'employee_modal.dart';
 import 'manger_modal.dart';
 
@@ -75,6 +77,36 @@ class DbHelper {
          FOREIGN KEY (id_manager) REFERENCES manager (id) ON DELETE CASCADE
          )
           ''');
+        await db.execute('''
+        CREATE TABLE system(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          systemName TEXT UNIQUE,
+          version TEXT,
+          id_admin INTEGER,
+          id_manager INTEGER, 
+          id_employee INTEGER, 
+          FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE CASCADE,
+          FOREIGN KEY (id_manager) REFERENCES manager (id) ON DELETE SET NULL, 
+          FOREIGN KEY (id_employee) REFERENCES employee (emp_id) ON DELETE SET NULL 
+        )
+        ''');
+
+        await db.execute('''
+        CREATE TABLE testing_device (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            deviceName TEXT NOT NULL,
+            operatingSystem TEXT,
+            osVersion TEXT,
+            status TEXT DEFAULT 'available',
+            assignedTo_employee_id INTEGER,
+            lastCheckOutDate TEXT,
+            lastCheckInDate TEXT,
+            id_admin INTEGER,
+            FOREIGN KEY (assignedTo_employee_id) REFERENCES employee (emp_id) ON DELETE SET NULL,
+            FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE SET NULL,
+        )
+        ''');
+        log("System table created.");
       },
     );
   }
@@ -225,10 +257,8 @@ class DbHelper {
     await db.rawUpdate(query, args);
   }
 
-  Future<List<MangerModal>> fetchAllManager(
-    int? adminId,
-    int? departmentId,
-  ) async {
+  Future<List<MangerModal>> fetchAllManager(int? adminId,
+      int? departmentId,) async {
     final db = await database;
     String query = ''' 
     SELECT manager.*, department.departmentName 
@@ -335,5 +365,158 @@ class DbHelper {
     log("Fetched Admin Data: $data");
     userData = data.map((e) => AdminModal.fromJson(e)).toList();
     return userData;
+  }
+
+
+  Future<void> insertIntoSystem({
+    required String systemName,
+    required String version,
+    int? adminId, // Nullable as per schema
+    int? managerId, // Nullable
+    int? employeeId, // Nullable
+  }) async {
+    final db = await database;
+    String query = """
+    INSERT INTO system
+    (systemName, version, id_admin, id_manager, id_employee)
+    VALUES (?, ?, ?, ?, ?)
+  """;
+    List args = [systemName, version, adminId, managerId, employeeId];
+    await db.rawInsert(query, args);
+    log("System inserted successfully: $systemName");
+  }
+
+  Future<List<SystemModal>> fetchAllSystems({int? adminId}) async {
+    final db = await database;
+    List<Map<String, dynamic>> data;
+    if (adminId != null) {
+      data = await db.rawQuery(
+        "SELECT * FROM system WHERE id_admin = ? ORDER BY systemName ASC",
+        [adminId],
+      );
+    } else {
+      // Fetch all systems if no adminId is provided (optional, adjust as needed)
+      data = await db.rawQuery("SELECT * FROM system ORDER BY systemName ASC");
+    }
+    log("Fetched Systems: $data");
+    return data.map((e) => SystemModal.fromJson(e)).toList();
+  }
+
+  Future<SystemModal?> fetchSystemById(int id) async {
+    final db = await database;
+    List<Map<String, dynamic>> data = await db.query(
+      "system",
+      where: "id = ?",
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (data.isNotEmpty) {
+      log("Fetched System by ID $id: ${data.first}");
+      return SystemModal.fromJson(data.first);
+    }
+    log("System with ID $id not found.");
+    return null;
+  }
+
+
+  Future<void> updateSystem({
+    required int id,
+    required String systemName,
+    required String version,
+    int? adminId,
+    int? managerId,
+    int? employeeId,
+  }) async {
+    final db = await database;
+    String query = '''
+    UPDATE system SET
+    systemName = ?,
+    version = ?,
+    id_admin = ?,
+    id_manager = ?,
+    id_employee = ?
+    WHERE id = ?
+  ''';
+    List args = [systemName, version, adminId, managerId, employeeId, id];
+    int count = await db.rawUpdate(query, args);
+    if (count > 0) {
+      log("System with ID $id updated successfully.");
+    } else {
+      log("Failed to update system with ID $id or system not found.");
+    }
+  }
+
+  Future<void> deleteSystem(int id) async {
+    final db = await database;
+    String query = "DELETE FROM system WHERE id = ?";
+    int count = await db.rawDelete(query, [id]);
+    if (count > 0) {
+      log("System with ID $id deleted successfully");
+    } else {
+      log("Failed to delete system with ID $id or system not found.");
+    }
+  }
+
+  // --- Testing Device Table CRUD Operations ---
+
+  Future<int> insertIntoTestingDevice({
+    required String deviceName,
+    String? operatingSystem,
+    String? osVersion,
+    String status = 'available', // Default value
+    int? assignedToEmployeeId,
+    String? lastCheckOutDate,
+    String? lastCheckInDate,
+    int? adminId,
+  }) async {
+    final db = await database;
+    String query = """
+    INSERT INTO testing_device
+    (deviceName, operatingSystem, osVersion, status, assignedTo_employee_id, lastCheckOutDate, lastCheckInDate, id_admin)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  """;
+    List args = [
+      deviceName,
+      operatingSystem,
+      osVersion,
+      status,
+      assignedToEmployeeId,
+      lastCheckOutDate,
+      lastCheckInDate,
+      adminId
+    ];
+    final id = await db.rawInsert(query, args);
+    log("Testing Device inserted successfully: $deviceName with ID: $id");
+    return id;
+  }
+
+  Future<List<TestingDeviceModal>> fetchAllTestingDevices(
+      {int? adminId, String? statusFilter}) async {
+    final db = await database;
+    String query =
+        "SELECT td.*, e.name as assigned_employee_name FROM testing_device td LEFT JOIN employee e ON td.assignedTo_employee_id = e.emp_id";
+    List<dynamic> args = [];
+    bool hasWhereClause = false;
+
+    if (adminId != null) {
+      query += " WHERE td.id_admin = ?";
+      args.add(adminId);
+      hasWhereClause = true;
+    }
+
+    if (statusFilter != null && statusFilter.isNotEmpty) {
+      if (hasWhereClause) {
+        query += " AND td.status = ?";
+      } else {
+        query += " WHERE td.status = ?";
+      }
+      args.add(statusFilter);
+    }
+
+    query += " ORDER BY td.deviceName ASC"; // Added ASC for ascending order, you can change to DESC if needed
+
+    List<Map<String, dynamic>> data = await db.rawQuery(query, args);
+    log("Fetched Testing Devices: $data");
+    return data.map((e) => TestingDeviceModal.fromJson(e)).toList();
   }
 }

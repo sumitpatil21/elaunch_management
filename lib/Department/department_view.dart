@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,6 +38,11 @@ class DepartmentScreen extends StatefulWidget {
 
 class _DepartmentScreenState extends State<DepartmentScreen> {
   @override
+  void initState() {
+    // TODO: implement initState
+    context.read<DepartmentBloc>().add(NetworkDepartment(connect: false));
+  }
+  @override
   Widget build(BuildContext context) {
     late AdminModal admin =
         ModalRoute.of(context)!.settings.arguments as AdminModal;
@@ -65,6 +73,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               ),
             );
           } else {
+            log("${state.connect}");
             return ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: state.departments.length,

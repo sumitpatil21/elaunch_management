@@ -46,10 +46,18 @@ class UpdateDepartment extends DepartmentEvent {
 
 class DeleteDepartment extends DepartmentEvent {
   final int id;
-  final int? adminId; // Added adminId for refreshing the list after deletion
+  final int? adminId; 
 
   const DeleteDepartment({required this.id, this.adminId});
 
   @override
   List<Object> get props => [id, adminId ?? 0];
+}
+
+class NetworkDepartment extends DepartmentEvent {
+   bool? connect;
+   NetworkDepartment({  this.connect,});
+
+  @override
+  List<Object> get props => [connect!];
 }
