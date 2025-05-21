@@ -5,11 +5,6 @@ class SystemModal {
   int? adminId;
   int? managerId;
   int? employeeId;
-  // You might want to add fields to hold the actual names if you join tables
-  // String? adminName;
-  // String? managerName;
-  // String? employeeName;
-
 
   SystemModal({
     this.id,

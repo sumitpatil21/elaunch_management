@@ -1,10 +1,15 @@
 part of 'system_bloc.dart';
 
-sealed class SystemState extends Equatable {
-  const SystemState();
+class SystemState extends Equatable {
+  final List<SystemModal> systems;
+
+  const SystemState({this.systems = const []});
+
+  SystemState copyWith({List<SystemModal>? systems}) {
+    return SystemState(systems: systems ?? this.systems);
+  }
+
+  @override
+  List<Object?> get props => [systems];
 }
 
-final class SystemInitial extends SystemState {
-  @override
-  List<Object> get props => [];
-}

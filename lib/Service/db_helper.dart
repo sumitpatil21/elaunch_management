@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'package:elaunch_management/Service/system_view.dart';
+import 'package:elaunch_management/Service/system_modal.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'admin_modal.dart';
@@ -386,37 +386,27 @@ class DbHelper {
     log("System inserted successfully: $systemName");
   }
 
-  Future<List<SystemModal>> fetchAllSystems({int? adminId}) async {
+  Future<List<SystemModal>> fetchSystemsByEmployeeId({int? employeeId,adminId}) async {
     final db = await database;
-    List<Map<String, dynamic>> data;
-    if (adminId != null) {
-      data = await db.rawQuery(
-        "SELECT * FROM system WHERE id_admin = ? ORDER BY systemName ASC",
-        [adminId],
-      );
-    } else {
-      // Fetch all systems if no adminId is provided (optional, adjust as needed)
-      data = await db.rawQuery("SELECT * FROM system ORDER BY systemName ASC");
+    String query = '''
+    SELECT system.*, employee.*
+    FROM system 
+    LEFT JOIN employee ON system.id_employee = employee.id
+  ''';
+    List<dynamic> args = [];
+
+    if (employeeId != null) {
+      query += ' WHERE system.id_employee = ?';
+      args.add(employeeId);
     }
-    log("Fetched Systems: $data");
+
+    query += ' ORDER BY system.systemName ASC';
+
+    List<Map<String, dynamic>> data = await db.rawQuery(query, args);
+    log("Fetched systems${employeeId != null ? ' for employee ID $employeeId' : ''}: $data");
     return data.map((e) => SystemModal.fromJson(e)).toList();
   }
 
-  Future<SystemModal?> fetchSystemById(int id) async {
-    final db = await database;
-    List<Map<String, dynamic>> data = await db.query(
-      "system",
-      where: "id = ?",
-      whereArgs: [id],
-      limit: 1,
-    );
-    if (data.isNotEmpty) {
-      log("Fetched System by ID $id: ${data.first}");
-      return SystemModal.fromJson(data.first);
-    }
-    log("System with ID $id not found.");
-    return null;
-  }
 
 
   Future<void> updateSystem({

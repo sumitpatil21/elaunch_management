@@ -4,24 +4,87 @@ sealed class SystemEvent extends Equatable {
   const SystemEvent();
 }
 
-class CreateSystem extends SystemEvent {
-  final System system;
+class FetchSystem extends SystemEvent {
+  final int? adminId;
+  final int? employeeId; // Added for consistency if needed for filtering
 
-  const CreateSystem(this.system);
+  const FetchSystem({required this.adminId, this.employeeId});
 
   @override
-  List<Object> get props => [system];
+  List<Object> get props => [adminId ?? 0, employeeId ?? ""];
+}
+
+class AddSystem extends SystemEvent {
+  final String systemName;
+  final String? version;
+  final int? adminId;
+  final int? managerId;
+  final int? employeeId;
+
+  const AddSystem({
+    required this.systemName,
+    this.version,
+    this.adminId,
+    this.managerId,
+    this.employeeId,
+  });
+
+  @override
+  List<Object> get props => [
+    systemName,
+    version ?? "",
+    adminId ?? 0,
+    managerId ?? 0,
+    employeeId ?? 0,
+  ];
 }
 
 class UpdateSystem extends SystemEvent {
-  final System system;
+  final int id;
+  final String systemName;
+  final String? version;
+  final int? adminId;
+  final int? managerId;
+  final int? employeeId;
 
-  const UpdateSystem(this.system);
+  const UpdateSystem({
+    required this.id,
+    required this.systemName,
+    this.version,
+    this.adminId,
+    this.managerId,
+    this.employeeId,
+  });
 
   @override
-  List<Object> get props => [system];
+  List<Object> get props => [
+    id,
+    systemName,
+    version ?? "",
+    adminId ?? 0,
+    managerId ?? 0,
+    employeeId ?? 0,
+  ];
 }
 
 class DeleteSystem extends SystemEvent {
-  const DeleteSystem();
+  final int id;
+  final int? adminId;
+
+  final int? employeeId;
+
+  const DeleteSystem({
+    required this.id,
+    this.adminId,
+
+    this.employeeId,
+  });
+
+  @override
+  List<Object> get props => [
+    id,
+    adminId ?? 0,
+
+    employeeId ?? "",
+  ];
 }
