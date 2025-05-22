@@ -1,4 +1,4 @@
-part of 'manager_bloc.dart';
+part of '../Manager/manager_bloc.dart';
 
 class ManagerState extends Equatable {
   final List<MangerModal> managers;

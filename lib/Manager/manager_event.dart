@@ -20,7 +20,7 @@ class FetchManagers extends ManagerEvent {
 class ManagerScreenArguments extends ManagerEvent {
   final int? adminId;
   final int? departmentId;
-  final DepartmentModal? department;
+   DepartmentModal? department;
    MangerModal? manager;
   final List<DepartmentModal>? departmentList;
 

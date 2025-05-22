@@ -1,76 +1,71 @@
+import 'dart:developer';
+
+import 'package:elaunch_management/Service/admin_modal.dart';
+import 'package:elaunch_management/Service/employee_modal.dart';
 import 'package:elaunch_management/Service/system_modal.dart';
+import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../Employee/employee_bloc.dart';
 
 class SystemView extends StatefulWidget {
   static String routeName = "/system";
   const SystemView({super.key});
   static Widget builder(BuildContext context) {
+    AdminModal? args =
+        ModalRoute.of(context)!.settings.arguments as AdminModal?;
     return MultiBlocProvider(
       providers: [
-
-       BlocProvider(create: (context) => SystemBloc(SystemState()),)
+        BlocProvider(
+          create:
+              (context) =>
+                  SystemBloc(SystemState())
+                    ..add(FetchSystem(adminId: args?.id)),
+        ),
+        BlocProvider(
+          create:
+              (context) =>
+                  EmployeeBloc(EmployeeState())
+                    ..add(FetchEmployees(adminId: args?.id)),
+        ),
+        BlocProvider(
+          create: (context) => AdminBloc(AdminState())..add(AdminFetch()),
+        ),
       ],
       child: const SystemView(),
     );
   }
+
   @override
   State<SystemView> createState() => _SystemViewState();
 }
 
 class _SystemViewState extends State<SystemView> {
+  final TextEditingController searchController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
-TextEditingController searchController = TextEditingController();
+    AdminModal? args =
+        ModalRoute.of(context)!.settings.arguments as AdminModal?;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.green.withOpacity(0.2),
-        title: Text(
-         "System"
-        ),
-        // actions: [
-        //   PopupMenuButton<int?>(
-        //     icon: const Icon(Icons.filter_list),
-        //     itemBuilder:
-        //         (_) => [
-        //       const PopupMenuItem<int?>(
-        //         value: null,
-        //         child: Text('All Managers'),
-        //       ),
-        //       ...departments
-        //           .map(
-        //             (dept) => PopupMenuItem<int?>(
-        //           value: dept.id,
-        //           child: Text(dept.name),
-        //         ),
-        //       )
-        //           .toList(),
-        //     ],
-        //     onSelected: (departmentId) {
-        //       setState(() {
-        //         selectedDepartment =
-        //         departmentId != null
-        //             ? departments.firstWhere((d) => d.id == departmentId)
-        //             : null;
-        //       });
-        //       context.read<ManagerBloc>().add(
-        //         FetchManagers(
-        //           departmentId: departmentId,
-        //
-        //           adminId:
-        //           selectedDepartment?.id_admin ?? arguments?.adminId ?? 1,
-        //         ),
-        //       );
-        //     },
-        //   ),
-        // ],
+        backgroundColor: Colors.yellow.withOpacity(0.2),
+        title: const Text("System"),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.green.withOpacity(0.2),
-        onPressed: () => showManagerDialog(context),
-        label: Text("Add Manager"),
-        icon: Icon(Icons.add),
+        backgroundColor: Colors.yellow.withOpacity(0.2),
+        onPressed:
+            () => showManagerDialog(
+              context,
+              bloc:
+                  context.read<EmployeeBloc>()
+                    ..add(FetchEmployees(adminId: args?.id ?? 1)),
+              systemBloc: context.read<SystemBloc>(),
+            ),
+        label: const Text("Add System"),
+        icon: const Icon(Icons.add),
       ),
       body: Column(
         children: [
@@ -82,23 +77,8 @@ TextEditingController searchController = TextEditingController();
                 labelText: "Search",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(Icons.search),
-                filled: true,
-
-                disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.green, width: 1),
-                ),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
@@ -107,84 +87,39 @@ TextEditingController searchController = TextEditingController();
                   },
                 ),
               ),
-
-              onChanged: (query) {
-                setState(() {});
-              },
+              onChanged: (_) => setState(() {}),
             ),
           ),
           Expanded(
             child: BlocBuilder<SystemBloc, SystemState>(
               builder: (context, state) {
-                if (state.systems.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.supervised_user_circle,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text("No managers found"),
-                        const SizedBox(height: 16),
+                final query = searchController.text.toLowerCase();
 
-                      ],
+                final filteredSystems =
+                    state.systems.where((system) {
+                      return system.systemName.toLowerCase().contains(query) ||
+                          (system.version?.toLowerCase().contains(query) ??
+                              false) ||
+                          (system.employeeName?.toLowerCase().contains(query) ??
+                              false);
+                    }).toList();
+
+                if (filteredSystems.isEmpty) {
+                  return Center(
+                    child: Text(
+                      searchController.text.isNotEmpty
+                          ? 'No results for "${searchController.text}"'
+                          : 'No System found',
                     ),
                   );
                 }
-                //
-                // final filteredManagers =
-                // searchController.isEmpty
-                //     ? state.
-                //     : state.managers
-                //     .where(
-                //       (manager) =>
-                //   manager.managerName.toLowerCase().contains(
-                //     searchText.toLowerCase(),
-                //   ) ||
-                //       (manager.email.toLowerCase().contains(
-                //         searchText.toLowerCase(),
-                //       )) ||
-                //       (manager.departmentName
-                //           ?.toLowerCase()
-                //           .contains(searchText.toLowerCase()) ??
-                //           false),
-                // )
-                //     .toList();
-                //
-                // if (filteredManagers.isEmpty) {
-                //   return Center(
-                //     child: Column(
-                //       mainAxisAlignment: MainAxisAlignment.center,
-                //       children: [
-                //         const Icon(
-                //           Icons.search_off,
-                //           size: 64,
-                //           color: Colors.grey,
-                //         ),
-                //         const SizedBox(height: 16),
-                //         Text("No results for \"$searchText\""),
-                //         const SizedBox(height: 16),
-                //         ElevatedButton(
-                //           onPressed: () {
-                //             searchController.clear();
-                //             setState(() {});
-                //           },
-                //           child: const Text("Clear Search"),
-                //         ),
-                //       ],
-                //     ),
-                //   );
-                // }
 
-                return ListView.separated(
+                return ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: state.systems.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+
+                  itemCount: filteredSystems.length,
                   itemBuilder: (context, index) {
-                    final system = state.systems[index];
+                    final system = filteredSystems[index];
                     return Dismissible(
                       key: Key(system.id.toString()),
                       background: Container(
@@ -199,33 +134,33 @@ TextEditingController searchController = TextEditingController();
                       direction: DismissDirection.endToStart,
                       confirmDismiss:
                           (_) => showDialog(
-                        context: context,
-                        builder:
-                            (_) => AlertDialog(
-                          title: const Text("Confirm Delete"),
-                          content: Text(
-                            "Are you sure you want to delete ${system.systemName}?",
+                            context: context,
+                            builder:
+                                (_) => AlertDialog(
+                                  title: const Text("Confirm Delete"),
+                                  content: Text(
+                                    "Are you sure you want to delete ${system.systemName}?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed:
+                                          () => Navigator.pop(context, false),
+                                      child: const Text("CANCEL"),
+                                    ),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
+                                      onPressed:
+                                          () => Navigator.pop(context, true),
+                                      child: const Text("DELETE"),
+                                    ),
+                                  ],
+                                ),
                           ),
-                          actions: [
-                            TextButton(
-                              onPressed:
-                                  () => Navigator.pop(context, false),
-                              child: const Text("CANCEL"),
-                            ),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              onPressed:
-                                  () => Navigator.pop(context, true),
-                              child: const Text("DELETE"),
-                            ),
-                          ],
-                        ),
-                      ),
                       onDismissed: (_) {
                         context.read<SystemBloc>().add(
-                          DeleteSystem(id: system.id??1),
+                          DeleteSystem(id: system.id ?? 1),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -241,7 +176,7 @@ TextEditingController searchController = TextEditingController();
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.yellow.withOpacity(0.2),
-                            child: Icon(Icons.computer_outlined),
+                            child: const Icon(Icons.computer_outlined),
                           ),
                           title: Text(
                             system.systemName,
@@ -250,30 +185,34 @@ TextEditingController searchController = TextEditingController();
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(system.version??""),
-                              Text(system.systemName),
+                              Text(system.version ?? ""),
+                              Text(system.employeeName ?? "N/A"),
                             ],
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed:
-                                    () => showManagerDialog(
-                                  context,
-                                  system: system,
-                                ),
+                                icon: const Icon(Icons.change_circle),
+                                onPressed: () {
+                                  showManagerDialog(
+                                    context,
+                                    system: system,
+                                    bloc:
+                                        context.read<EmployeeBloc>()..add(
+                                          FetchEmployees(
+                                            adminId: args?.id ?? 1,
+                                          ),
+                                        ),
+                                    systemBloc: context.read<SystemBloc>(),
+                                  );
+                                },
                               ),
                               IconButton(
-                                onPressed: () {
-                                  // Navigator.pushNamed(
-                                  //   context,
-                                  //   EmployeeScreen.routeName,
-                                  //   arguments: ManagerScreenArguments(departmentList: departments,manager: system,adminId: departments.first.id_admin),
-                                  // );
-                                },
-                                icon: Icon(Icons.arrow_forward_ios_rounded),
+                                onPressed: () {},
+                                icon: const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                ),
                               ),
                             ],
                           ),
@@ -290,26 +229,34 @@ TextEditingController searchController = TextEditingController();
     );
   }
 
-  void showManagerDialog(BuildContext context, {SystemModal? system}) {
-
-    // final departments = departmentBloc.state.departments;
-    // final managerBloc = context.read<ManagerBloc>();
-    // final arguments =
-    // ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments?;
-
-   // DepartmentModal? selectedDepartment =
-   //  departments.isNotEmpty ? departments.first :  null;
-
+  void showManagerDialog(
+    BuildContext context, {
+    SystemModal? system,
+    required EmployeeBloc bloc,
+    required SystemBloc systemBloc,
+  }) {
     final formKey = GlobalKey<FormState>();
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController versionController = TextEditingController();
-    // final TextEditingController dobController = TextEditingController();
-    // final TextEditingController addressController = TextEditingController();
+    final nameController = TextEditingController();
+    final versionController = TextEditingController();
+    EmployeeModal? selectedEmployee;
+
+    AdminModal? args =
+        ModalRoute.of(context)!.settings.arguments as AdminModal?;
 
     if (system != null) {
       nameController.text = system.systemName;
-      versionController.text = system.version??"";
-
+      versionController.text = system.version ?? "";
+      selectedEmployee = bloc.state.employees.firstWhere(
+        (emp) {
+          log("${emp.id} ${system.employeeId}");
+          return emp.id == system.employeeId;
+        },
+        orElse: () => bloc.state.employees.isNotEmpty
+            ? bloc.state.employees.first
+            :  EmployeeModal(id: -1, name: " available", email: '', address: '', dob: ''),
+      );
+    } else if (bloc.state.employees.isNotEmpty) {
+      selectedEmployee = bloc.state.employees.first;
     }
 
     showDialog(
@@ -321,23 +268,22 @@ TextEditingController searchController = TextEditingController();
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: Text(system != null ? 'Edit Manager' : 'Add Manager'),
+              title: Text(system != null ? 'Edit System' : 'Add System'),
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-
                       TextFormField(
                         controller: nameController,
                         validator:
                             (value) =>
-                        value == null || value.isEmpty
-                            ? 'Please enter a manager name'
-                            : null,
+                                value == null || value.isEmpty
+                                    ? 'Please enter a System name'
+                                    : null,
                         decoration: const InputDecoration(
-                          labelText: "Manager Name",
+                          labelText: "System Name",
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -346,30 +292,46 @@ TextEditingController searchController = TextEditingController();
                         controller: versionController,
                         validator:
                             (value) =>
-                        value == null || value.isEmpty
-                            ? 'Please enter a manager email'
-                            : null,
+                                value == null || value.isEmpty
+                                    ? 'Please enter a System Version'
+                                    : null,
                         decoration: const InputDecoration(
-                          labelText: "Email",
+                          labelText: "Version",
                           border: OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // TextFormField(
-                      //   controller: addressController,
-                      //   decoration: const InputDecoration(
-                      //     labelText: "Address",
-                      //     border: OutlineInputBorder(),
-                      //   ),
-                      // ),
-                      // const SizedBox(height: 12),
-                      // TextFormField(
-                      //   controller: dobController,
-                      //   decoration: const InputDecoration(
-                      //     labelText: "DOB",
-                      //     border: OutlineInputBorder(),
-                      //   ),
-                      // ),
+                      const Text("Select Employee"),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<EmployeeModal>(
+                        value: selectedEmployee,
+                        decoration: const InputDecoration(
+                          labelText: "Employee",
+                          border: OutlineInputBorder(),
+                        ),
+                        items: bloc.state.employees.isNotEmpty
+                            ? bloc.state.employees.map((emp) {
+                                return DropdownMenuItem<EmployeeModal>(
+                                  value: emp,
+                                  child: Text(emp.name),
+                                );
+                              }).toList()
+                            : [
+                                const DropdownMenuItem<EmployeeModal>(
+                                  value: null,
+                                  child: Text("No employees available"),
+                                ),
+                              ],
+                        onChanged: (emp) {
+                          setState(() {
+                            selectedEmployee = emp;
+                          });
+                        },
+                        validator: (value) =>
+                            value == null || value.id == -1
+                                ? 'Please select an employee'
+                                : null,
+                      ),
                     ],
                   ),
                 ),
@@ -377,27 +339,32 @@ TextEditingController searchController = TextEditingController();
               actions: [
                 TextButton(
                   child: const Text("Cancel"),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                 ),
                 ElevatedButton(
                   child: Text(system != null ? "Update" : "Add"),
                   onPressed: () {
-                    if (formKey.currentState!.validate()) {
+                    if (formKey.currentState!.validate() &&
+                        selectedEmployee != null) {
                       if (system != null) {
-                        context.read<SystemBloc>().add(
+                        systemBloc.add(
                           UpdateSystem(
                             id: system.id!,
                             systemName: nameController.text,
                             version: versionController.text,
+                            employeeName: selectedEmployee?.name ?? "dssc",
+                            employeeId: selectedEmployee?.id ?? 1,
+                            adminId: args?.id ?? 1,
                           ),
                         );
                       } else {
-                        context.read<SystemBloc>().add(
+                        systemBloc.add(
                           AddSystem(
                             systemName: nameController.text,
                             version: versionController.text,
+                            employeeName: selectedEmployee?.name ?? "dssc",
+                            employeeId: selectedEmployee?.id ?? 1,
+                            adminId: args?.id ?? 1,
                           ),
                         );
                       }
@@ -413,5 +380,3 @@ TextEditingController searchController = TextEditingController();
     );
   }
 }
-
-

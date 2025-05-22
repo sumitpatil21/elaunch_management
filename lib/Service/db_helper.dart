@@ -79,15 +79,14 @@ class DbHelper {
           ''');
         await db.execute('''
         CREATE TABLE system(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          systemName TEXT UNIQUE,
-          version TEXT,
-          id_admin INTEGER,
-          id_manager INTEGER, 
-          id_employee INTEGER, 
-          FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE CASCADE,
-          FOREIGN KEY (id_manager) REFERENCES manager (id) ON DELETE SET NULL, 
-          FOREIGN KEY (id_employee) REFERENCES employee (emp_id) ON DELETE SET NULL 
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              systemName TEXT UNIQUE,
+              version TEXT,
+              id_admin INTEGER,
+              id_employee INTEGER,
+              employee_name TEXT,
+              FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE CASCADE,
+              FOREIGN KEY (id_employee) REFERENCES employee (emp_id) ON DELETE SET NULL
         )
         ''');
 
@@ -103,7 +102,7 @@ class DbHelper {
             lastCheckInDate TEXT,
             id_admin INTEGER,
             FOREIGN KEY (assignedTo_employee_id) REFERENCES employee (emp_id) ON DELETE SET NULL,
-            FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE SET NULL,
+            FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE SET NULL
         )
         ''');
         log("System table created.");
@@ -257,8 +256,10 @@ class DbHelper {
     await db.rawUpdate(query, args);
   }
 
-  Future<List<MangerModal>> fetchAllManager(int? adminId,
-      int? departmentId,) async {
+  Future<List<MangerModal>> fetchAllManager(
+    int? adminId,
+    int? departmentId,
+  ) async {
     final db = await database;
     String query = ''' 
     SELECT manager.*, department.departmentName 
@@ -367,47 +368,30 @@ class DbHelper {
     return userData;
   }
 
-
   Future<void> insertIntoSystem({
     required String systemName,
     required String version,
-    int? adminId, // Nullable as per schema
-    int? managerId, // Nullable
-    int? employeeId, // Nullable
+    int? adminId,
+    int? managerId,
+    int? employeeId,
+    String? employeeName,
   }) async {
     final db = await database;
     String query = """
     INSERT INTO system
-    (systemName, version, id_admin, id_manager, id_employee)
+    (systemName, version, id_admin, id_employee, employee_name)
     VALUES (?, ?, ?, ?, ?)
   """;
-    List args = [systemName, version, adminId, managerId, employeeId];
+    List args = [
+      systemName,
+      version,
+      adminId,
+      employeeId,
+      employeeName,
+    ];
     await db.rawInsert(query, args);
     log("System inserted successfully: $systemName");
   }
-
-  Future<List<SystemModal>> fetchSystemsByEmployeeId({int? employeeId,adminId}) async {
-    final db = await database;
-    String query = '''
-    SELECT system.*, employee.*
-    FROM system 
-    LEFT JOIN employee ON system.id_employee = employee.id
-  ''';
-    List<dynamic> args = [];
-
-    if (employeeId != null) {
-      query += ' WHERE system.id_employee = ?';
-      args.add(employeeId);
-    }
-
-    query += ' ORDER BY system.systemName ASC';
-
-    List<Map<String, dynamic>> data = await db.rawQuery(query, args);
-    log("Fetched systems${employeeId != null ? ' for employee ID $employeeId' : ''}: $data");
-    return data.map((e) => SystemModal.fromJson(e)).toList();
-  }
-
-
 
   Future<void> updateSystem({
     required int id,
@@ -416,6 +400,7 @@ class DbHelper {
     int? adminId,
     int? managerId,
     int? employeeId,
+    String? employeeName,
   }) async {
     final db = await database;
     String query = '''
@@ -423,17 +408,61 @@ class DbHelper {
     systemName = ?,
     version = ?,
     id_admin = ?,
-    id_manager = ?,
-    id_employee = ?
+    id_employee = ?,
+    employee_name = ?
     WHERE id = ?
   ''';
-    List args = [systemName, version, adminId, managerId, employeeId, id];
+    List args = [
+      systemName,
+      version,
+      adminId,
+      managerId,
+      employeeId,
+      employeeName,
+      id,
+    ];
     int count = await db.rawUpdate(query, args);
-    if (count > 0) {
-      log("System with ID $id updated successfully.");
-    } else {
-      log("Failed to update system with ID $id or system not found.");
+    log(
+      count > 0
+          ? "System with ID $id updated successfully."
+          : "Failed to update system with ID $id.",
+    );
+  }
+
+  Future<List<SystemModal>> fetchSystems({
+    int? employeeId,
+    int? adminId,
+  }) async {
+    final db = await database;
+
+    String query = '''
+    SELECT system.*, employee.name AS employeeName
+    FROM system
+    LEFT JOIN employee ON system.id_employee = employee.emp_id
+  ''';
+
+    List<dynamic> args = [];
+    bool hasWhereClause = false;
+
+    if (employeeId != null) {
+      query += ' WHERE system.id_employee = ?';
+      args.add(employeeId);
+      hasWhereClause = true;
     }
+
+    if (adminId != null) {
+      query += hasWhereClause ? ' AND' : ' WHERE';
+      query += ' system.id_admin = ?';
+      args.add(adminId);
+    }
+
+    query += ' ORDER BY system.systemName ASC';
+
+    List<Map<String, dynamic>> data = await db.rawQuery(query, args);
+
+    log("Fetched systems: $data");
+
+    return data.map((e) => SystemModal.fromJson(e)).toList();
   }
 
   Future<void> deleteSystem(int id) async {
@@ -473,15 +502,17 @@ class DbHelper {
       assignedToEmployeeId,
       lastCheckOutDate,
       lastCheckInDate,
-      adminId
+      adminId,
     ];
     final id = await db.rawInsert(query, args);
     log("Testing Device inserted successfully: $deviceName with ID: $id");
     return id;
   }
 
-  Future<List<TestingDeviceModal>> fetchAllTestingDevices(
-      {int? adminId, String? statusFilter}) async {
+  Future<List<TestingDeviceModal>> fetchAllTestingDevices({
+    int? adminId,
+    String? statusFilter,
+  }) async {
     final db = await database;
     String query =
         "SELECT td.*, e.name as assigned_employee_name FROM testing_device td LEFT JOIN employee e ON td.assignedTo_employee_id = e.emp_id";
@@ -503,7 +534,8 @@ class DbHelper {
       args.add(statusFilter);
     }
 
-    query += " ORDER BY td.deviceName ASC"; // Added ASC for ascending order, you can change to DESC if needed
+    query +=
+        " ORDER BY td.deviceName ASC"; // Added ASC for ascending order, you can change to DESC if needed
 
     List<Map<String, dynamic>> data = await db.rawQuery(query, args);
     log("Fetched Testing Devices: $data");

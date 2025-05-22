@@ -1,5 +1,7 @@
 import 'package:elaunch_management/Service/firebaseDatabase.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'Device_Testing/device_view.dart';
+import 'System/system_view.dart';
 import 'firebase_options.dart';
 import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
@@ -42,5 +44,7 @@ class MyApp extends StatelessWidget {
     DepartmentScreen.routeName:DepartmentScreen.builder,
     ManagerScreen.routeName:ManagerScreen.builder,
     EmployeeScreen.routeName:EmployeeScreen.builder,
+    SystemView.routeName:SystemView.builder,
+    DeviceView.routeName:DeviceView.builder,
   };
 }

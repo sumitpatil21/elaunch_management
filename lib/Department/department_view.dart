@@ -56,22 +56,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
         builder: (context, state) {
           if (state.departments.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16),
-                  const Text("No departments found"),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<DepartmentBloc>().add(
-                        FetchDepartments(adminId: admin.id),
-                      );
-                    },
-                    child: const Text("Refresh"),
-                  ),
-                ],
-              ),
+              child: CircularProgressIndicator(),
             );
           } else {
             log("${state.connect}");

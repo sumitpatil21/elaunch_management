@@ -19,7 +19,7 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     FetchSystem event,
     Emitter<SystemState> emit,
   ) async {
-    final systems = await DbHelper.dbHelper.fetchSystemsByEmployeeId(
+    final systems = await DbHelper.dbHelper.fetchSystems(
       employeeId: event.employeeId,
       adminId: event.adminId
     );
@@ -37,6 +37,7 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
       adminId: event.adminId,
       managerId: event.managerId,
       employeeId: event.employeeId,
+      employeeName: event.employeeName,
     );
     add(FetchSystem(adminId: event.adminId, employeeId: event.employeeId));
   }

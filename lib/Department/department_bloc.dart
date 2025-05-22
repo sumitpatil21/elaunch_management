@@ -27,9 +27,9 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
 
     final departments = await DbHelper.dbHelper.departmentFetch(event.adminId ?? 0,);
     FirebaseDbHelper.firebaseDbHelper.insertDepartment(departments);
-    final fireDepart = await FirebaseDbHelper.firebaseDbHelper.fetchDepartments(departments.first.id_admin);
-    log("${fireDepart}Fetch.......");
-    emit(DepartmentState(departments: departments,fireDepartments: fireDepart));
+    // final fireDepart = await FirebaseDbHelper.firebaseDbHelper.fetchDepartments(departments.first.id_admin);
+    // log("${fireDepart}Fetch.......");
+    emit(DepartmentState(departments: departments));
   }
 
 

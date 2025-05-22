@@ -17,6 +17,7 @@ class FetchSystem extends SystemEvent {
 class AddSystem extends SystemEvent {
   final String systemName;
   final String? version;
+  final String? employeeName;
   final int? adminId;
   final int? managerId;
   final int? employeeId;
@@ -24,6 +25,7 @@ class AddSystem extends SystemEvent {
   const AddSystem({
     required this.systemName,
     this.version,
+    this.employeeName,
     this.adminId,
     this.managerId,
     this.employeeId,
@@ -33,6 +35,7 @@ class AddSystem extends SystemEvent {
   List<Object> get props => [
     systemName,
     version ?? "",
+    employeeName ?? "",
     adminId ?? 0,
     managerId ?? 0,
     employeeId ?? 0,
@@ -43,6 +46,7 @@ class UpdateSystem extends SystemEvent {
   final int id;
   final String systemName;
   final String? version;
+  final String? employeeName;
   final int? adminId;
   final int? managerId;
   final int? employeeId;
@@ -51,6 +55,7 @@ class UpdateSystem extends SystemEvent {
     required this.id,
     required this.systemName,
     this.version,
+    this.employeeName,
     this.adminId,
     this.managerId,
     this.employeeId,
@@ -61,6 +66,7 @@ class UpdateSystem extends SystemEvent {
     id,
     systemName,
     version ?? "",
+    employeeName ?? "",
     adminId ?? 0,
     managerId ?? 0,
     employeeId ?? 0,

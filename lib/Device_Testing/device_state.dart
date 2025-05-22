@@ -1,10 +1,13 @@
 part of 'device_bloc.dart';
 
-sealed class DeviceState extends Equatable {
-  const DeviceState();
-}
+ class DeviceState extends Equatable {
+  final List<TestingDeviceModal> devices;
 
-final class DeviceInitial extends DeviceState {
-  @override
-  List<Object> get props => [];
+  const DeviceState({this.devices = const []});
+
+  DeviceState copyWith({List<TestingDeviceModal>? devices}) {
+    return DeviceState(devices: devices ?? this.devices);
+  }
+
+  List<Object> get props => [devices];
 }

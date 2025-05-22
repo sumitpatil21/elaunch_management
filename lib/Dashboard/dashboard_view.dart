@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:elaunch_management/Dashboard/dashboard_bloc.dart';
 import 'package:elaunch_management/Department/department_view.dart';
+import 'package:elaunch_management/Device_Testing/device_view.dart';
 import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:elaunch_management/Manager/manager_view.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
@@ -34,7 +37,7 @@ class DashboardView extends StatefulWidget {
         ),
         BlocProvider(create: (context) => AdminBloc(AdminState())),
         BlocProvider(create: (context) => DepartmentBloc(DepartmentState())),
-        BlocProvider(create: (context) => SystemBloc(SystemState())),
+        BlocProvider(create: (context) => SystemBloc(SystemState())..add(FetchSystem(adminId: admin.id))),
         BlocProvider(
           create:
               (context) =>
@@ -455,8 +458,8 @@ class _DashboardViewState extends State<DashboardView> {
                   // system Card
                   GestureDetector(
                     onTap: () {
-                      final dept = context.read<DashboardBloc>().state.department;
-                      Navigator.pushNamed(context, SystemView.routeName);
+                      log("${admin.id}");
+                      Navigator.pushNamed(context, SystemView.routeName,arguments: admin);
                     },
                     child: Card(
                       elevation: 4,
@@ -484,12 +487,7 @@ class _DashboardViewState extends State<DashboardView> {
                                   return SizedBox(
                                     height: 15,
                                     width: 15,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
+                                    child: Text("0"),
                                   );
                                 } else {
                                   return Text(
@@ -511,8 +509,8 @@ class _DashboardViewState extends State<DashboardView> {
                   //Device Card
                   GestureDetector(
                     onTap: () {
-                      final dept = context.read<DashboardBloc>().state.department;
-                      Navigator.pushNamed(context, SystemView.routeName);
+
+                      Navigator.pushNamed(context, DeviceView.routeName);
                     },
                     child: Card(
                       elevation: 4,
@@ -540,12 +538,7 @@ class _DashboardViewState extends State<DashboardView> {
                                   return SizedBox(
                                     height: 15,
                                     width: 15,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
+                                    child: Text("0"),
                                   );
                                 } else {
                                   return Text(
