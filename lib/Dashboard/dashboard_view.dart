@@ -26,7 +26,6 @@ class DashboardView extends StatefulWidget {
   static Widget builder(BuildContext context) {
     late AdminModal admin =
         ModalRoute.of(context)!.settings.arguments as AdminModal;
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(
