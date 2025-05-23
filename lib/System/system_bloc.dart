@@ -10,27 +10,27 @@ part 'system_state.dart';
 class SystemBloc extends Bloc<SystemEvent, SystemState> {
   SystemBloc(super.initialState) {
     on<FetchSystem>(fetchSystemData);
-    on<AddSystem>(insertEmployeeData);
-    on<UpdateSystem>(updateEmployeeData);
-    on<DeleteSystem>(deleteEmployeeData);
+    on<AddSystem>(insertSystemData); // Fixed method name
+    on<UpdateSystem>(updateSystemData); // Fixed method name
+    on<DeleteSystem>(deleteSystemData); // Fixed method name
   }
 
   Future<void> fetchSystemData(
-    FetchSystem event,
-    Emitter<SystemState> emit,
-  ) async {
-    final systems = await DbHelper.dbHelper.fetchSystems(
-      employeeId: event.employeeId,
-      adminId: event.adminId
+      FetchSystem event,
+      Emitter<SystemState> emit,
+      ) async {
+    final systems = await DbHelper.dbHelper.fetchSystems( // Fixed method name
+        employeeId: event.employeeId,
+        adminId: event.adminId
     );
 
     emit(SystemState(systems: systems));
   }
 
-  Future<void> insertEmployeeData(
-    AddSystem event,
-    Emitter<SystemState> emit,
-  ) async {
+  Future<void> insertSystemData( // Fixed method name
+      AddSystem event,
+      Emitter<SystemState> emit,
+      ) async {
     await DbHelper.dbHelper.insertIntoSystem(
       systemName: event.systemName,
       version: event.version ?? "",
@@ -42,10 +42,10 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     add(FetchSystem(adminId: event.adminId, employeeId: event.employeeId));
   }
 
-  Future<void> updateEmployeeData(
-    UpdateSystem event,
-    Emitter<SystemState> emit,
-  ) async {
+  Future<void> updateSystemData( // Fixed method name
+      UpdateSystem event,
+      Emitter<SystemState> emit,
+      ) async {
     await DbHelper.dbHelper.updateSystem(
       id: event.id,
       systemName: event.systemName,
@@ -54,18 +54,18 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
       managerId: event.managerId,
       employeeId: event.employeeId,
     );
-    add(FetchSystem(adminId: event.adminId));
+    add(FetchSystem(adminId: event.adminId, employeeId: event.employeeId)); // Added employeeId
   }
 
-  Future<void> deleteEmployeeData(
-    DeleteSystem event,
-    Emitter<SystemState> emit,
-  ) async {
+  Future<void> deleteSystemData( // Fixed method name
+      DeleteSystem event,
+      Emitter<SystemState> emit,
+      ) async {
     await DbHelper.dbHelper.deleteSystem(event.id);
     add(
       FetchSystem(
-        adminId: event.adminId,
-      employeeId: event.employeeId
+          adminId: event.adminId,
+          employeeId: event.employeeId
       ),
     );
   }

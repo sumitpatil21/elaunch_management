@@ -1,37 +1,16 @@
-import 'dart:developer';
-
-import 'package:elaunch_management/Service/admin_modal.dart';
-import 'package:elaunch_management/Service/employee_modal.dart';
 import 'package:elaunch_management/Service/system_modal.dart';
-import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../Employee/employee_bloc.dart';
 
 class SystemView extends StatefulWidget {
   static String routeName = "/system";
   const SystemView({super.key});
+
   static Widget builder(BuildContext context) {
-    AdminModal? args =
-        ModalRoute.of(context)!.settings.arguments as AdminModal?;
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create:
-              (context) =>
-                  SystemBloc(SystemState())
-                    ..add(FetchSystem(adminId: args?.id)),
-        ),
-        BlocProvider(
-          create:
-              (context) =>
-                  EmployeeBloc(EmployeeState())
-                    ..add(FetchEmployees(adminId: args?.id)),
-        ),
-        BlocProvider(
-          create: (context) => AdminBloc(AdminState())..add(AdminFetch()),
-        ),
+        BlocProvider(create: (context) => SystemBloc(SystemState())),
       ],
       child: const SystemView(),
     );
@@ -42,30 +21,27 @@ class SystemView extends StatefulWidget {
 }
 
 class _SystemViewState extends State<SystemView> {
-  final TextEditingController searchController = TextEditingController();
+  TextEditingController searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize by fetching systems
+    context.read<SystemBloc>().add(FetchSystem(adminId: 1)); // Replace with actual adminId
+  }
 
   @override
   Widget build(BuildContext context) {
-    AdminModal? args =
-        ModalRoute.of(context)!.settings.arguments as AdminModal?;
-
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.yellow.withOpacity(0.2),
-        title: const Text("System"),
+        backgroundColor: Colors.green.withOpacity(0.2),
+        title: Text("System"),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.yellow.withOpacity(0.2),
-        onPressed:
-            () => showManagerDialog(
-              context,
-              bloc:
-                  context.read<EmployeeBloc>()
-                    ..add(FetchEmployees(adminId: args?.id ?? 1)),
-              systemBloc: context.read<SystemBloc>(),
-            ),
-        label: const Text("Add System"),
-        icon: const Icon(Icons.add),
+        backgroundColor: Colors.green.withOpacity(0.2),
+        onPressed: () => showSystemDialog(context), // Fixed method name
+        label: Text("Add System"), // Fixed text
+        icon: Icon(Icons.add),
       ),
       body: Column(
         children: [
@@ -77,8 +53,22 @@ class _SystemViewState extends State<SystemView> {
                 labelText: "Search",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(Icons.search),
+                filled: true,
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.green, width: 1),
+                ),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
@@ -87,37 +77,72 @@ class _SystemViewState extends State<SystemView> {
                   },
                 ),
               ),
-              onChanged: (_) => setState(() {}),
+              onChanged: (query) {
+                setState(() {});
+              },
             ),
           ),
           Expanded(
             child: BlocBuilder<SystemBloc, SystemState>(
               builder: (context, state) {
-                final query = searchController.text.toLowerCase();
-
-                final filteredSystems =
-                    state.systems.where((system) {
-                      return system.systemName.toLowerCase().contains(query) ||
-                          (system.version?.toLowerCase().contains(query) ??
-                              false) ||
-                          (system.employeeName?.toLowerCase().contains(query) ??
-                              false);
-                    }).toList();
-
-                if (filteredSystems.isEmpty) {
+                if (state.systems.isEmpty) {
                   return Center(
-                    child: Text(
-                      searchController.text.isNotEmpty
-                          ? 'No results for "${searchController.text}"'
-                          : 'No System found',
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.computer_outlined, // Fixed icon
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text("No systems found"), // Fixed text
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                // Filter systems based on search
+                final filteredSystems = searchController.text.isEmpty
+                    ? state.systems
+                    : state.systems.where((system) =>
+                system.systemName.toLowerCase().contains(
+                  searchController.text.toLowerCase(),
+                ) ||
+                    (system.version?.toLowerCase().contains(
+                      searchController.text.toLowerCase(),
+                    ) ?? false)).toList();
 
+                if (filteredSystems.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        Text("No results for \"${searchController.text}\""),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            searchController.clear();
+                            setState(() {});
+                          },
+                          child: const Text("Clear Search"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
                   itemCount: filteredSystems.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final system = filteredSystems[index];
                     return Dismissible(
@@ -132,35 +157,34 @@ class _SystemViewState extends State<SystemView> {
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
                       direction: DismissDirection.endToStart,
-                      confirmDismiss:
-                          (_) => showDialog(
-                            context: context,
-                            builder:
-                                (_) => AlertDialog(
-                                  title: const Text("Confirm Delete"),
-                                  content: Text(
-                                    "Are you sure you want to delete ${system.systemName}?",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(context, false),
-                                      child: const Text("CANCEL"),
-                                    ),
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      onPressed:
-                                          () => Navigator.pop(context, true),
-                                      child: const Text("DELETE"),
-                                    ),
-                                  ],
-                                ),
+                      confirmDismiss: (_) => showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text("Confirm Delete"),
+                          content: Text(
+                            "Are you sure you want to delete ${system.systemName}?",
                           ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text("CANCEL"),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text("DELETE"),
+                            ),
+                          ],
+                        ),
+                      ),
                       onDismissed: (_) {
                         context.read<SystemBloc>().add(
-                          DeleteSystem(id: system.id ?? 1),
+                          DeleteSystem(
+                            id: system.id ?? 1,
+                            adminId: 1, // Replace with actual adminId
+                          ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -175,8 +199,8 @@ class _SystemViewState extends State<SystemView> {
                         elevation: 2,
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.yellow.withOpacity(0.2),
-                            child: const Icon(Icons.computer_outlined),
+                            backgroundColor: Colors.blue.withOpacity(0.2), // Changed color
+                            child: Icon(Icons.computer_outlined),
                           ),
                           title: Text(
                             system.systemName,
@@ -185,34 +209,26 @@ class _SystemViewState extends State<SystemView> {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(system.version ?? ""),
-                              Text(system.employeeName ?? "N/A"),
+                              Text("Version: ${system.version ?? 'N/A'}"), // Fixed display
+                              if (system.employeeName != null) // Added null check
+                                Text("Assigned to: ${system.employeeName}"),
                             ],
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.change_circle),
-                                onPressed: () {
-                                  showManagerDialog(
-                                    context,
-                                    system: system,
-                                    bloc:
-                                        context.read<EmployeeBloc>()..add(
-                                          FetchEmployees(
-                                            adminId: args?.id ?? 1,
-                                          ),
-                                        ),
-                                    systemBloc: context.read<SystemBloc>(),
-                                  );
-                                },
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => showSystemDialog( // Fixed method name
+                                  context,
+                                  system: system,
+                                ),
                               ),
                               IconButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                ),
+                                onPressed: () {
+                                  // Add navigation logic here if needed
+                                },
+                                icon: Icon(Icons.arrow_forward_ios_rounded),
                               ),
                             ],
                           ),
@@ -229,34 +245,14 @@ class _SystemViewState extends State<SystemView> {
     );
   }
 
-  void showManagerDialog(
-    BuildContext context, {
-    SystemModal? system,
-    required EmployeeBloc bloc,
-    required SystemBloc systemBloc,
-  }) {
+  void showSystemDialog(BuildContext context, {SystemModal? system}) { // Fixed method name
     final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final versionController = TextEditingController();
-    EmployeeModal? selectedEmployee;
-
-    AdminModal? args =
-        ModalRoute.of(context)!.settings.arguments as AdminModal?;
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController versionController = TextEditingController();
 
     if (system != null) {
       nameController.text = system.systemName;
       versionController.text = system.version ?? "";
-      selectedEmployee = bloc.state.employees.firstWhere(
-        (emp) {
-          log("${emp.id} ${system.employeeId}");
-          return emp.id == system.employeeId;
-        },
-        orElse: () => bloc.state.employees.isNotEmpty
-            ? bloc.state.employees.first
-            :  EmployeeModal(id: -1, name: " available", email: '', address: '', dob: ''),
-      );
-    } else if (bloc.state.employees.isNotEmpty) {
-      selectedEmployee = bloc.state.employees.first;
     }
 
     showDialog(
@@ -268,7 +264,7 @@ class _SystemViewState extends State<SystemView> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: Text(system != null ? 'Edit System' : 'Add System'),
+              title: Text(system != null ? 'Edit System' : 'Add System'), // Fixed title
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
@@ -277,61 +273,28 @@ class _SystemViewState extends State<SystemView> {
                     children: [
                       TextFormField(
                         controller: nameController,
-                        validator:
-                            (value) =>
-                                value == null || value.isEmpty
-                                    ? 'Please enter a System name'
-                                    : null,
+                        validator: (value) =>
+                        value == null || value.isEmpty
+                            ? 'Please enter a system name' // Fixed validation message
+                            : null,
                         decoration: const InputDecoration(
-                          labelText: "System Name",
+                          labelText: "System Name", // Fixed label
                           border: OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: versionController,
-                        validator:
-                            (value) =>
-                                value == null || value.isEmpty
-                                    ? 'Please enter a System Version'
-                                    : null,
-                        decoration: const InputDecoration(
-                          labelText: "Version",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text("Select Employee"),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<EmployeeModal>(
-                        value: selectedEmployee,
-                        decoration: const InputDecoration(
-                          labelText: "Employee",
-                          border: OutlineInputBorder(),
-                        ),
-                        items: bloc.state.employees.isNotEmpty
-                            ? bloc.state.employees.map((emp) {
-                                return DropdownMenuItem<EmployeeModal>(
-                                  value: emp,
-                                  child: Text(emp.name),
-                                );
-                              }).toList()
-                            : [
-                                const DropdownMenuItem<EmployeeModal>(
-                                  value: null,
-                                  child: Text("No employees available"),
-                                ),
-                              ],
-                        onChanged: (emp) {
-                          setState(() {
-                            selectedEmployee = emp;
-                          });
-                        },
                         validator: (value) =>
-                            value == null || value.id == -1
-                                ? 'Please select an employee'
-                                : null,
+                        value == null || value.isEmpty
+                            ? 'Please enter a version' // Fixed validation message
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: "Version", // Fixed label
+                          border: OutlineInputBorder(),
+                        ),
                       ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -339,32 +302,29 @@ class _SystemViewState extends State<SystemView> {
               actions: [
                 TextButton(
                   child: const Text("Cancel"),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
                 ElevatedButton(
                   child: Text(system != null ? "Update" : "Add"),
                   onPressed: () {
-                    if (formKey.currentState!.validate() &&
-                        selectedEmployee != null) {
+                    if (formKey.currentState!.validate()) {
                       if (system != null) {
-                        systemBloc.add(
+                        context.read<SystemBloc>().add(
                           UpdateSystem(
                             id: system.id!,
                             systemName: nameController.text,
                             version: versionController.text,
-                            employeeName: selectedEmployee?.name ?? "dssc",
-                            employeeId: selectedEmployee?.id ?? 1,
-                            adminId: args?.id ?? 1,
+                            adminId: 1, // Replace with actual adminId
                           ),
                         );
                       } else {
-                        systemBloc.add(
+                        context.read<SystemBloc>().add(
                           AddSystem(
                             systemName: nameController.text,
                             version: versionController.text,
-                            employeeName: selectedEmployee?.name ?? "dssc",
-                            employeeId: selectedEmployee?.id ?? 1,
-                            adminId: args?.id ?? 1,
+                            adminId: 1, // Replace with actual adminId
                           ),
                         );
                       }
