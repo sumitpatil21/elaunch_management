@@ -2,7 +2,7 @@ import 'package:elaunch_management/Service/firebaseDatabase.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'Device_Testing/device_view.dart';
 import 'System/system_view.dart';
-// import 'firebase_options.dart';
+import 'firebase_options.dart';
 import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
 import 'package:elaunch_management/Manager/manager_view.dart';
@@ -16,6 +16,10 @@ import 'Service/db_helper.dart';
 void main()  {
 
   WidgetsFlutterBinding.ensureInitialized();
+   Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
    Firebase.initializeApp();
    FirebaseDbHelper.firebaseDbHelper;
   DbHelper.dbHelper.createDatabase();

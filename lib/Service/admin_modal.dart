@@ -20,7 +20,7 @@ class AdminModal {
   factory AdminModal.fromJson(Map<String, dynamic> json) {
     return AdminModal(
       id: json['id'],
-      name: json['adminName'],
+      name: json['adminName']??"",
       email: json['email'],
       pass: json['pass'],
       check: json['isChecked'],

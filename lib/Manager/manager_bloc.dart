@@ -9,7 +9,7 @@ import '../Service/manger_modal.dart';
 
 part 'manager_event.dart';
 
-part '../Service/manager_state.dart';
+part 'manager_state.dart';
 
 class ManagerBloc extends Bloc<ManagerEvent, ManagerState> {
   ManagerBloc(super.initialState) {

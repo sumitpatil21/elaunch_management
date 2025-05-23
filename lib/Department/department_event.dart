@@ -28,20 +28,15 @@ class AddDepartment extends DepartmentEvent {
 }
 
 class UpdateDepartment extends DepartmentEvent {
-  final int id;
-  final String departmentName;
-  final String dob;
-  final int? adminId; // Added adminId for refreshing the list after update
+  final DepartmentModal departmentModal;
 
   const UpdateDepartment({
-    required this.id,
-    required this.departmentName,
-    required this.dob,
-    this.adminId,
+    required this.departmentModal,
+
   });
 
   @override
-  List<Object> get props => [id, departmentName, dob, adminId ?? 0];
+  List<Object> get props => [departmentModal];
 }
 
 class DeleteDepartment extends DepartmentEvent {

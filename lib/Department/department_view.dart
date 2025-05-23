@@ -218,10 +218,11 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   if (dept != null) {
                     context.read<DepartmentBloc>().add(
                       UpdateDepartment(
-                        id: dept.id,
-                        departmentName: nameController.text,
-                        dob: dobController.text,
-                        adminId: admin.id,
+                       departmentModal: DepartmentModal(
+                         id: dept.id,
+                         name: nameController.text,
+                         date: dobController.text,
+                         id_admin: admin.id??0,)
                       ),
                     );
                   } else {

@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:elaunch_management/Department/department_bloc.dart';
 
 import 'admin_modal.dart';
 import 'department_modal.dart';
@@ -41,20 +42,26 @@ class FirebaseDbHelper {
   }
 
   // Department
-  Future<void> insertDepartment(List<DepartmentModal> department) async {
-    for (var d in department) {
-      _firestore.collection('/departments').add(d.toJson());
-    }
+  Future<void> insertDepartment(DepartmentModal department) async {
+
+      _firestore.collection('/departments').add(department.toJson());
     log("Added....");
   }
 
-  Future<void> updateDepartment(
-    String docId,
-    DepartmentModal department,
-  ) async {
+  Future<List<DepartmentModal>> fetchDepartments(int adminId) async {
+    var snapshot = await _firestore
+        .collection('/departments')
+        .where('id_admin', isEqualTo: adminId)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => DepartmentModal.fromJson(doc.data(),))
+        .toList();
+  }Future<void> updateDepartment({required DepartmentModal department}) async {
+    if (department.id == null) return;
     await _firestore
         .collection('/departments')
-        .doc(docId)
+        .doc("${department.id}")
         .update(department.toJson());
   }
 
@@ -62,17 +69,6 @@ class FirebaseDbHelper {
     await _firestore.collection('/departments').doc(docId).delete();
   }
 
-  Future<List<DepartmentModal>> fetchDepartments(int adminId) async {
-    var snapshot =
-        await _firestore
-            .collection('/departments')
-            .where('id_admin', isEqualTo: adminId)
-            .get();
-    log("${snapshot.docs}");
-    return snapshot.docs
-        .map((doc) => DepartmentModal.fromJson(doc.data()))
-        .toList();
-  }
 
   // Manager
   // Future<void> insertManager(MangerModal manager) async {

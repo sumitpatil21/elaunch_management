@@ -20,16 +20,23 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
     on<DeleteDepartment>(deleteDepartmentData);
     on<NetworkDepartment>(networkDepartmentData);
   }
-  Future<void> fetchDepartmentsData(
+
+
+ Future<void> fetchDepartmentsData(
       FetchDepartments event,
       Emitter<DepartmentState> emit,
       ) async {
+    final connectivityResult = await Connectivity().checkConnectivity();
 
-    final departments = await DbHelper.dbHelper.departmentFetch(event.adminId ?? 0,);
-    FirebaseDbHelper.firebaseDbHelper.insertDepartment(departments);
-    // final fireDepart = await FirebaseDbHelper.firebaseDbHelper.fetchDepartments(departments.first.id_admin);
-    // log("${fireDepart}Fetch.......");
-    emit(DepartmentState(departments: departments));
+    if (connectivityResult == ConnectivityResult.mobile ||
+        connectivityResult == ConnectivityResult.wifi) {
+        final fire = await FirebaseDbHelper.firebaseDbHelper
+            .fetchDepartments(event.adminId ?? 0);
+        emit(DepartmentState(fireDepartments: fire, departments: fire, connect: true));
+    } else {
+      final local = await DbHelper.dbHelper.departmentFetch(event.adminId ?? 0);
+      emit(DepartmentState(departments: local, connect: false));
+    }
   }
 
 
@@ -43,6 +50,7 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
       dob: event.dob,
     );
     final departments = await DbHelper.dbHelper.departmentFetch(event.id);
+    FirebaseDbHelper.firebaseDbHelper.insertDepartment(departments.last);
     emit(DepartmentState(departments: departments));
   }
 
@@ -51,11 +59,12 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
     Emitter<DepartmentState> emit,
   ) async {
     await DbHelper.dbHelper.updateDepartment(
-      id: event.id,
-      departmentName: event.departmentName,
-      dob: event.dob,
+      id: event.departmentModal.id,
+      departmentName: event.departmentModal.name,
+      dob: event.departmentModal.date,
     );
-    final departments = await DbHelper.dbHelper.departmentFetch(event.id);
+    final departments = await DbHelper.dbHelper.departmentFetch(event.departmentModal.id_admin);
+     FirebaseDbHelper.firebaseDbHelper.updateDepartment(department: event.departmentModal);
     emit(DepartmentState(departments: departments));
   }
 

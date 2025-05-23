@@ -65,36 +65,36 @@ class _ManagerScreenState extends State<ManagerScreen> {
               : "Managers  ${arguments?.department ?? ""}",
         ),
         actions: [
-          PopupMenuButton<DepartmentModal?>(
+          PopupMenuButton<int>(
             icon: const Icon(Icons.filter_list),
             itemBuilder:
                 (_) => [
-                  const PopupMenuItem<DepartmentModal?>(
-                    value: null,
+                  const PopupMenuItem<int>(
+                    value: -1,
                     child: Text('All Managers'),
                   ),
+
                   ...departments
                       .map(
-                        (dept) => PopupMenuItem<DepartmentModal?>(
-                          value: dept,
+                        (dept) => PopupMenuItem<int>(
+                          value: dept.id,
                           child: Text(dept.name),
                         ),
                       ),
                 ],
             onSelected: (depart) {
-              arguments!.department = depart;
-              if(depart==null){
+              if(depart==-1){
                 context.read<ManagerBloc>().add(
                     FetchManagers(
-                      adminId: arguments.department?.id_admin ?? 1,
+                      adminId: arguments!.adminId?? 1,
                     ));
               }
               else
                 {
                   context.read<ManagerBloc>().add(
                     FetchManagers(
-                      departmentId: depart.id,
-                      adminId: depart.id_admin ?? 1,
+                      departmentId: depart,
+                      adminId: arguments!.adminId??1,
                     ));
                 }
 

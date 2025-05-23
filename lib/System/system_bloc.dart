@@ -34,6 +34,8 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     await DbHelper.dbHelper.insertIntoSystem(
       systemName: event.systemName,
       version: event.version ?? "",
+      operatingSystem: event.operatingSystem??"",
+      status: event.status??"",
       adminId: event.adminId,
       managerId: event.managerId,
       employeeId: event.employeeId,
@@ -50,6 +52,8 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
       id: event.id,
       systemName: event.systemName,
       version: event.version ?? "",
+      operatingSystem: event.operatingSystem??"",
+      status: event.status??"",
       adminId: event.adminId,
       managerId: event.managerId,
       employeeId: event.employeeId,
