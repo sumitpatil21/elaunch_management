@@ -1,10 +1,10 @@
 part of 'employee_bloc.dart';
 
-class EmployeeEvent extends Equatable {
+abstract class EmployeeEvent extends Equatable {
   const EmployeeEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class FetchEmployees extends EmployeeEvent {
@@ -12,25 +12,18 @@ class FetchEmployees extends EmployeeEvent {
   final int? adminId;
   final String? managerName;
 
-
   const FetchEmployees({
-     required this.adminId,
     this.departmentName,
+    this.adminId,
     this.managerName,
-
   });
 
   @override
-  List<Object> get props => [
-    departmentName ?? "",
-    managerName ?? "",
-    adminId??""
-
-  ];
+  List<Object?> get props => [departmentName, managerName, adminId];
 }
 
 class AddEmployee extends EmployeeEvent {
-  final int id;
+  final int? id;
   final int? adminId;
   final int managerId;
   final int departmentId;
@@ -42,7 +35,7 @@ class AddEmployee extends EmployeeEvent {
   final String department;
 
   const AddEmployee({
-    required this.id,
+    this.id,
     this.adminId,
     required this.managerId,
     required this.departmentId,
@@ -55,8 +48,9 @@ class AddEmployee extends EmployeeEvent {
   });
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     id,
+    adminId,
     managerId,
     departmentId,
     name,
@@ -94,8 +88,9 @@ class UpdateEmployee extends EmployeeEvent {
   });
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     id,
+    adminId,
     managerId,
     departmentId,
     name,
@@ -110,23 +105,16 @@ class UpdateEmployee extends EmployeeEvent {
 class DeleteEmployee extends EmployeeEvent {
   final int id;
   final int? adminId;
-  final int? departmentId;
   final String? managerName;
   final String? departmentName;
 
   const DeleteEmployee({
     required this.id,
     this.adminId,
-    this.departmentId,
     this.managerName,
     this.departmentName,
   });
 
   @override
-  List<Object> get props => [
-    id,
-    departmentId ?? 0,
-    managerName ?? "",
-    departmentName ?? "",
-  ];
+  List<Object?> get props => [id, adminId, managerName, departmentName];
 }

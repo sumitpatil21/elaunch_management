@@ -24,7 +24,7 @@ class DepartmentScreen extends StatefulWidget {
         BlocProvider(
           create:
               (_) =>
-                  DepartmentBloc(DepartmentState())
+                  DepartmentBloc()
                     ..add(FetchDepartments(adminId: admin.id)),
         ),
       ],
@@ -41,7 +41,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   void initState() {
     super.initState();
     // TODO: implement initState
-    context.read<DepartmentBloc>().add(NetworkDepartment(connect: false));
+    // context.read<DepartmentBloc>().add(NetworkDepartment(connect: false));
   }
   @override
   Widget build(BuildContext context) {
@@ -59,7 +59,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               child: CircularProgressIndicator(),
             );
           } else {
-            log("${state.connect}");
             return ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: state.departments.length,
@@ -172,6 +171,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     final _formKey = GlobalKey<FormState>();
     final TextEditingController nameController = TextEditingController(text: dept?.name ?? '');
     final TextEditingController dobController = TextEditingController(text: dept?.date ?? '');
+    final TextEditingController idController = TextEditingController(text: 'Department Id');
 
     showDialog(
       context: context,
@@ -186,6 +186,15 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                TextFormField(
+                  controller: idController,
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Please enter a department name' : null,
+                  decoration: const InputDecoration(
+                    labelText: "Department ID",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 TextFormField(
                   controller: nameController,
                   validator: (value) =>
@@ -218,18 +227,20 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   if (dept != null) {
                     context.read<DepartmentBloc>().add(
                       UpdateDepartment(
-                        id: dept.id,
-                        departmentName: nameController.text,
-                        dob: dobController.text,
-                        adminId: admin.id,
+                       departmentModal: DepartmentModal(
+                         id: dept.id,
+                         name: nameController.text,
+                         date: dobController.text,
+                         id_admin: dept.id_admin,)
                       ),
                     );
                   } else {
                     context.read<DepartmentBloc>().add(
                       AddDepartment(
+                        adminId: admin.id??1,
                         departmentName: nameController.text,
                         dob: dobController.text,
-                        id: admin.id??1,
+                        id: int.parse(idController.text),
                       ),
                     );
                   }

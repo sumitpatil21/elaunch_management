@@ -9,7 +9,7 @@ class AdminView extends StatefulWidget {
 
   static Widget builder(BuildContext context) {
     return BlocProvider(
-      create: (context) => AdminBloc(AdminState()),
+      create: (context) => AdminBloc(),
       child: AdminView(),
     );
   }
@@ -25,6 +25,7 @@ class _AdminViewState extends State<AdminView> {
   final passwordController = TextEditingController();
   final companyController = TextEditingController();
   final fieldController = TextEditingController();
+  final idController = TextEditingController();
   bool isLogin = true;
 
   @override
@@ -33,11 +34,11 @@ class _AdminViewState extends State<AdminView> {
     // TODO: implement initState
     super.initState();
   }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(isLogin ? 'Super Admin Login' : 'Super Admin Register'),
-
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -53,6 +54,17 @@ class _AdminViewState extends State<AdminView> {
                     style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 20),
+                  if (!isLogin)
+                    TextFormField(
+                      keyboardType: TextInputType.numberWithOptions(),
+                      decoration: InputDecoration(
+                        labelText: 'User ID',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.perm_identity),
+                      ),
+                      controller: idController,
+                    ),
+                    SizedBox(height: 20),
                   if (!isLogin)
                     TextFormField(
                       decoration: InputDecoration(
@@ -127,10 +139,8 @@ class _AdminViewState extends State<AdminView> {
                         if (isLogin) {
                           context.read<AdminBloc>().add(
                             AdminLogin(
-                              email:
-                              emailController.text,
-                            check:
-                            "isLogin",
+                              email: emailController.text,
+                              check: "isLogin",
                             ),
                           );
                           context.read<AdminBloc>().stream.listen((state) {
@@ -138,8 +148,10 @@ class _AdminViewState extends State<AdminView> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text("Login Done")),
                               );
-                              Navigator.of(context).pushReplacementNamed(DashboardView.routeName,arguments: state.adminList.first);
-
+                              Navigator.of(context).pushReplacementNamed(
+                                DashboardView.routeName,
+                                arguments: state.adminList.first,
+                              );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text("Login fail")),
@@ -149,12 +161,13 @@ class _AdminViewState extends State<AdminView> {
                         } else {
                           context.read<AdminBloc>().add(
                             AdminInsert(
-                              nameController.text,
-                              emailController.text,
-                              passwordController.text,
-                              "Logout",
-                              companyController.text,
-                              fieldController.text,
+                              id: int.parse(idController.text),
+                              name: nameController.text,
+                              email: emailController.text,
+                              pass: passwordController.text,
+                              check: "Logout",
+                              companyName: companyController.text,
+                              field: fieldController.text,
                             ),
                           );
                           ScaffoldMessenger.of(context).showSnackBar(

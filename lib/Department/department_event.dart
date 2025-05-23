@@ -19,29 +19,25 @@ class FetchDepartments extends DepartmentEvent {
 class AddDepartment extends DepartmentEvent {
   final String departmentName;
   final String dob;
-  final int id;
+  final int id, adminId;
 
-  const AddDepartment({required this.departmentName, required this.dob, required this.id});
+
+  const AddDepartment({required this.departmentName, required this.dob, required this.id, required this.adminId});
 
   @override
-  List<Object> get props => [departmentName, dob, id];
+  List<Object> get props => [departmentName, dob, id, adminId];
 }
 
 class UpdateDepartment extends DepartmentEvent {
-  final int id;
-  final String departmentName;
-  final String dob;
-  final int? adminId; // Added adminId for refreshing the list after update
+  final DepartmentModal departmentModal;
 
   const UpdateDepartment({
-    required this.id,
-    required this.departmentName,
-    required this.dob,
-    this.adminId,
+    required this.departmentModal,
+
   });
 
   @override
-  List<Object> get props => [id, departmentName, dob, adminId ?? 0];
+  List<Object> get props => [departmentModal];
 }
 
 class DeleteDepartment extends DepartmentEvent {

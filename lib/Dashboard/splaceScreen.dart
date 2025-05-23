@@ -12,7 +12,7 @@ class SplashScreen extends StatefulWidget {
   static String routeName = "/";
   static Widget builder(BuildContext context) {
     return MultiBlocProvider(
-      providers: [BlocProvider(create: (context) => AdminBloc(AdminState()))],
+      providers: [BlocProvider(create: (context) => AdminBloc())],
       child: SplashScreen(),
     );
   }

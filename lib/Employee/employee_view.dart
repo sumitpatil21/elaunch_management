@@ -25,7 +25,7 @@ class EmployeeScreen extends StatefulWidget {
       providers: [
         BlocProvider(
           create:
-              (context) => EmployeeBloc(EmployeeState())..add(
+              (context) => EmployeeBloc()..add(
                 manager != null
                     ? FetchEmployees(
                       adminId: args.adminId,
@@ -38,12 +38,12 @@ class EmployeeScreen extends StatefulWidget {
         BlocProvider(
           create:
               (_) =>
-                  ManagerBloc(ManagerState())
+                  ManagerBloc()
                     ..add(FetchManagers(adminId: args.adminId ?? 1)),
         ),
         BlocProvider(
           create:
-              (_) => DepartmentBloc(DepartmentState())..add(FetchDepartments()),
+              (_) => DepartmentBloc()..add(FetchDepartments()),
         ),
         BlocProvider(create: (context) => DashboardBloc(DashboardState())),
       ],
@@ -137,8 +137,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                                             'No Department',
                                       ),
                                       onTap: () {
-                                        args.manager =
-                                            managerState.managers[index];
+                                        // args.manager =
+                                        //     managerState.managers[index];
                                         Navigator.pop(context, {
                                           'name':
                                               managerState

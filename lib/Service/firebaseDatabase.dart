@@ -1,6 +1,9 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:elaunch_management/Department/department_bloc.dart';
+import 'package:elaunch_management/Service/device_modal.dart';
+import 'package:elaunch_management/Service/system_modal.dart';
 
 import 'admin_modal.dart';
 import 'department_modal.dart';
@@ -41,88 +44,143 @@ class FirebaseDbHelper {
   }
 
   // Department
-  Future<void> insertDepartment(List<DepartmentModal> department) async {
-    for (var d in department) {
-      _firestore.collection('/departments').add(d.toJson());
-    }
+  Future<void> insertDepartment(DepartmentModal department) async {
+
+      _firestore.collection('/departments').add(department.toJson());
     log("Added....");
   }
 
-  Future<void> updateDepartment(
-    String docId,
-    DepartmentModal department,
-  ) async {
+  Future<List<DepartmentModal>> fetchDepartments(int adminId) async {
+    var snapshot = await _firestore
+        .collection('/departments')
+        .where('id_admin', isEqualTo: adminId)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => DepartmentModal.fromJson(doc.data(),))
+        .toList();
+  }Future<void> updateDepartment({required DepartmentModal department}) async {
+    if (department.id == null) return;
     await _firestore
         .collection('/departments')
-        .doc(docId)
+        .doc("${department.id}")
         .update(department.toJson());
+    log("update...");
   }
 
   Future<void> deleteDepartment(String docId) async {
     await _firestore.collection('/departments').doc(docId).delete();
   }
 
-  Future<List<DepartmentModal>> fetchDepartments(int adminId) async {
-    var snapshot =
-        await _firestore
-            .collection('/departments')
-            .where('id_admin', isEqualTo: adminId)
-            .get();
-    log("${snapshot.docs}");
+
+
+  Future<void> insertManager(MangerModal manager) async {
+    await _firestore.collection('/managers').add(manager.toJson());
+  }
+
+  Future<void> updateManager(String docId, MangerModal manager) async {
+    await _firestore.collection('/managers').doc(docId).update(manager.toJson());
+  }
+
+  Future<void> deleteManager(String docId) async {
+    await _firestore.collection('/managers').doc(docId).delete();
+  }
+
+  Future<List<MangerModal>> fetchManagers({String? adminId, String? departmentId}) async {
+
+      Query<Map<String, dynamic>> query = _firestore.collection('/managers');
+
+      if (adminId != null && adminId.isNotEmpty) {
+        query = query.where('adminId', isEqualTo: adminId);
+      }
+
+      if (departmentId != null && departmentId.isNotEmpty) {
+        query = query.where('departmentId', isEqualTo: departmentId);
+      }
+
+      final snapshot = await query.get();
+      log("$snapshot");
+      return snapshot.docs.map((doc) => MangerModal.fromJson(doc.data())).toList();
+
+  }
+  // Employee
+  Future<void> insertEmployee(EmployeeModal employee) async {
+    await _firestore.collection('/employees').add(employee.toJson());
+  }
+
+  Future<void> updateEmployee({String? docId, EmployeeModal? employee}) async {
+    await _firestore.collection('/employees').doc(docId).update(employee!.toJson());
+  }
+
+  Future<void> deleteEmployee(String docId) async {
+    await _firestore.collection('/employees').doc(docId).delete();
+  }
+
+  Future<List<EmployeeModal>> fetchEmployees({String? adminId, String? managerName, String? departmentName}) async {
+    Query<Map<String, dynamic>> query = _firestore.collection('/employees');
+    if (managerName != null) {
+      query = query.where('manager_name', isEqualTo: managerName);
+    }
+    if (departmentName != null) {
+      query = query.where('department_name', isEqualTo: departmentName);
+    }
+    var snapshot = await query.get();
+    return snapshot.docs.map((doc) => EmployeeModal.fromJson(doc.data())).toList();
+  }
+
+  Future<List<EmployeeModal>> fetchAllEmployees() async {
+    var snapshot = await _firestore.collection('/employees').get();
+    return snapshot.docs.map((doc) => EmployeeModal.fromJson(doc.data())).toList();
+  }
+
+  Future<void> insertSystem({required SystemModal system}) async {
+    await _firestore.collection('/systems').add(system.toJson());
+  }
+
+  Future<void> updateSystem({required SystemModal system}) async {
+    if (system.id == null) return;
+    await _firestore.collection('/systems').doc("${system.id}").update(system.toJson());
+  }
+
+  Future<void> deleteSystem(String id) async {
+    await _firestore.collection('/systems').doc(id).delete();
+  }
+
+  Future<List<SystemModal>> fetchSystems({int? adminId, int? employeeId}) async {
+    Query<Map<String, dynamic>> query = _firestore.collection('/systems');
+
+    if (adminId != null) {
+      query = query.where('adminId', isEqualTo: adminId);
+    }
+    if (employeeId != null) {
+      query = query.where('employeeId', isEqualTo: employeeId);
+    }
+
+    var snapshot = await query.get();
     return snapshot.docs
-        .map((doc) => DepartmentModal.fromJson(doc.data()))
+        .map((doc) => SystemModal.fromJson(doc.data(),))
         .toList();
   }
 
-  // Manager
-  // Future<void> insertManager(MangerModal manager) async {
-  //   await _firestore.collection('managers').add(manager.toJson());
-  // }
-  //
-  // Future<void> updateManager(String docId, MangerModal manager) async {
-  //   await _firestore.collection('managers').doc(docId).update(manager.toJson());
-  // }
-  //
-  // Future<void> deleteManager(String docId) async {
-  //   await _firestore.collection('managers').doc(docId).delete();
-  // }
-  //
-  // Future<List<MangerModal>> fetchManagers({String? adminId, String? departmentId}) async {
-  //   Query<Map<String, dynamic>> query = _firestore.collection('managers');
-  //   if (departmentId != null) {
-  //     query = query.where('id_department', isEqualTo: departmentId);
-  //   }
-  //   var snapshot = await query.get();
-  //   return snapshot.docs.map((doc) => MangerModal.fromJson(doc.data())).toList();
-  // }
-  //
-  // // Employee
-  // Future<void> insertEmployee(EmployeeModal employee) async {
-  //   await _firestore.collection('employees').add(employee.toJson());
-  // }
-  //
-  // Future<void> updateEmployee(String docId, EmployeeModal employee) async {
-  //   await _firestore.collection('employees').doc(docId).update(employee.toJson());
-  // }
-  //
-  // Future<void> deleteEmployee(String docId) async {
-  //   await _firestore.collection('employees').doc(docId).delete();
-  // }
-  //
-  // Future<List<EmployeeModal>> fetchEmployees({String? adminId, String? managerName, String? departmentName}) async {
-  //   Query<Map<String, dynamic>> query = _firestore.collection('employees');
-  //   if (managerName != null) {
-  //     query = query.where('manager_name', isEqualTo: managerName);
-  //   }
-  //   if (departmentName != null) {
-  //     query = query.where('department_name', isEqualTo: departmentName);
-  //   }
-  //   var snapshot = await query.get();
-  //   return snapshot.docs.map((doc) => EmployeeModal.fromJson(doc.data())).toList();
-  // }
-  //
-  // Future<List<EmployeeModal>> fetchAllEmployees() async {
-  //   var snapshot = await _firestore.collection('employees').get();
-  //   return snapshot.docs.map((doc) => EmployeeModal.fromJson(doc.data())).toList();
-  // }
+  Future<void> insertDevice(TestingDeviceModal device) async {
+    await _firestore.collection('/devices').add(device.toJson());
+  }
+
+  Future<void> updateDevice(TestingDeviceModal device) async {
+    if (device.id == null) return;
+    await _firestore.collection('/devices').doc("${device.id}").update(device.toJson());
+  }
+
+  Future<void> deleteDevice(String id) async {
+    await _firestore.collection('/devices').doc(id).delete();
+  }
+
+  Future<List<TestingDeviceModal>> fetchDevices({required int adminId}) async {
+    final snapshot = await _firestore
+        .collection('/devices')
+        .where('adminId', isEqualTo: adminId)
+        .get();
+
+    return snapshot.docs.map((doc) => TestingDeviceModal.fromJson(doc.data())).toList();
+  }
 }

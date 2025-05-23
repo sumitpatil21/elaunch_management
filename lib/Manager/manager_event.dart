@@ -17,26 +17,8 @@ class FetchManagers extends ManagerEvent {
   List<Object?> get props => [departmentId, adminId];
 }
 
-class ManagerScreenArguments extends ManagerEvent {
-  final int? adminId;
-  final int? departmentId;
-   DepartmentModal? department;
-   MangerModal? manager;
-  final List<DepartmentModal>? departmentList;
-
-   ManagerScreenArguments({
-    this.adminId,
-     this.departmentId,
-    this.department,
-    this.manager,
-    this.departmentList,
-  });
-
-  @override
-  List<Object?> get props => [adminId, departmentId, department,departmentList,manager];
-}
-
 class AddManager extends ManagerEvent {
+  final int id;
   final String name;
   final String email;
   final String address;
@@ -46,6 +28,7 @@ class AddManager extends ManagerEvent {
   final String? departmentName;
 
   const AddManager({
+    required this.id,
     required this.name,
     required this.email,
     required this.address,
@@ -57,6 +40,7 @@ class AddManager extends ManagerEvent {
 
   @override
   List<Object?> get props => [
+    id,
     name,
     email,
     address,
@@ -99,11 +83,8 @@ class UpdateManager extends ManagerEvent {
 }
 
 
-
-
-
 class DeleteManager extends ManagerEvent {
-  final int id;
+  final String id; // Firebase document ID
   final int? departmentId;
   final int? adminId;
 
@@ -111,4 +92,29 @@ class DeleteManager extends ManagerEvent {
 
   @override
   List<Object?> get props => [id, departmentId, adminId];
+}
+
+class ManagerScreenArguments extends ManagerEvent {
+  final int? adminId;
+  final int? departmentId;
+  final DepartmentModal? department;
+  final MangerModal? manager;
+  final List<DepartmentModal>? departmentList;
+
+  const ManagerScreenArguments({
+    this.adminId,
+    this.departmentId,
+    this.department,
+    this.manager,
+    this.departmentList,
+  });
+
+  @override
+  List<Object?> get props => [
+    adminId,
+    departmentId,
+    department,
+    departmentList,
+    manager,
+  ];
 }

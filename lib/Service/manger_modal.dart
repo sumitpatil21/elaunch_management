@@ -1,14 +1,15 @@
 class MangerModal {
-  final int id, departmentId;
+  final int id, departmentId, adminId;
   final String managerName;
   final String email;
   final String address;
   final String dob;
-  late final String? departmentName;
+   final String? departmentName;
 
   MangerModal({
     required this.id,
     required this.departmentId,
+    required this.adminId,
     required this.managerName,
     required this.email,
     required this.address,
@@ -19,7 +20,8 @@ class MangerModal {
   factory MangerModal.fromJson(Map<String, dynamic> json) {
     return MangerModal(
       id: json['id'],
-      departmentId: json['id_department'] ?? 0,
+      departmentId: json['departmentId'] ?? 1,
+      adminId: json['adminId'] ?? 1,
       managerName: json['managerName'] ?? '',
       email: json['email'] ?? '',
       address: json['address'] ?? '',
@@ -36,6 +38,8 @@ class MangerModal {
       'address': address,
       'dob': dob,
       'departmentName': departmentName,
+      'departmentId': departmentId,
+      'adminId': adminId,
     };
   }
 }

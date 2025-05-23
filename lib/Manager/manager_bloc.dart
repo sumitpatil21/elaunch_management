@@ -1,75 +1,106 @@
+
+
+
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
-import 'package:elaunch_management/Service/department_modal.dart';
 import 'package:equatable/equatable.dart';
-
-import '../Service/db_helper.dart';
+import '../Service/department_modal.dart';
 import '../Service/manger_modal.dart';
+import '../Service/firebaseDatabase.dart';
 
 part 'manager_event.dart';
-
-part '../Service/manager_state.dart';
+part 'manager_state.dart';
 
 class ManagerBloc extends Bloc<ManagerEvent, ManagerState> {
-  ManagerBloc(super.initialState) {
-    on<AddManager>(insertManagerData);
+  ManagerBloc() : super(const ManagerState()){
+    on<AddManager>(_insertManagerData);
     on<FetchManagers>(fetchManagersData);
-    on<UpdateManager>(updateManagerData);
-    on<DeleteManager>(deleteManagerData);
+    on<UpdateManager>(_updateManagerData);
+    on<DeleteManager>(_deleteManagerData);
   }
 
-  Future<void> insertManagerData(
-    AddManager event,
-    Emitter<ManagerState> emit,
-  ) async {
-    await DbHelper.dbHelper.insertIntoManager(
-      id: event.departmentId,
-      name: event.name,
-      dob: event.dob,
-      email: event.email,
-      address: event.address,
-    );
-    add(
-      FetchManagers(departmentId: event.departmentId, adminId: event.adminId??1),
-    );
+  Future<void> _insertManagerData(
+      AddManager event,
+      Emitter<ManagerState> emit,
+      ) async {
+    try {
+      final manager = MangerModal(
+        id: event.id,
+        managerName: event.name,
+        email: event.email,
+        address: event.address,
+        dob: event.dob,
+        departmentId: event.departmentId,
+        departmentName: event.departmentName,
+        adminId: event.adminId??1,
+      );
+      await FirebaseDbHelper.firebaseDbHelper.insertManager(manager);
+      add(FetchManagers(
+        departmentId: event.departmentId,
+        adminId: event.adminId ?? 1,
+      ));
+    } catch (e) {
+      log("Insert Manager Error: $e");
+    }
   }
+
 
   Future<void> fetchManagersData(
-    FetchManagers event,
-    Emitter<ManagerState> emit,
-  ) async {
-    final managers = await DbHelper.dbHelper.fetchAllManager(
-       event.adminId,
-       event.departmentId,
-    );
-    emit(state.copyWith(managers: managers));
+      FetchManagers event,
+      Emitter<ManagerState> emit,
+      ) async {
+    try {
+      final managers = await FirebaseDbHelper.firebaseDbHelper.fetchManagers(
+        adminId: "${event.adminId}",
+        departmentId: "${event.departmentId}",
+      );
+      log("Fetch Managers: $managers");
+      emit(state.copyWith(managers: managers));
+    } catch (e) {
+      log("Fetch Managers Error: $e");
+    }
   }
 
-  Future<void> updateManagerData(
-    UpdateManager event,
-    Emitter<ManagerState> emit,
-  ) async {
-    await DbHelper.dbHelper.updateManager(
-      id: event.id,
-      name: event.name,
-      dob: event.dob,
-      email: event.email,
-      address: event.address,
-      departmentId: event.departmentId,
-    );
-    add(
-      FetchManagers(departmentId: event.departmentId, adminId: event.adminId??1),
-    );
+
+  Future<void> _updateManagerData(
+      UpdateManager event,
+      Emitter<ManagerState> emit,
+      ) async {
+    try {
+      final manager = MangerModal(
+        id: event.id,
+        managerName: event.name,
+        email: event.email,
+        address: event.address,
+        dob: event.dob,
+        departmentId: event.departmentId,
+        adminId:event.adminId??1,
+      );
+      await FirebaseDbHelper.firebaseDbHelper.updateManager("${event.id}", manager);
+      add(FetchManagers(
+        departmentId: event.departmentId,
+        adminId: event.adminId ?? 1,
+      ));
+    } catch (e) {
+      log("Update Manager Error: $e");
+    }
   }
 
-  Future<void> deleteManagerData(
-    DeleteManager event,
-    Emitter<ManagerState> emit,
-  ) async {
-    await DbHelper.dbHelper.deleteManager(event.id);
-    add(
-      FetchManagers(departmentId: event.departmentId, adminId: event.adminId??1),
-    );
+
+  Future<void> _deleteManagerData(
+      DeleteManager event,
+      Emitter<ManagerState> emit,
+      ) async {
+    try {
+      // await DbHelper.dbHelper.deleteManager(event.id);
+      await FirebaseDbHelper.firebaseDbHelper.deleteManager(event.id);
+      add(FetchManagers(
+        departmentId: event.departmentId,
+        adminId: event.adminId ?? 1,
+      ));
+    } catch (e) {
+      log("Delete Manager Error: $e");
+    }
   }
 }

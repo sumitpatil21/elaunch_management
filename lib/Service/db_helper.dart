@@ -31,14 +31,14 @@ class DbHelper {
         await db.execute("PRAGMA foreign_keys = ON;");
       },
       onCreate: (db, version) async {
-        await db.execute(''' 
+        await db.execute('''
     CREATE TABLE admin(
-    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-    adminName TEXT, 
-    email TEXT, 
-    pass TEXT, 
-    isChecked TEXT, 
-    companyName TEXT, 
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    adminName TEXT,
+    email TEXT,
+    pass TEXT,
+    isChecked TEXT,
+    companyName TEXT,
     field TEXT
   ) ''');
 
@@ -72,8 +72,8 @@ class DbHelper {
          address TEXT,
          dob TEXT,
          id_manager INTEGER,
-         manager_name TEXT,  
-         department_name TEXT, 
+         manager_name TEXT,
+         department_name TEXT,
          FOREIGN KEY (id_manager) REFERENCES manager (id) ON DELETE CASCADE
          )
           ''');
@@ -82,12 +82,10 @@ class DbHelper {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           systemName TEXT UNIQUE,
           version TEXT,
-          id_admin INTEGER,
-          id_manager INTEGER, 
-          id_employee INTEGER, 
-          FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE CASCADE,
-          FOREIGN KEY (id_manager) REFERENCES manager (id) ON DELETE SET NULL, 
-          FOREIGN KEY (id_employee) REFERENCES employee (emp_id) ON DELETE SET NULL 
+          operatingSystem TEXT,
+          status TEXT DEFAULT 'available',
+          id_employee INTEGER,
+          FOREIGN KEY (id_employee) REFERENCES employee (emp_id) ON DELETE SET NULL
         )
         ''');
 
@@ -103,10 +101,10 @@ class DbHelper {
             lastCheckInDate TEXT,
             id_admin INTEGER,
             FOREIGN KEY (assignedTo_employee_id) REFERENCES employee (emp_id) ON DELETE SET NULL,
-            FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE SET NULL,
+            FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE SET NULL
         )
         ''');
-        log("System table created.");
+        log("Device table created.");
       },
     );
   }
@@ -154,7 +152,7 @@ class DbHelper {
   }) async {
     final db = await database;
     String query = """
-      UPDATE department 
+      UPDATE department
       SET departmentName = ?, field = ?
       WHERE id = ?
       """;
@@ -260,10 +258,10 @@ class DbHelper {
   Future<List<MangerModal>> fetchAllManager(int? adminId,
       int? departmentId,) async {
     final db = await database;
-    String query = ''' 
-    SELECT manager.*, department.departmentName 
-    FROM manager 
-    INNER JOIN department ON manager.id_department = department.id 
+    String query = '''
+    SELECT manager.*, department.departmentName
+    FROM manager
+    INNER JOIN department ON manager.id_department = department.id
   ''';
 
     List<dynamic> args = [];
@@ -287,9 +285,9 @@ class DbHelper {
   }) async {
     final db = await database;
     String query = '''
-  SELECT employee.*, manager.managerName, department.departmentName 
-  FROM employee 
-  INNER JOIN manager ON employee.id_manager = manager.id 
+  SELECT employee.*, manager.managerName, department.departmentName
+  FROM employee
+  INNER JOIN manager ON employee.id_manager = manager.id
   INNER JOIN department ON manager.id_department = department.id
   WHERE department.id_admin = ?
 ''';
@@ -373,6 +371,8 @@ class DbHelper {
   Future<void> insertIntoSystem({
     required String systemName,
     required String version,
+    required String operatingSystem,
+    required String status,
     int? adminId,
     int? managerId,
     int? employeeId,
@@ -381,7 +381,7 @@ class DbHelper {
     final db = await database;
     String query = """
     INSERT INTO system
-    (systemName, version, id_admin, id_manager, id_employee)
+    (systemName, version,operatingSystem, status, id_admin, id_manager, id_employee)
     VALUES (?, ?, ?, ?, ?)
   """;
     List args = [systemName, version, adminId, managerId, employeeId];
@@ -397,7 +397,7 @@ class DbHelper {
     final db = await database;
     String query = '''
     SELECT system.*, employee.name as employee_name
-    FROM system 
+    FROM system
     LEFT JOIN employee ON system.id_employee = employee.emp_id
   ''';
     List<dynamic> args = [];
@@ -428,6 +428,8 @@ class DbHelper {
     required int id,
     required String systemName,
     required String version,
+    required String operatingSystem,
+    required String status,
     int? adminId,
     int? managerId,
     int? employeeId,
@@ -437,6 +439,8 @@ class DbHelper {
     UPDATE system SET
     systemName = ?,
     version = ?,
+    operatingSystem = ?,
+    status = ?,
     id_admin = ?,
     id_manager = ?,
     id_employee = ?

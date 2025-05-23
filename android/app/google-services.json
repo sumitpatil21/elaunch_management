@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "20208301176",
+    "project_id": "elaunch-management",
+    "storage_bucket": "elaunch-management.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20208301176:android:b829ffbaa81d645139298d",
+        "android_client_info": {
+          "package_name": "com.example.elaunch_management"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjUHJfyCsF-ERBkeGStMWWOx29ngRI7zc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
