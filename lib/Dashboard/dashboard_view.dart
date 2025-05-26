@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:elaunch_management/Dashboard/dashboard_bloc.dart';
 import 'package:elaunch_management/Department/department_view.dart';
-import 'package:elaunch_management/Device_Testing/device_bloc.dart';
 import 'package:elaunch_management/Device_Testing/device_view.dart';
 import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:elaunch_management/Manager/manager_view.dart';
@@ -12,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Department/department_bloc.dart';
-import '../Device_Testing/device_event.dart';
 import '../Employee/employee_bloc.dart';
 
 import '../Manager/manager_bloc.dart';
@@ -34,29 +32,21 @@ class DashboardView extends StatefulWidget {
           create:
               (context) =>
                   DashboardBloc(DashboardState())
-                    ..add(FetchDepartment(admin.id ?? 2,)),
+                    ..add(FetchDepartment(admin.id ?? 1)),
         ),
-        BlocProvider(create: (context) => AdminBloc()),
-        BlocProvider(create: (context) => DepartmentBloc()),
+        BlocProvider(create: (context) => AdminBloc(AdminState())),
+        BlocProvider(create: (context) => DepartmentBloc(DepartmentState())),
+        BlocProvider(create: (context) => SystemBloc(SystemState())..add(FetchSystem(adminId: admin.id))),
         BlocProvider(
           create:
               (context) =>
-                  SystemBloc()
-                    ..add(FetchSystem(adminId: admin.id)),
-        ),
-        BlocProvider(
-          create: (context) => DeviceBloc()..add(FetchDevice()),
-        ),
-        BlocProvider(
-          create:
-              (context) =>
-                  EmployeeBloc()
+                  EmployeeBloc(EmployeeState())
                     ..add(FetchEmployees(adminId: admin.id)),
         ),
         BlocProvider(
           create:
               (context) =>
-                  ManagerBloc()
+                  ManagerBloc(ManagerState())
                     ..add(FetchManagers(adminId: admin.id ?? 1)),
         ),
       ],
@@ -223,30 +213,6 @@ class _DashboardViewState extends State<DashboardView> {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.phone_android_outlined),
-              title: Text("Device"),
-              onTap: () {
-                log("${admin.id}");
-                Navigator.pushNamed(
-                  context,
-                  DeviceView.routeName,
-                  arguments: admin,
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.computer_outlined),
-              title: Text("System"),
-              onTap: () {
-                log("${admin.id}");
-                Navigator.pushNamed(
-                  context,
-                  SystemView.routeName,
-                  arguments: admin,
-                );
-              },
-            ),
             Divider(),
             ListTile(
               leading: Icon(Icons.logout, color: Colors.red),
@@ -292,7 +258,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ],
                 ),
               ),
-
+        
               // Management Section
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
@@ -311,7 +277,7 @@ class _DashboardViewState extends State<DashboardView> {
               GridView.count(
                 crossAxisCount: 3,
                 shrinkWrap: true,
-                childAspectRatio: 3.5 / 4.7,
+                childAspectRatio: 3.5/4.7,
                 crossAxisSpacing: 1,
                 mainAxisSpacing: 1,
 
@@ -337,10 +303,7 @@ class _DashboardViewState extends State<DashboardView> {
                             SizedBox(height: 8),
                             Text(
                               'Departments',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.white),
                             ),
                             SizedBox(height: 4),
                             BlocBuilder<DashboardBloc, DashboardState>(
@@ -349,7 +312,12 @@ class _DashboardViewState extends State<DashboardView> {
                                   return SizedBox(
                                     height: 15,
                                     width: 15,
-                                    child: Text("0"),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
                                   );
                                 } else {
                                   return Text(
@@ -393,10 +361,7 @@ class _DashboardViewState extends State<DashboardView> {
                             SizedBox(height: 8),
                             Text(
                               'Managers',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.white),
                             ),
                             SizedBox(height: 4),
                             BlocBuilder<ManagerBloc, ManagerState>(
@@ -405,7 +370,12 @@ class _DashboardViewState extends State<DashboardView> {
                                   return SizedBox(
                                     height: 15,
                                     width: 15,
-                                    child:  Text("0"),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
                                   );
                                 } else {
                                   return Text(
@@ -428,8 +398,7 @@ class _DashboardViewState extends State<DashboardView> {
                   // Employee Card
                   GestureDetector(
                     onTap: () {
-                      final dept =
-                          context.read<DashboardBloc>().state.department;
+                      final dept = context.read<DashboardBloc>().state.department;
                       Navigator.pushNamed(
                         context,
                         EmployeeScreen.routeName,
@@ -452,10 +421,7 @@ class _DashboardViewState extends State<DashboardView> {
                             SizedBox(height: 8),
                             Text(
                               'Employees',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.white),
                             ),
                             SizedBox(height: 4),
                             BlocBuilder<EmployeeBloc, EmployeeState>(
@@ -464,7 +430,12 @@ class _DashboardViewState extends State<DashboardView> {
                                   return SizedBox(
                                     height: 15,
                                     width: 15,
-                                    child: Text("0"),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
                                   );
                                 } else {
                                   return Text(
@@ -487,11 +458,7 @@ class _DashboardViewState extends State<DashboardView> {
                   GestureDetector(
                     onTap: () {
                       log("${admin.id}");
-                      Navigator.pushNamed(
-                        context,
-                        SystemView.routeName,
-                        arguments: admin,
-                      );
+                      Navigator.pushNamed(context, SystemView.routeName,arguments: admin);
                     },
                     child: Card(
                       elevation: 4,
@@ -510,10 +477,7 @@ class _DashboardViewState extends State<DashboardView> {
                             SizedBox(height: 8),
                             Text(
                               'System',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.white),
                             ),
                             SizedBox(height: 4),
                             BlocBuilder<SystemBloc, SystemState>(
@@ -544,6 +508,7 @@ class _DashboardViewState extends State<DashboardView> {
                   //Device Card
                   GestureDetector(
                     onTap: () {
+
                       Navigator.pushNamed(context, DeviceView.routeName);
                     },
                     child: Card(
@@ -563,15 +528,12 @@ class _DashboardViewState extends State<DashboardView> {
                             SizedBox(height: 8),
                             Text(
                               'Device',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.white),
                             ),
                             SizedBox(height: 4),
-                            BlocBuilder<DeviceBloc, DeviceState>(
+                            BlocBuilder<SystemBloc, SystemState>(
                               builder: (context, state) {
-                                if (state.devices.isEmpty) {
+                                if (state.systems.isEmpty) {
                                   return SizedBox(
                                     height: 15,
                                     width: 15,
@@ -579,7 +541,7 @@ class _DashboardViewState extends State<DashboardView> {
                                   );
                                 } else {
                                   return Text(
-                                    '${state.devices.length}',
+                                    '${state.systems.length}',
                                     style: TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
@@ -596,9 +558,9 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                 ],
               ),
-
+        
               SizedBox(height: 16),
-
+        
               // Overview Section
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
@@ -614,7 +576,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                 ),
               ),
-
+        
               // Overview Cards
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -622,8 +584,8 @@ class _DashboardViewState extends State<DashboardView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * .7,
-                      height: MediaQuery.of(context).size.height * 0.32,
+                      width: 250,
+                      height: 350,
                       child: Card(
                         elevation: 2,
                         child: Column(
@@ -648,7 +610,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 builder: (context, state) {
                                   if (state.department.isEmpty) {
                                     return Center(
-                                      child: Text("No Department"),
+                                      child: CircularProgressIndicator(),
                                     );
                                   } else if (state.department.isNotEmpty) {
                                     return ListView.builder(
@@ -716,8 +678,8 @@ class _DashboardViewState extends State<DashboardView> {
                     ),
                     SizedBox(width: 10),
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * .7,
-                      height: MediaQuery.of(context).size.height * 0.32,
+                      width: 250,
+                      height: 350,
                       child: Card(
                         elevation: 2,
                         child: Column(
@@ -742,7 +704,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 builder: (context, state) {
                                   if (state.managers.isEmpty) {
                                     return Center(
-                                      child: Text("No Manager"),
+                                      child: CircularProgressIndicator(),
                                     );
                                   } else if (state.managers.isNotEmpty) {
                                     return ListView.builder(
@@ -810,8 +772,8 @@ class _DashboardViewState extends State<DashboardView> {
 
                     // Employee Overview Card
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * .7,
-                      height: MediaQuery.of(context).size.height * 0.32,
+                      width: 250,
+                      height: 350,
                       child: Card(
                         elevation: 2,
                         child: Column(
@@ -836,7 +798,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 builder: (context, state) {
                                   if (state.employees.isEmpty) {
                                     return Center(
-                                      child: Text("No Employee"),
+                                      child: CircularProgressIndicator(),
                                     );
                                   } else if (state.employees.isNotEmpty) {
                                     return ListView.builder(
@@ -877,187 +839,6 @@ class _DashboardViewState extends State<DashboardView> {
                                           ),
                                           title: Text(
                                             state.employees[index].name,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          subtitle: Text('Employee'),
-                                        );
-                                      },
-                                    );
-                                  } else {
-                                    return Center(
-                                      child: Text('No employees found'),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(width: 10),
-
-                    // system Overview Card
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * .7,
-                      height: MediaQuery.of(context).size.height * 0.32,
-                      child: Card(
-                        elevation: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(8),
-                              color: Colors.yellow,
-                              width: double.infinity,
-                              child: Text(
-                                'System Overview',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Expanded(
-                              child: BlocBuilder<SystemBloc, SystemState>(
-                                builder: (context, state) {
-                                  if (state.systems.isEmpty) {
-                                    return Center(
-                                      child: Text("No System"),
-                                    );
-                                  } else if (state.systems.isNotEmpty) {
-                                    return ListView.builder(
-                                      padding: EdgeInsets.zero,
-                                      itemCount: state.systems.length,
-                                      itemBuilder: (context, index) {
-                                        return ListTile(
-                                          trailing: GestureDetector(
-                                            onTap: () {
-                                              final dept =
-                                                  context
-                                                      .read<DashboardBloc>()
-                                                      .state
-                                                      .department;
-                                              Navigator.pushNamed(
-                                                context,
-                                                EmployeeScreen.routeName,
-                                                arguments:
-                                                    ManagerScreenArguments(
-                                                      adminId: admin.id ?? 1,
-                                                      departmentId: 0,
-                                                      departmentList: dept,
-                                                    ),
-                                              );
-                                            },
-                                            child: Icon(
-                                              Icons.arrow_forward_ios_outlined,
-                                              size: 17,
-                                            ),
-                                          ),
-                                          leading: CircleAvatar(
-                                            backgroundColor: Colors.yellow
-                                                .withOpacity(0.2),
-                                            child: Icon(
-                                              Icons.computer_outlined,
-                                            ),
-                                          ),
-                                          title: Text(
-                                            state.systems[index].systemName,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          subtitle: Text('Employee'),
-                                        );
-                                      },
-                                    );
-                                  } else {
-                                    return Center(
-                                      child: Text('No employees found'),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-
-                    // system Overview Card
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * .7,
-                      height: MediaQuery.of(context).size.height * 0.32,
-                      child: Card(
-                        elevation: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(8),
-                              color: Colors.purple,
-                              width: double.infinity,
-                              child: Text(
-                                'Device Overview',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Expanded(
-                              child: BlocBuilder<DeviceBloc, DeviceState>(
-                                builder: (context, state) {
-                                  if (state.devices.isEmpty) {
-                                    return Center(
-                                      child: Text("No Device"),
-                                    );
-                                  } else if (state.devices.isNotEmpty) {
-                                    return ListView.builder(
-                                      padding: EdgeInsets.zero,
-                                      itemCount: state.devices.length,
-                                      itemBuilder: (context, index) {
-                                        return ListTile(
-                                          trailing: GestureDetector(
-                                            onTap: () {
-                                              final dept =
-                                                  context
-                                                      .read<DashboardBloc>()
-                                                      .state
-                                                      .department;
-                                              Navigator.pushNamed(
-                                                context,
-                                                EmployeeScreen.routeName,
-                                                arguments:
-                                                    ManagerScreenArguments(
-                                                      adminId: admin.id ?? 1,
-                                                      departmentId: 0,
-                                                      departmentList: dept,
-                                                    ),
-                                              );
-                                            },
-                                            child: Icon(
-                                              Icons.arrow_forward_ios_outlined,
-                                              size: 17,
-                                            ),
-                                          ),
-                                          leading: CircleAvatar(
-                                            backgroundColor: Colors.purple
-                                                .withOpacity(0.2),
-                                            child: Icon(
-                                              Icons.phone_android_outlined,
-                                            ),
-                                          ),
-                                          title: Text(
-                                            state.devices[index].deviceName,
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                             ),

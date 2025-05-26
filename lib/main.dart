@@ -17,8 +17,11 @@ void main()  {
 
   WidgetsFlutterBinding.ensureInitialized();
    Firebase.initializeApp(
-     options: DefaultFirebaseOptions.currentPlatform,
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+
+   Firebase.initializeApp();
+   FirebaseDbHelper.firebaseDbHelper;
   DbHelper.dbHelper.createDatabase();
   runApp(MyApp());
 }

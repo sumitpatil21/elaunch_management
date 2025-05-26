@@ -22,15 +22,15 @@ class DeviceView extends StatefulWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => DeviceBloc()
+          create: (context) => DeviceBloc(DeviceState())
             ..add(FetchDevice(adminId: args?.id)),
         ),
         BlocProvider(
-          create: (context) => EmployeeBloc()
+          create: (context) => EmployeeBloc(EmployeeState())
             ..add(FetchEmployees(adminId: args?.id)),
         ),
         BlocProvider(
-          create: (context) => AdminBloc()..add(AdminFetch()),
+          create: (context) => AdminBloc(AdminState())..add(AdminFetch()),
         ),
       ],
       child: const DeviceView(),
@@ -222,7 +222,7 @@ class _DeviceViewState extends State<DeviceView> {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
     final versionController = TextEditingController();
-    final unassignedEmployee = EmployeeModal(id: -1, name: "Unassigned", email: '', address: '', dob: '',managerId: 1,departmentId: 1,departmentName: "",managerName: "");
+    final unassignedEmployee = EmployeeModal(id: -1, name: "Unassigned", email: '', address: '', dob: '');
 
     EmployeeModal? selectedEmployee = unassignedEmployee;
     String selectedStatus = 'available';
