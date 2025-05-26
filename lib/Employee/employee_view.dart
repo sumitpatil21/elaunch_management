@@ -25,26 +25,16 @@ class EmployeeScreen extends StatefulWidget {
       providers: [
         BlocProvider(
           create:
-              (context) => EmployeeBloc()..add(
-                manager != null
-                    ? FetchEmployees(
-                      adminId: args.adminId,
-                      departmentName: manager.departmentName,
-                      managerName: manager.managerName,
-                    )
-                    : FetchEmployees(adminId: args.adminId),
-              ),
+              (context) => EmployeeBloc()..add(FetchEmployees(role: "manager")),
         ),
         BlocProvider(
           create:
               (_) =>
-                  ManagerBloc()
-                    ..add(FetchManagers(adminId: args.adminId ?? 1)),
+                  ManagerBloc()..add(
+                    FetchManagers(adminId: args.department?.id_admin ?? 1),
+                  ),
         ),
-        BlocProvider(
-          create:
-              (_) => DepartmentBloc()..add(FetchDepartments()),
-        ),
+        BlocProvider(create: (_) => DepartmentBloc()..add(FetchDepartments())),
         BlocProvider(create: (context) => DashboardBloc(DashboardState())),
       ],
       child: const EmployeeScreen(),
@@ -107,10 +97,10 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                 onSelected: (value) async {
                   if (value == "reset") {
                     context.read<EmployeeBloc>().add(
-                      FetchEmployees(adminId: args.adminId),
+                      FetchEmployees(role: "manager"),
                     );
-                  }
-                  else if (value == "manager" && managerState.managers.isNotEmpty) {
+                  } else if (value == "manager" &&
+                      managerState.managers.isNotEmpty) {
                     final selected = await showDialog<Map<String, dynamic>>(
                       context: context,
                       builder:
@@ -162,13 +152,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           ),
                     );
                     if (selected != null) {
-                      context.read<EmployeeBloc>().add(
-                        FetchEmployees(
-                          adminId: args.adminId,
-                          managerName: selected['name'],
-                          departmentName: selected['depart'],
-                        ),
-                      );
+                      context.read<EmployeeBloc>().add(FetchEmployees());
                     }
                   } else if (value == "department" && departments!.isNotEmpty) {
                     final selectedDept = await showDialog<DepartmentModal?>(
@@ -187,7 +171,6 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                                       leading: const Icon(Icons.business),
                                       title: Text(departments[index].name),
                                       onTap: () {
-
                                         Navigator.pop(
                                           context,
                                           departments[index],
@@ -206,12 +189,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     );
 
                     if (selectedDept != null) {
-                      context.read<EmployeeBloc>().add(
-                        FetchEmployees(
-                          adminId: args.adminId,
-                          departmentName: selectedDept.name,
-                        ),
-                      );
+                      context.read<EmployeeBloc>().add(FetchEmployees());
                     }
                   }
                 },
@@ -289,11 +267,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           icon: const Icon(Icons.refresh),
                           label: const Text("Refresh"),
                           onPressed: () {
-                            context.read<EmployeeBloc>().add(
-                              FetchEmployees(
-                                adminId: args.adminId,
-                              ),
-                            );
+                            context.read<EmployeeBloc>().add(FetchEmployees());
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
@@ -409,7 +383,13 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.red.withOpacity(0.2),
-                            child: Text(employee.name[0].toUpperCase()),
+                            child: Text(
+                              (employee.role == "Manager")
+                                  ? "M"
+                                  : (employee.role == "Employee")
+                                  ? "E"
+                                  : "HR",
+                            ),
                           ),
                           title: Text(
                             employee.name,
@@ -429,17 +409,11 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.red.withOpacity(0.2),
         onPressed: () {
-          if (manager != null) {
-            showEmployeeDialog(
-              context: context,
-              manager: manager,
-              bloc: context.read<EmployeeBloc>(),
-            );
-          } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(" View Data")));
-          }
+          showEmployeeDialog(
+            context: context,
+            manager: manager,
+            bloc: context.read<EmployeeBloc>(),
+          );
         },
         icon: (manager == null) ? Icon(Icons.remove_red_eye) : Icon(Icons.add),
         label: (manager == null) ? Text("View Employee") : Text("Add Employee"),
@@ -464,7 +438,7 @@ void showEmployeeDialog({
     text: employee?.address ?? '',
   );
   final dobController = TextEditingController(text: employee?.dob ?? '');
-
+  String selectedRole = employee?.role ?? 'Employee';
   Future<void> pickDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -533,6 +507,48 @@ void showEmployeeDialog({
                     ),
                   ),
                   const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    decoration: const InputDecoration(
+                      labelText: "Employee Role",
+                      border: OutlineInputBorder(),
+                    ),
+                    items:
+                        ['Employee', 'Manager', 'Human Resource']
+                            .map(
+                              (os) =>
+                                  DropdownMenuItem(value: os, child: Text(os)),
+                            )
+                            .toList(),
+                    onChanged: (value) {
+                      selectedRole = value ?? 'Employee';
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  (selectedRole == 'Employee')
+                      ? DropdownButtonFormField<EmployeeModal>(
+                        // value: bloc?.state.employees.firstWhere((element) => element.role=='Manager').name,
+                        decoration: const InputDecoration(
+                          labelText: "Select Manager",
+                          border: OutlineInputBorder(),
+                        ),
+                        items:
+                            bloc?.state.employees
+                                .where((element) => element.role == 'Manager')
+                                .map(
+                                  (os) => DropdownMenuItem(
+                                    value: os,
+                                    child: Text(os.name),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) {
+                          // selectedRole = value ?? 'Employee';
+                        },
+                      )
+                      : const SizedBox.shrink(),
+                  const SizedBox(height: 12),
+
                   TextFormField(
                     controller: dobController,
                     decoration: InputDecoration(
@@ -574,8 +590,7 @@ void showEmployeeDialog({
                       UpdateEmployee(
                         adminId: 1,
                         id: employee.id!,
-                        managerId: managerId,
-                        departmentId: departmentId,
+                        role: selectedRole,
                         name: nameController.text,
                         email: emailController.text,
                         address: addressController.text,
@@ -589,7 +604,7 @@ void showEmployeeDialog({
                       AddEmployee(
                         adminId: 1,
                         id: 0,
-                        managerId: managerId,
+                        role: selectedRole,
                         departmentId: departmentId,
                         name: nameController.text,
                         email: emailController.text,

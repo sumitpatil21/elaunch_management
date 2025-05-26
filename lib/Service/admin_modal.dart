@@ -20,12 +20,14 @@ class AdminModal {
   factory AdminModal.fromJson(Map<String, dynamic> json) {
     return AdminModal(
       id: json['id'],
-      name: json['adminName'],
-      email: json['email'],
-      pass: json['pass'],
-      check: json['isChecked'],
-      companyName: json['companyName'],
-      field: json['field'],
+      name: json['adminName']??"",
+      email: json['email']??"",
+      pass: json['pass']??"",
+      check: json['isChecked']??"",
+      companyName: json['companyName']??"",
+      field: json['field']??"",
+
+
     );
   }
   Map<String, dynamic> toJson() {

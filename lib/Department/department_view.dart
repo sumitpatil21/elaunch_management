@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 
+import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -137,8 +138,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
-                                ManagerScreen.routeName,
-                                arguments: ManagerScreenArguments(adminId: state.departments[index].id_admin, departmentId:state.departments[index].id,department: state.departments[index],departmentList: state.departments),
+                                EmployeeScreen.routeName,
+                                arguments: ManagerScreenArguments(department: state.departments[index],departmentList: state.departments),
                               );
 
                             },
@@ -231,7 +232,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                          id: dept.id,
                          name: nameController.text,
                          date: dobController.text,
-                         id_admin: dept.id_admin,)
+                         id_admin: admin.id??0,)
                       ),
                     );
                   } else {

@@ -1,11 +1,10 @@
 class EmployeeModal {
-  int? id; // Auto-increment ID in local DB
+  int? id;
   String name;
   String email;
   String address;
   String dob;
-  int managerId;
-  int departmentId;
+  String role;
   String? managerName;
   String? departmentName;
 
@@ -15,8 +14,8 @@ class EmployeeModal {
     required this.email,
     required this.address,
     required this.dob,
-    required this.managerId,
-    required this.departmentId,
+    required this.role,
+
     this.managerName,
     this.departmentName,
   });
@@ -29,8 +28,8 @@ class EmployeeModal {
       email: json['email'] ?? '',
       address: json['address'] ?? '',
       dob: json['dob'] ?? '',
-      managerId: json['managerId'] ?? 0,
-      departmentId: json['departmentId'] ?? 0,
+      role: json['role'] ?? '',
+
       managerName: json['managerName'],
       departmentName: json['departmentName'],
     );
@@ -43,8 +42,8 @@ class EmployeeModal {
       'email': email,
       'address': address,
       'dob': dob,
-      'managerId': managerId,
-      'departmentId': departmentId,
+      'role': role,
+
       'managerName': managerName,
       'departmentName': departmentName,
     };

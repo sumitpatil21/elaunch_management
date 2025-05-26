@@ -19,15 +19,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     FetchEmployee event,
     Emitter<DashboardState> emit,
   ) async {
-    final employees = await DbHelper.dbHelper.employeeFetch();
-    emit(DashboardState(employee: employees, department: state.department));
+    // final employees = await DbHelper.dbHelper.employeeFetch();
+    // emit(DashboardState(employee: employees, department: state.department));
+    // }
   }
+    Future<void> fetchDepartmentData(FetchDepartment event,
+        Emitter<DashboardState> emit,) async {
+      // final departments = await DbHelper.dbHelper.departmentFetch(event.adminId);
+      // emit(DashboardState(employee: state.employee, department: departments));
+      }
+    }
 
-  Future<void> fetchDepartmentData(
-    FetchDepartment event,
-    Emitter<DashboardState> emit,
-  ) async {
-    final departments = await DbHelper.dbHelper.departmentFetch(event.adminId);
-    emit(DashboardState(employee: state.employee, department: departments));
-  }
-}

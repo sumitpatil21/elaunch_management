@@ -26,7 +26,7 @@ class SystemView extends StatefulWidget {
           create:
               (context) =>
                   EmployeeBloc()
-                    ..add(FetchEmployees(adminId: args?.id)),
+                    ..add(FetchEmployees()),
         ),
         BlocProvider(
           create: (context) => AdminBloc()..add(AdminFetch()),
@@ -59,7 +59,7 @@ class _SystemViewState extends State<SystemView> {
           final employeeBloc = context.read<EmployeeBloc>();
           final systemBloc = context.read<SystemBloc>();
           if (employeeBloc.state.employees.isEmpty) {
-            employeeBloc.add(FetchEmployees(adminId: args?.id ?? 1));
+            employeeBloc.add(FetchEmployees());
           }
           showManagerDialog(
             context,
@@ -255,8 +255,7 @@ class _SystemViewState extends State<SystemView> {
                             email: '',
                             address: '',
                             dob: '',
-                            departmentId: 1,
-                            managerId: 1,
+                            role: "",
                             departmentName: "",
                             managerName: "",
                           ),

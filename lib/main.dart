@@ -20,9 +20,7 @@ void main()  {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-   Firebase.initializeApp();
-   FirebaseDbHelper.firebaseDbHelper;
-  DbHelper.dbHelper.createDatabase();
+  // DbHelper.dbHelper.createDatabase();
   runApp(MyApp());
 }
 

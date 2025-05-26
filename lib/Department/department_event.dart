@@ -50,10 +50,3 @@ class DeleteDepartment extends DepartmentEvent {
   List<Object> get props => [id, adminId ?? 0];
 }
 
-class NetworkDepartment extends DepartmentEvent {
-   bool? connect;
-   NetworkDepartment({  this.connect,});
-
-  @override
-  List<Object> get props => [connect!];
-}

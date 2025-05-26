@@ -8,41 +8,37 @@ abstract class EmployeeEvent extends Equatable {
 }
 
 class FetchEmployees extends EmployeeEvent {
-  final String? departmentName;
-  final int? adminId;
-  final String? managerName;
+  final String? role;
 
   const FetchEmployees({
-    this.departmentName,
-    this.adminId,
-    this.managerName,
+    this.role,
   });
 
   @override
-  List<Object?> get props => [departmentName, managerName, adminId];
+  List<Object?> get props => [role];
 }
 
 class AddEmployee extends EmployeeEvent {
   final int? id;
   final int? adminId;
-  final int managerId;
   final int departmentId;
   final String name;
   final String email;
   final String address;
   final String dob;
+  final String role;
   final String managerName;
   final String department;
 
   const AddEmployee({
     this.id,
     this.adminId,
-    required this.managerId,
     required this.departmentId,
     required this.name,
     required this.email,
     required this.address,
     required this.dob,
+    required this.role,
     required this.managerName,
     required this.department,
   });
@@ -51,12 +47,12 @@ class AddEmployee extends EmployeeEvent {
   List<Object?> get props => [
     id,
     adminId,
-    managerId,
     departmentId,
     name,
     email,
     address,
     dob,
+    role,
     managerName,
     department,
   ];
@@ -65,24 +61,22 @@ class AddEmployee extends EmployeeEvent {
 class UpdateEmployee extends EmployeeEvent {
   final int id;
   final int? adminId;
-  final int managerId;
-  final int departmentId;
   final String name;
   final String email;
   final String address;
   final String dob;
+  final String role;
   final String managerName;
   final String department;
 
   const UpdateEmployee({
     required this.id,
     this.adminId,
-    required this.managerId,
-    required this.departmentId,
     required this.name,
     required this.email,
     required this.address,
     required this.dob,
+    required this.role,
     required this.managerName,
     required this.department,
   });
@@ -91,12 +85,11 @@ class UpdateEmployee extends EmployeeEvent {
   List<Object?> get props => [
     id,
     adminId,
-    managerId,
-    departmentId,
     name,
     email,
     address,
     dob,
+    role,
     managerName,
     department,
   ];

@@ -1,4 +1,4 @@
-import 'package:elaunch_management/Dashboard/splaceScreen.dart';
+
 import 'package:elaunch_management/Department/department_bloc.dart';
 import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:flutter/material.dart';
@@ -24,18 +24,19 @@ class ManagerScreen extends StatefulWidget {
       providers: [
         BlocProvider(
           create:
-              (context) => ManagerBloc(ManagerState())..add(
-                FetchManagers(
-                  departmentId: arguments.departmentId,
-                  adminId: arguments.adminId ?? 1,
-                ),
-              ),
+              (context) =>
+                  ManagerBloc()..add(
+                    FetchManagers(
+                      departmentId: arguments.department?.id??1,
+                      adminId: arguments.department?.id_admin??1,
+                    ),
+                  ),
         ),
         BlocProvider(
           create:
               (context) =>
-                  DepartmentBloc(DepartmentState())
-                    ..add(FetchDepartments(adminId: arguments.adminId)),
+                  DepartmentBloc()
+                    ..add(FetchDepartments(adminId: arguments.department?.id_admin)),
         ),
       ],
       child: const ManagerScreen(),
@@ -74,29 +75,26 @@ class _ManagerScreenState extends State<ManagerScreen> {
                     child: Text('All Managers'),
                   ),
 
-                  ...departments
-                      .map(
-                        (dept) => PopupMenuItem<int>(
-                          value: dept.id,
-                          child: Text(dept.name),
-                        ),
-                      ),
+                  ...departments.map(
+                    (dept) => PopupMenuItem<int>(
+                      value: dept.id,
+                      child: Text(dept.name),
+                    ),
+                  ),
                 ],
             onSelected: (depart) {
-              if(depart==-1){
+              if (depart == -1) {
                 context.read<ManagerBloc>().add(
-                    FetchManagers(
-                      adminId: arguments!.adminId?? 1,
-                    ));
+                  FetchManagers(adminId: arguments!.department?.id_admin ?? 1),
+                );
+              } else {
+                context.read<ManagerBloc>().add(
+                  FetchManagers(
+                    departmentId: depart,
+                    adminId: arguments!.department?.id_admin?? 1,
+                  ),
+                );
               }
-              else
-                {
-                  context.read<ManagerBloc>().add(
-                    FetchManagers(
-                      departmentId: depart,
-                      adminId: arguments!.adminId??1,
-                    ));
-                }
 
               setState(() {});
             },
@@ -173,11 +171,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                     as ManagerScreenArguments?;
                             context.read<ManagerBloc>().add(
                               FetchManagers(
-                                departmentId: arguments!.department?.id,
+                                departmentId: arguments!.department?.id??1,
                                 adminId:
-                                    arguments.department?.id_admin ??
-                                    arguments.adminId ??
-                                    1,
+                                    arguments.department?.id_admin??2,
                               ),
                             );
                           },
@@ -278,7 +274,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                           ),
                       onDismissed: (_) {
                         context.read<ManagerBloc>().add(
-                          DeleteManager(manager.id),
+                          DeleteManager("${manager.id}"),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -327,7 +323,6 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                     arguments: ManagerScreenArguments(
                                       departmentList: departments,
                                       manager: manager,
-                                      adminId: departments.first.id_admin,
                                     ),
                                   );
                                 },
@@ -349,7 +344,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
   }
 
   void showManagerDialog(BuildContext context, {MangerModal? manager}) {
-    final departmentBloc = context.read<DepartmentBloc>();
+
 
     final managerBloc = context.read<ManagerBloc>();
     final arguments =
@@ -362,13 +357,14 @@ class _ManagerScreenState extends State<ManagerScreen> {
     final TextEditingController emailController = TextEditingController();
     final TextEditingController dobController = TextEditingController();
     final TextEditingController addressController = TextEditingController();
+    final TextEditingController idController = TextEditingController();
 
     if (manager != null) {
       nameController.text = manager.managerName;
       emailController.text = manager.email;
       addressController.text = manager.address;
       dobController.text = manager.dob;
-      selectedDepartment = arguments!.departmentList?.firstWhere(
+      selectedDepartment = arguments.departmentList?.firstWhere(
         (dept) => dept.id == manager.departmentId,
         orElse:
             () =>
@@ -394,6 +390,19 @@ class _ManagerScreenState extends State<ManagerScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      TextFormField(
+                        controller: idController,
+                        keyboardType: TextInputType.numberWithOptions(),
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Please enter a manager email'
+                                    : null,
+                        decoration: const InputDecoration(
+                          labelText: "ID",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
                       if (arguments.departmentList!.isNotEmpty)
                         DropdownButtonFormField<DepartmentModal>(
                           value: selectedDepartment,
@@ -410,7 +419,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                               }).toList(),
                           onChanged: (value) {
                             setState(() {
-                              arguments.department = value;
+                              // arguments.department = value;
                               selectedDepartment = value;
                             });
                           },
@@ -494,6 +503,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                       } else {
                         managerBloc.add(
                           AddManager(
+                            id: int.parse(idController.text),
                             name: nameController.text,
                             email: emailController.text,
                             address: addressController.text,

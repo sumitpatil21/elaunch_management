@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:elaunch_management/Service/admin_modal.dart';
@@ -18,20 +17,20 @@ class DeviceView extends StatefulWidget {
   const DeviceView({super.key});
 
   static Widget builder(BuildContext context) {
-    AdminModal? args = ModalRoute.of(context)!.settings.arguments as AdminModal?;
+    AdminModal? args =
+        ModalRoute.of(context)!.settings.arguments as AdminModal?;
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => DeviceBloc(DeviceState())
-            ..add(FetchDevice(adminId: args?.id)),
+          create:
+              (context) => DeviceBloc()..add(FetchDevice(adminId: args?.id)),
         ),
         BlocProvider(
-          create: (context) => EmployeeBloc(EmployeeState())
-            ..add(FetchEmployees(adminId: args?.id)),
+          create:
+              (context) =>
+                  EmployeeBloc()..add(FetchEmployees()),
         ),
-        BlocProvider(
-          create: (context) => AdminBloc(AdminState())..add(AdminFetch()),
-        ),
+        BlocProvider(create: (context) => AdminBloc()..add(AdminFetch())),
       ],
       child: const DeviceView(),
     );
@@ -46,7 +45,8 @@ class _DeviceViewState extends State<DeviceView> {
 
   @override
   Widget build(BuildContext context) {
-    AdminModal? args = ModalRoute.of(context)!.settings.arguments as AdminModal?;
+    AdminModal? args =
+        ModalRoute.of(context)!.settings.arguments as AdminModal?;
 
     return Scaffold(
       appBar: AppBar(
@@ -55,12 +55,14 @@ class _DeviceViewState extends State<DeviceView> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.purple.withOpacity(0.2),
-        onPressed: () => showDeviceDialog(
-          context,
-          employeeBloc: context.read<EmployeeBloc>()
-            ..add(FetchEmployees(adminId: args?.id ?? 1)),
-          deviceBloc: context.read<DeviceBloc>(),
-        ),
+        onPressed:
+            () => showDeviceDialog(
+              context,
+              employeeBloc:
+                  context.read<EmployeeBloc>()
+                    ..add(FetchEmployees()),
+              deviceBloc: context.read<DeviceBloc>(),
+            ),
         label: const Text("Add Device"),
         icon: const Icon(Icons.add),
       ),
@@ -92,12 +94,20 @@ class _DeviceViewState extends State<DeviceView> {
               builder: (context, state) {
                 final query = searchController.text.toLowerCase();
 
-                final filteredDevices = state.devices.where((device) {
-                  return device.deviceName.toLowerCase().contains(query) ||
-                      (device.osVersion?.toLowerCase().contains(query) ?? false) ||
-                      (device.assignedEmployeeName?.toLowerCase().contains(query) ?? false) ||
-                      (device.operatingSystem?.toLowerCase().contains(query) ?? false);
-                }).toList();
+                final filteredDevices =
+                    state.devices.where((device) {
+                      return device.deviceName.toLowerCase().contains(query) ||
+                          (device.osVersion?.toLowerCase().contains(query) ??
+                              false) ||
+                          (device.assignedEmployeeName?.toLowerCase().contains(
+                                query,
+                              ) ??
+                              false) ||
+                          (device.operatingSystem?.toLowerCase().contains(
+                                query,
+                              ) ??
+                              false);
+                    }).toList();
 
                 if (filteredDevices.isEmpty) {
                   return Center(
@@ -110,100 +120,114 @@ class _DeviceViewState extends State<DeviceView> {
                 }
 
                 return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: filteredDevices.length,
-                itemBuilder: (context, index) {
-                final device = filteredDevices[index];
-                return Dismissible(
-                key: Key(device.id.toString()),
-                background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20),
-                decoration: BoxDecoration(
-                color: Colors.red.shade700,
-                borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (_) => showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                title: const Text("Confirm Delete"),
-                content: Text(
-                "Are you sure you want to delete ${device.deviceName} device?",
-                ),
-                actions: [
-                TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("CANCEL"),
-                ),
-                TextButton(
-                style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("DELETE"),
-                ),
-                ],
-                ),
-                ),
-                onDismissed: (_) {
-                context.read<DeviceBloc>().add(
-                DeleteDevice(id: device.id ?? 1, adminId: args?.id),
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("${device.deviceName} deleted")),
-                );
-                },
-                child: Card(
-                shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-                child: ListTile(
-                leading: CircleAvatar(
-                backgroundColor: Colors.purple.withOpacity(0.2),
-                child: const Icon(Icons.phone_android),
-                ),
-                title: Text(
-                device.deviceName,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Text("${device.operatingSystem ?? ''} ${device.osVersion ?? ''}"),
-                Text("Assigned to: ${device.assignedEmployeeName ?? 'Unassigned'}"),
-                Text("Status: ${device.status ?? 'Available'}"),
-                ],
-                ),
-                trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () {
-
-                showDeviceDialog(
-                context,
-                device: device,
-                employeeBloc: context.read<EmployeeBloc>()
-                ..add(FetchEmployees(adminId: args?.id ?? 1)),
-                deviceBloc: context.read<DeviceBloc>(),
-                );
-                },
-                ),
-                IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.arrow_forward_ios_rounded),
-                ),
-                ],
-                ),
-                ),
-                ),
-                );
-                },
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredDevices.length,
+                  itemBuilder: (context, index) {
+                    final device = filteredDevices[index];
+                    return Dismissible(
+                      key: Key(device.id.toString()),
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade700,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      direction: DismissDirection.endToStart,
+                      confirmDismiss:
+                          (_) => showDialog(
+                            context: context,
+                            builder:
+                                (_) => AlertDialog(
+                                  title: const Text("Confirm Delete"),
+                                  content: Text(
+                                    "Are you sure you want to delete ${device.deviceName} device?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed:
+                                          () => Navigator.pop(context, false),
+                                      child: const Text("CANCEL"),
+                                    ),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
+                                      onPressed:
+                                          () => Navigator.pop(context, true),
+                                      child: const Text("DELETE"),
+                                    ),
+                                  ],
+                                ),
+                          ),
+                      onDismissed: (_) {
+                        context.read<DeviceBloc>().add(
+                          DeleteDevice(id: device.id ?? 1, adminId: args?.id),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("${device.deviceName} deleted"),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.purple.withOpacity(0.2),
+                            child: const Icon(Icons.phone_android),
+                          ),
+                          title: Text(
+                            device.deviceName,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${device.operatingSystem ?? ''} ${device.osVersion ?? ''}",
+                              ),
+                              Text(
+                                "Assigned to: ${device.assignedEmployeeName ?? 'Unassigned'}",
+                              ),
+                              Text("Status: ${device.status ?? 'Available'}"),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  showDeviceDialog(
+                                    context,
+                                    device: device,
+                                    employeeBloc:
+                                        context.read<EmployeeBloc>()..add(
+                                          FetchEmployees(
+                                          ),
+                                        ),
+                                    deviceBloc: context.read<DeviceBloc>(),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                onPressed: () {},
+                                icon: const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -214,21 +238,31 @@ class _DeviceViewState extends State<DeviceView> {
   }
 
   void showDeviceDialog(
-      BuildContext context, {
-        TestingDeviceModal? device,
-        required EmployeeBloc employeeBloc,
-        required DeviceBloc deviceBloc,
-      }) {
+    BuildContext context, {
+    TestingDeviceModal? device,
+    required EmployeeBloc employeeBloc,
+    required DeviceBloc deviceBloc,
+  }) {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
     final versionController = TextEditingController();
-    final unassignedEmployee = EmployeeModal(id: -1, name: "Unassigned", email: '', address: '', dob: '');
+    final unassignedEmployee = EmployeeModal(
+      id: -1,
+      name: "Unassigned",
+      email: '',
+      address: '',
+      dob: '',
+      departmentName: "",
+      managerName: "",
+      role: ""
+    );
 
     EmployeeModal? selectedEmployee = unassignedEmployee;
     String selectedStatus = 'available';
     String selectedOS = 'Android';
 
-    AdminModal? args = ModalRoute.of(context)!.settings.arguments as AdminModal?;
+    AdminModal? args =
+        ModalRoute.of(context)!.settings.arguments as AdminModal?;
 
     if (device != null) {
       nameController.text = device.deviceName;
@@ -238,7 +272,7 @@ class _DeviceViewState extends State<DeviceView> {
 
       if (device.assignedToEmployeeId != null) {
         selectedEmployee = employeeBloc.state.employees.firstWhere(
-              (emp) => emp.id == device.assignedToEmployeeId,
+          (emp) => emp.id == device.assignedToEmployeeId,
           orElse: () => unassignedEmployee,
         );
       }
@@ -262,8 +296,11 @@ class _DeviceViewState extends State<DeviceView> {
                     children: [
                       TextFormField(
                         controller: nameController,
-                        validator: (value) =>
-                        value == null || value.isEmpty ? 'Please enter a device name' : null,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Please enter a device name'
+                                    : null,
                         decoration: const InputDecoration(
                           labelText: "Device Name",
                           border: OutlineInputBorder(),
@@ -276,21 +313,29 @@ class _DeviceViewState extends State<DeviceView> {
                           labelText: "Operating System",
                           border: OutlineInputBorder(),
                         ),
-                        items: ['Android', 'iOS']
-                            .map((os) => DropdownMenuItem(value: os, child: Text(os)))
-                            .toList(),
+                        items:
+                            ['Android', 'iOS']
+                                .map(
+                                  (os) => DropdownMenuItem(
+                                    value: os,
+                                    child: Text(os),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             selectedOS = value ?? 'Android';
                           });
-
                         },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: versionController,
-                        validator: (value) =>
-                        value == null || value.isEmpty ? 'Please enter OS version' : null,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Please enter OS version'
+                                    : null,
                         decoration: const InputDecoration(
                           labelText: "OS Version",
                           border: OutlineInputBorder(),
@@ -303,9 +348,15 @@ class _DeviceViewState extends State<DeviceView> {
                           labelText: "Status",
                           border: OutlineInputBorder(),
                         ),
-                        items: ['available', 'assigned', 'maintenance', 'retired']
-                            .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-                            .toList(),
+                        items:
+                            ['available', 'assigned', 'maintenance', 'retired']
+                                .map(
+                                  (status) => DropdownMenuItem(
+                                    value: status,
+                                    child: Text(status),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             selectedStatus = value ?? 'available';
@@ -359,9 +410,13 @@ class _DeviceViewState extends State<DeviceView> {
                         osVersion: versionController.text,
                         status: selectedStatus,
                         assignedToEmployeeId:
-                        selectedEmployee?.id == -1 ? null : selectedEmployee?.id,
+                            selectedEmployee?.id == -1
+                                ? null
+                                : selectedEmployee?.id,
                         assignedEmployeeName:
-                        selectedEmployee?.id == -1 ? null : selectedEmployee?.name,
+                            selectedEmployee?.id == -1
+                                ? null
+                                : selectedEmployee?.name,
                         adminId: args?.id ?? 1,
                         lastCheckInDate: device?.lastCheckInDate,
                         lastCheckOutDate: device?.lastCheckOutDate,
@@ -373,8 +428,8 @@ class _DeviceViewState extends State<DeviceView> {
                         deviceBloc.add(AddDevice(deviceData));
                       }
 
-                    Navigator.pop(context);
-                  }
+                      Navigator.pop(context);
+                    }
                   },
                 ),
               ],

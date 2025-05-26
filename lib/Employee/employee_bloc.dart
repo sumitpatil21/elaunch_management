@@ -27,9 +27,10 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     // );
 
     final employees = await FirebaseDbHelper.firebaseDbHelper.fetchEmployees(
-      adminId: event.adminId?.toString(),
-      departmentName: event.departmentName,
-      managerName: event.managerName,
+      role: event.role,
+      // adminId: event.adminId ?? 1,
+      // departmentName: event.departmentName,
+      // managerName: event.managerName,
     );
 
     emit(EmployeeState(employees: employees));
@@ -44,12 +45,11 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
     final employee = EmployeeModal(
       id: event.id,
-      departmentId: event.departmentId,
       name: event.name,
       email: event.email,
       address: event.address,
       dob: event.dob,
-      managerId: event.managerId,
+      role: event.role,
       managerName: event.managerName,
       departmentName: event.department,
     );
@@ -57,9 +57,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     await FirebaseDbHelper.firebaseDbHelper.insertEmployee(employee);
 
     add(FetchEmployees(
-      adminId: event.adminId,
-      departmentName: event.department,
-      managerName: event.managerName,
+    role: event.role,
     ));
   }
 
@@ -72,12 +70,11 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
     final updated = EmployeeModal(
       id: event.id,
-      departmentId: event.departmentId,
       name: event.name,
       email: event.email,
       address: event.address,
       dob: event.dob,
-      managerId: event.managerId,
+      role: event.role,
       managerName: event.managerName,
       departmentName: event.department,
     );
@@ -88,9 +85,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
 
     add(FetchEmployees(
-      adminId: event.adminId,
-      departmentName: event.department,
-      managerName: event.managerName,
+      role: event.role,
     ));
   }
 
@@ -103,10 +98,6 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
     await FirebaseDbHelper.firebaseDbHelper.deleteEmployee(event.id.toString());
 
-    add(FetchEmployees(
-      adminId: event.adminId,
-      departmentName: event.departmentName,
-      managerName: event.managerName,
-    ));
+
   }
 }

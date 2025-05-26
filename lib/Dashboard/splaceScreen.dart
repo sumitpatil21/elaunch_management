@@ -43,12 +43,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Image(
-        image: NetworkImage(
-          "https://st3.depositphotos.com/3591429/14157/i/450/depositphotos_141571116-stock-photo-business-people-on-meeting.jpg"
-        ),
-        height: double.infinity,
-        fit: BoxFit.contain,
+      body: Center(
+        child: Icon(Icons.manage_accounts),
       ),
     );
   }

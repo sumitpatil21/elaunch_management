@@ -95,15 +95,13 @@ class DeleteManager extends ManagerEvent {
 }
 
 class ManagerScreenArguments extends ManagerEvent {
-  final int? adminId;
-  final int? departmentId;
+
   final DepartmentModal? department;
   final MangerModal? manager;
   final List<DepartmentModal>? departmentList;
 
   const ManagerScreenArguments({
-    this.adminId,
-    this.departmentId,
+
     this.department,
     this.manager,
     this.departmentList,
@@ -111,8 +109,7 @@ class ManagerScreenArguments extends ManagerEvent {
 
   @override
   List<Object?> get props => [
-    adminId,
-    departmentId,
+
     department,
     departmentList,
     manager,
