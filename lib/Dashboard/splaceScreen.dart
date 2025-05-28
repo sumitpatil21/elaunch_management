@@ -29,8 +29,8 @@ class _SplashScreenState extends State<SplashScreen> {
     final adminBloc = context.read<AdminBloc>();
     adminBloc.add(AdminFetch());
     Future.delayed(Duration(seconds: 2)).then((_) {
-      if (adminBloc.state.adminList.isNotEmpty) {
-        Navigator.of(context).pushReplacementNamed(DashboardView.routeName,arguments: adminBloc.state.adminList.first);
+      if (adminBloc.state.adminList!.isNotEmpty) {
+        Navigator.of(context).pushReplacementNamed(DashboardView.routeName,arguments: adminBloc.state.adminList?.first);
       } else {
         Navigator.of(context).pushReplacementNamed(AdminView.routeName);
    }

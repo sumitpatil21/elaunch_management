@@ -8,24 +8,29 @@ class DepartmentEvent extends Equatable {
 }
 
 class FetchDepartments extends DepartmentEvent {
-  final int? adminId;
+  final String? adminId;
 
   const FetchDepartments({this.adminId});
 
   @override
-  List<Object> get props => [adminId ?? 0];
+  List<Object> get props => [adminId ?? ""];
 }
 
 class AddDepartment extends DepartmentEvent {
   final String departmentName;
-  final String dob;
-  final int id, adminId;
+  final String dob, adminId;
+  final int id;
+  // Removed int id since Firestore generates document IDs automatically
 
-
-  const AddDepartment({required this.departmentName, required this.dob, required this.id, required this.adminId});
+  const AddDepartment({
+    required this.departmentName,
+    required this.dob,
+    required this.adminId,
+    required this.id,
+  });
 
   @override
-  List<Object> get props => [departmentName, dob, id, adminId];
+  List<Object> get props => [departmentName, dob, adminId,id];
 }
 
 class UpdateDepartment extends DepartmentEvent {
@@ -33,7 +38,6 @@ class UpdateDepartment extends DepartmentEvent {
 
   const UpdateDepartment({
     required this.departmentModal,
-
   });
 
   @override
@@ -41,12 +45,11 @@ class UpdateDepartment extends DepartmentEvent {
 }
 
 class DeleteDepartment extends DepartmentEvent {
-  final int id;
-  final int? adminId; 
+  final String id; // Changed from int to String to match Firestore document IDs
+  final String? adminId; // Changed from int? to String?
 
   const DeleteDepartment({required this.id, this.adminId});
 
   @override
-  List<Object> get props => [id, adminId ?? 0];
+  List<Object> get props => [id, adminId ?? ""];
 }
-

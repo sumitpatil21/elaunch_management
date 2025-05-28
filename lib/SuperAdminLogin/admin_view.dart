@@ -8,10 +8,7 @@ class AdminView extends StatefulWidget {
   const AdminView({super.key});
 
   static Widget builder(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AdminBloc(),
-      child: AdminView(),
-    );
+    return BlocProvider(create: (context) => AdminBloc(), child: AdminView());
   }
 
   @override
@@ -27,14 +24,20 @@ class _AdminViewState extends State<AdminView> {
   final fieldController = TextEditingController();
   final idController = TextEditingController();
   bool isLogin = true;
+  bool passwordVisible = false;
 
   @override
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    companyController.dispose();
+    fieldController.dispose();
+    idController.dispose();
+    super.dispose();
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -43,7 +46,7 @@ class _AdminViewState extends State<AdminView> {
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(20.0),
             child: Form(
               key: formKey,
               child: Column(
@@ -53,19 +56,26 @@ class _AdminViewState extends State<AdminView> {
                     isLogin ? 'Welcome Back!' : 'Register Now!',
                     style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 20),
-                  if (!isLogin)
+                  SizedBox(height: 30),
+
+                  if (!isLogin) ...[
                     TextFormField(
-                      keyboardType: TextInputType.numberWithOptions(),
+                      keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'User ID',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.perm_identity),
                       ),
                       controller: idController,
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) {
+                          return 'Please enter user ID';
+                        }
+                        return null;
+                      },
                     ),
                     SizedBox(height: 20),
-                  if (!isLogin)
+
                     TextFormField(
                       decoration: InputDecoration(
                         labelText: 'Name',
@@ -74,121 +84,182 @@ class _AdminViewState extends State<AdminView> {
                       ),
                       controller: nameController,
                       validator: (value) {
-                        if (value!.isEmpty) {
+                        if (value?.isEmpty ?? true) {
                           return 'Please enter your name';
                         }
                         return null;
                       },
                     ),
-                  SizedBox(height: 20),
+                    SizedBox(height: 20),
+                  ],
+
                   TextFormField(
+                    keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.email),
                     ),
                     controller: emailController,
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) {
+                        return 'Please enter email';
+                      }
+
+                      return null;
+                    },
                   ),
                   SizedBox(height: 20),
+
                   TextFormField(
+                    obscureText: !passwordVisible,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.lock),
                       suffixIcon: IconButton(
-                        onPressed: () {},
-                        icon: Icon(Icons.visibility),
+                        onPressed: () {
+                          setState(() {
+                            passwordVisible = !passwordVisible;
+                          });
+                        },
+                        icon: Icon(
+                          passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
                       ),
                     ),
+                    controller: passwordController,
                     validator: (value) {
-                      if (!isLogin && value!.isEmpty) {
-                        return 'Please enter your field';
+                      if (value?.isEmpty ?? true) {
+                        return 'Please enter password';
+                      }
+                      if (!isLogin && value!.length < 6) {
+                        return 'Password must be at least 6 characters';
                       }
                       return null;
                     },
-                    controller: passwordController,
                   ),
                   SizedBox(height: 20),
-                  !isLogin
-                      ? TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Company Name',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.business),
-                        ),
-                        controller: companyController,
-                      )
-                      : SizedBox(height: 20),
 
-                  SizedBox(height: 20),
-
-                  !isLogin
-                      ? TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Field',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.work),
-                        ),
-                        controller: fieldController,
-                      )
-                      : SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (formKey.currentState!.validate()) {
-                        if (isLogin) {
-                          context.read<AdminBloc>().add(
-                            AdminLogin(
-                              email: emailController.text,
-                              check: "isLogin",
-                            ),
-                          );
-                          context.read<AdminBloc>().stream.listen((state) {
-                            if (state.adminList.isNotEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Login Done")),
-                              );
-                              Navigator.of(context).pushReplacementNamed(
-                                DashboardView.routeName,
-                                arguments: state.adminList.first,
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Login fail")),
-                              );
-                            }
-                          });
-                        } else {
-                          context.read<AdminBloc>().add(
-                            AdminInsert(
-                              id: int.parse(idController.text),
-                              name: nameController.text,
-                              email: emailController.text,
-                              pass: passwordController.text,
-                              check: "Logout",
-                              companyName: companyController.text,
-                              field: fieldController.text,
-                            ),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Registered Successfully")),
-                          );
-                          setState(() {
-                            nameController.clear();
-                            emailController.clear();
-                            passwordController.clear();
-                            companyController.clear();
-                            fieldController.clear();
-                            isLogin = true;
-                          });
+                  if (!isLogin) ...[
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Company Name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.business),
+                      ),
+                      controller: companyController,
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) {
+                          return 'Please enter company name';
                         }
-                      }
-                    },
-                    child: Text(isLogin ? 'Login' : 'Register'),
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 20),
+
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Field',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.work),
+                      ),
+                      controller: fieldController,
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) {
+                          return 'Please enter field';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 20),
+                  ],
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (formKey.currentState!.validate()) {
+                          if (isLogin) {
+                            context.read<AdminBloc>().add(
+                              AdminLogin(
+                                email: emailController.text,
+                                password: passwordController.text,
+                              ),
+                            );
+                            await Future.delayed(Duration(milliseconds: 500));
+
+
+                              final adminState =
+                                  context.read<AdminBloc>().state;
+                              if (adminState.adminList?.isNotEmpty ?? false) {
+                                Navigator.of(context).pushReplacementNamed(
+                                  DashboardView.routeName,
+                                  arguments: adminState.adminList!.first,
+                                );
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Invalid email or password"),
+                                  ),
+                                );
+
+                            }
+                          } else {
+                            context.read<AdminBloc>().add(
+                              AdminInsert(
+                                id: idController.text,
+                                name: nameController.text.trim(),
+                                email: emailController.text.trim(),
+                                pass: passwordController.text,
+                                companyName: companyController.text.trim(),
+                                field: fieldController.text.trim(),
+                                check: "isLogout",
+                              ),
+                            );
+
+                            await Future.delayed(Duration(milliseconds: 500));
+
+                            if (mounted) {
+                              final adminState =
+                                  context.read<AdminBloc>().state;
+                              if (adminState.adminList?.isNotEmpty ?? false) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Registered Successfully"),
+                                  ),
+                                );
+                                _clearFields();
+                                setState(() {
+                                  isLogin = true;
+                                });
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Registration failed"),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      child: Text(
+                        isLogin ? 'Login' : 'Register',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
                   ),
+                  SizedBox(height: 20),
 
                   TextButton(
                     onPressed: () {
+                      _clearFields();
                       setState(() {
                         isLogin = !isLogin;
                       });
@@ -197,6 +268,7 @@ class _AdminViewState extends State<AdminView> {
                       isLogin
                           ? 'Don\'t have an account? Register'
                           : 'Already have an account? Login',
+                      style: TextStyle(fontSize: 16),
                     ),
                   ),
                 ],
@@ -206,5 +278,14 @@ class _AdminViewState extends State<AdminView> {
         ),
       ),
     );
+  }
+
+  void _clearFields() {
+    nameController.clear();
+    emailController.clear();
+    passwordController.clear();
+    companyController.clear();
+    fieldController.clear();
+    idController.clear();
   }
 }

@@ -1,14 +1,6 @@
-import 'dart:developer';
-
-
 import 'package:elaunch_management/Employee/employee_view.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-
-import '../Manager/manager_bloc.dart';
-import '../Manager/manager_view.dart';
 import '../Service/admin_modal.dart';
 import '../Service/department_modal.dart';
 import 'department_bloc.dart';
@@ -19,14 +11,11 @@ class DepartmentScreen extends StatefulWidget {
 
   static Widget builder(BuildContext context) {
     late AdminModal admin =
-        ModalRoute.of(context)!.settings.arguments as AdminModal;
+    ModalRoute.of(context)!.settings.arguments as AdminModal;
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create:
-              (_) =>
-                  DepartmentBloc()
-                    ..add(FetchDepartments(adminId: admin.id)),
+          create: (_) => DepartmentBloc()..add(FetchDepartments(adminId: admin.id)),
         ),
       ],
       child: const DepartmentScreen(),
@@ -40,14 +29,13 @@ class DepartmentScreen extends StatefulWidget {
 class _DepartmentScreenState extends State<DepartmentScreen> {
   @override
   void initState() {
+    context.read<DepartmentBloc>().add(FetchDepartments());
     super.initState();
-    // TODO: implement initState
-    // context.read<DepartmentBloc>().add(NetworkDepartment(connect: false));
   }
+
   @override
   Widget build(BuildContext context) {
-    late AdminModal admin =
-        ModalRoute.of(context)!.settings.arguments as AdminModal;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.withOpacity(0.2),
@@ -56,7 +44,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
       body: BlocBuilder<DepartmentBloc, DepartmentState>(
         builder: (context, state) {
           if (state.departments.isEmpty) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(),
             );
           } else {
@@ -103,13 +91,14 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   },
                   onDismissed: (_) {
                     context.read<DepartmentBloc>().add(
-                      DeleteDepartment(id: dept.id, adminId: admin.id),
+                        DeleteDepartment(id: dept.id),
+
+
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("${dept.name} deleted")),
                     );
                   },
-
                   child: Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -118,11 +107,11 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor: Colors.blue.withOpacity(0.2),
-                        child: Icon(Icons.business, size: 16),
+                        child: const Icon(Icons.business, size: 16),
                       ),
                       title: Text(
                         state.departments[index].name,
-                        style: TextStyle(fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -130,24 +119,22 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                           IconButton(
                             onPressed: () {
                               _showDepartmentDialog(dept: state.departments[index]);
-
                             },
-                            icon: Icon(Icons.edit),
+                            icon: const Icon(Icons.edit),
                           ),
                           IconButton(
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
                                 EmployeeScreen.routeName,
-                                arguments: ManagerScreenArguments(department: state.departments[index],departmentList: state.departments),
+                                arguments: state.departments[index],
                               );
-
                             },
-                            icon: Icon(Icons.arrow_forward_ios_rounded),
+                            icon: const Icon(Icons.arrow_forward_ios_rounded),
                           ),
                         ],
                       ),
-                      subtitle: Text('Department'),
+                      subtitle: const Text('Department'),
                     ),
                   ),
                 );
@@ -170,9 +157,12 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     final admin = args;
 
     final _formKey = GlobalKey<FormState>();
-    final TextEditingController nameController = TextEditingController(text: dept?.name ?? '');
-    final TextEditingController dobController = TextEditingController(text: dept?.date ?? '');
-    final TextEditingController idController = TextEditingController(text: 'Department Id');
+    final TextEditingController nameController =
+    TextEditingController(text: dept?.name ?? '');
+    final TextEditingController dobController =
+    TextEditingController(text: dept?.date ?? '');
+    final TextEditingController idController =
+    TextEditingController(text: 'Department Id');
 
     showDialog(
       context: context,
@@ -189,17 +179,20 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               children: [
                 TextFormField(
                   controller: idController,
-                  validator: (value) =>
-                  value == null || value.isEmpty ? 'Please enter a department name' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a department name'
+                      : null,
                   decoration: const InputDecoration(
                     labelText: "Department ID",
                     border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: nameController,
-                  validator: (value) =>
-                  value == null || value.isEmpty ? 'Please enter a department name' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a department name'
+                      : null,
                   decoration: const InputDecoration(
                     labelText: "Department Name",
                     border: OutlineInputBorder(),
@@ -228,17 +221,19 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   if (dept != null) {
                     context.read<DepartmentBloc>().add(
                       UpdateDepartment(
-                       departmentModal: DepartmentModal(
-                         id: dept.id,
-                         name: nameController.text,
-                         date: dobController.text,
-                         id_admin: admin.id??0,)
+                        departmentModal: DepartmentModal(
+                          id: dept.id,
+                          name: nameController.text,
+                          date: dobController.text,
+                          id_admin: admin.id ?? "",
+                        ),
                       ),
                     );
                   } else {
                     context.read<DepartmentBloc>().add(
                       AddDepartment(
-                        adminId: admin.id??1,
+
+                        adminId: admin.id ?? "",
                         departmentName: nameController.text,
                         dob: dobController.text,
                         id: int.parse(idController.text),
@@ -246,7 +241,9 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     );
                   }
                   Navigator.pop(context);
-                  context.read<DepartmentBloc>().add(FetchDepartments(adminId: admin.id));
+                  context
+                      .read<DepartmentBloc>()
+                      .add(FetchDepartments(adminId: admin.id));
                 }
               },
             ),
@@ -255,5 +252,4 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
       },
     );
   }
-
 }

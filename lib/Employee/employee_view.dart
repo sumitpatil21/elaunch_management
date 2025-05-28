@@ -16,25 +16,20 @@ class EmployeeScreen extends StatefulWidget {
   const EmployeeScreen({super.key});
 
   static Widget builder(BuildContext context) {
-    ManagerScreenArguments? args =
-        ModalRoute.of(context)!.settings.arguments as ManagerScreenArguments;
-
-    final manager = args.manager;
+    DepartmentModal? args =
+        ModalRoute.of(context)!.settings.arguments as DepartmentModal?;
 
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create:
-              (context) => EmployeeBloc()..add(FetchEmployees(role: "manager")),
+          create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
         BlocProvider(
           create:
               (_) =>
-                  ManagerBloc()..add(
-                    FetchManagers(adminId: args.department?.id_admin ?? 1),
-                  ),
+                  DepartmentBloc()
+                    ..add(FetchDepartments(adminId: args!.id_admin)),
         ),
-        BlocProvider(create: (_) => DepartmentBloc()..add(FetchDepartments())),
         BlocProvider(create: (context) => DashboardBloc(DashboardState())),
       ],
       child: const EmployeeScreen(),
@@ -48,162 +43,318 @@ class EmployeeScreen extends StatefulWidget {
 class _EmployeeScreenState extends State<EmployeeScreen> {
   final TextEditingController searchController = TextEditingController();
 
+  // Filter variables
+  String? selectedDepartmentFilter;
+  String? selectedManagerFilter;
+  String selectedRoleFilter = 'All';
+
   @override
+  void initState() {
+    context.read<EmployeeBloc>().add(FetchEmployees());
+    super.initState();
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      selectedDepartmentFilter = null;
+      selectedManagerFilter = null;
+      selectedRoleFilter = 'All';
+      searchController.clear();
+    });
+  }
+
+  void _showFilterBottomSheet() {
+    final departments = context.read<DepartmentBloc>().state.departments;
+    final managers =
+        context
+            .read<EmployeeBloc>()
+            .state
+            .employees
+            .where((emp) => emp.role == 'Manager')
+            .toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setModalState) => Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Filter Employees',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                selectedDepartmentFilter = null;
+                                selectedManagerFilter = null;
+                                selectedRoleFilter = 'All';
+                              });
+                            },
+                            child: const Text('Clear All'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Role Filter
+                      const Text(
+                        'Filter by Role:',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: selectedRoleFilter,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        items:
+                            ['All', 'Employee', 'Manager', 'Human Resource']
+                                .map(
+                                  (role) => DropdownMenuItem(
+                                    value: role,
+                                    child: Text(role),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedRoleFilter = value ?? 'All';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Department Filter
+                      const Text(
+                        'Filter by Department:',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: selectedDepartmentFilter,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          hintText: 'Select Department',
+                        ),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('All Departments'),
+                          ),
+                          ...departments.map(
+                            (dept) => DropdownMenuItem(
+                              value: dept.name,
+                              child: Text(dept.name),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedDepartmentFilter = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Manager Filter
+                      const Text(
+                        'Filter by Manager:',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: selectedManagerFilter,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          hintText: 'Select Manager',
+                        ),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('All Managers'),
+                          ),
+                          ...managers.map(
+                            (manager) => DropdownMenuItem(
+                              value: manager.name,
+                              child: Text(manager.name),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedManagerFilter = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Apply Button
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            // Update the main state with filter values
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.withOpacity(0.8),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Apply Filters'),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                    ],
+                  ),
+                ),
+          ),
+    );
+  }
+
+  List<EmployeeModal> _getFilteredEmployees(List<EmployeeModal> employees) {
+    final query = searchController.text.toLowerCase();
+
+    return employees.where((employee) {
+      bool matchesSearch =
+          query.isEmpty ||
+          employee.name.toLowerCase().contains(query) ||
+          employee.email.toLowerCase().contains(query) ||
+          (employee.departmentName?.toLowerCase().contains(query) ?? false) ||
+          (employee.managerName?.toLowerCase().contains(query) ?? false);
+
+      bool matchesRole =
+          selectedRoleFilter == 'All' || employee.role == selectedRoleFilter;
+
+      bool matchesDepartment =
+          selectedDepartmentFilter == null ||
+          employee.departmentName == selectedDepartmentFilter;
+
+      bool matchesManager =
+          selectedManagerFilter == null ||
+          employee.managerName == selectedManagerFilter;
+
+      return matchesSearch &&
+          matchesRole &&
+          matchesDepartment &&
+          matchesManager;
+    }).toList();
+  }
+
+  Widget _buildActiveFiltersChips() {
+    List<Widget> chips = [];
+
+    if (selectedRoleFilter != 'All') {
+      chips.add(
+        _buildFilterChip('Role: $selectedRoleFilter', () {
+          setState(() => selectedRoleFilter = 'All');
+        }),
+      );
+    }
+
+    if (selectedDepartmentFilter != null) {
+      chips.add(
+        _buildFilterChip('Dept: $selectedDepartmentFilter', () {
+          setState(() => selectedDepartmentFilter = null);
+        }),
+      );
+    }
+
+    if (selectedManagerFilter != null) {
+      chips.add(
+        _buildFilterChip('Manager: $selectedManagerFilter', () {
+          setState(() => selectedManagerFilter = null);
+        }),
+      );
+    }
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Wrap(
+        spacing: 8,
+        children: [
+          ...chips,
+          if (chips.isNotEmpty)
+            ActionChip(
+              label: const Text('Clear All'),
+              onPressed: _clearAllFilters,
+              backgroundColor: Colors.grey.shade200,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, VoidCallback onDeleted) {
+    return Chip(
+      label: Text(label),
+      onDeleted: onDeleted,
+      backgroundColor: Colors.red.withOpacity(0.1),
+      deleteIconColor: Colors.red,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as ManagerScreenArguments;
-    final manager = args.manager;
-    final departments = args.departmentList;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back),
         ),
         backgroundColor: Colors.red.withOpacity(0.2),
         elevation: 2,
-        title: Text(
-          (manager?.managerName != null)
-              ? "${manager?.managerName}'s Team"
-              : (manager?.departmentName != null)
-              ? "${manager?.departmentName}'s Employee"
-              : "All Employees",
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: const Text(
+          "All Employees",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
-          BlocBuilder<ManagerBloc, ManagerState>(
-            builder: (context, managerState) {
-              return PopupMenuButton<String>(
-                icon: const Icon(Icons.filter_list),
-                tooltip: "Filter employees",
-                itemBuilder:
-                    (context) => [
-                      const PopupMenuItem(
-                        value: "department",
-                        child: Text("Filter by Department"),
-                      ),
-                      const PopupMenuItem(
-                        value: "manager",
-                        child: Text("Filter by Manager"),
-                      ),
-                      const PopupMenuItem(
-                        value: "reset",
-                        child: Text("Reset Filters"),
-                      ),
-                    ],
-                onSelected: (value) async {
-                  if (value == "reset") {
-                    context.read<EmployeeBloc>().add(
-                      FetchEmployees(role: "manager"),
-                    );
-                  } else if (value == "manager" &&
-                      managerState.managers.isNotEmpty) {
-                    final selected = await showDialog<Map<String, dynamic>>(
-                      context: context,
-                      builder:
-                          (_) => AlertDialog(
-                            title: const Text("Select Manager"),
-                            content: SizedBox(
-                              width: double.maxFinite,
-                              height: 300,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: managerState.managers.length,
-                                itemBuilder:
-                                    (_, index) => ListTile(
-                                      leading: const Icon(Icons.person),
-                                      title: Text(
-                                        managerState
-                                            .managers[index]
-                                            .managerName,
-                                      ),
-                                      subtitle: Text(
-                                        managerState
-                                                .managers[index]
-                                                .departmentName ??
-                                            'No Department',
-                                      ),
-                                      onTap: () {
-                                        // args.manager =
-                                        //     managerState.managers[index];
-                                        Navigator.pop(context, {
-                                          'name':
-                                              managerState
-                                                  .managers[index]
-                                                  .managerName,
-                                          "depart":
-                                              managerState
-                                                  .managers[index]
-                                                  .departmentName,
-                                        });
-                                      },
-                                    ),
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text("CANCEL"),
-                              ),
-                            ],
-                          ),
-                    );
-                    if (selected != null) {
-                      context.read<EmployeeBloc>().add(FetchEmployees());
-                    }
-                  } else if (value == "department" && departments!.isNotEmpty) {
-                    final selectedDept = await showDialog<DepartmentModal?>(
-                      context: context,
-                      builder:
-                          (_) => AlertDialog(
-                            title: const Text("Select Department"),
-                            content: SizedBox(
-                              width: double.maxFinite,
-                              height: 300,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: departments.length,
-                                itemBuilder:
-                                    (_, index) => ListTile(
-                                      leading: const Icon(Icons.business),
-                                      title: Text(departments[index].name),
-                                      onTap: () {
-                                        Navigator.pop(
-                                          context,
-                                          departments[index],
-                                        );
-                                      },
-                                    ),
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text("CANCEL"),
-                              ),
-                            ],
-                          ),
-                    );
-
-                    if (selectedDept != null) {
-                      context.read<EmployeeBloc>().add(FetchEmployees());
-                    }
-                  }
-                },
-              );
-            },
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _showFilterBottomSheet,
           ),
         ],
       ),
       body: Column(
         children: [
-          Container(
+          // Search Bar
+          Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: searchController,
+              onChanged: (value) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Search employees...',
                 prefixIcon: const Icon(Icons.search),
@@ -211,16 +362,14 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     searchController.text.isNotEmpty
                         ? IconButton(
                           icon: const Icon(Icons.clear),
-                          onPressed: () => searchController.clear(),
+                          onPressed: () {
+                            searchController.clear();
+                            setState(() {});
+                          },
                         )
                         : null,
                 filled: true,
-
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
@@ -232,9 +381,17 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             ),
           ),
 
+          // Active Filters
+          _buildActiveFiltersChips(),
+
+          // Employee List
           Expanded(
             child: BlocBuilder<EmployeeBloc, EmployeeState>(
               builder: (context, state) {
+                final filteredEmployees = _getFilteredEmployees(
+                  state.employees,
+                );
+
                 if (state.employees.isEmpty) {
                   return Center(
                     child: Column(
@@ -255,11 +412,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          manager?.managerName != null
-                              ? "No employees under ${manager?.managerName}"
-                              : manager?.departmentName != null
-                              ? "No employees in ${manager?.departmentName}"
-                              : "Try adding some employees",
+                          "Try adding some employees",
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                         const SizedBox(height: 16),
@@ -269,42 +422,45 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           onPressed: () {
                             context.read<EmployeeBloc>().add(FetchEmployees());
                           },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                          ),
                         ),
                       ],
                     ),
                   );
                 }
 
-                final filteredEmployees =
-                    searchController.text.isEmpty
-                        ? state.employees
-                        : state.employees
-                            .where(
-                              (employee) =>
-                                  employee.name.toLowerCase().contains(
-                                    searchController.text.toLowerCase(),
-                                  ) ||
-                                  (employee.email.toLowerCase().contains(
-                                    searchController.text.toLowerCase(),
-                                  )) ||
-                                  (employee.departmentName
-                                          ?.toLowerCase()
-                                          .contains(
-                                            searchController.text.toLowerCase(),
-                                          ) ??
-                                      false) ||
-                                  (employee.managerName?.toLowerCase().contains(
-                                        searchController.text.toLowerCase(),
-                                      ) ??
-                                      false),
-                            )
-                            .toList();
+                if (filteredEmployees.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "No employees match your filters",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Try adjusting your search or filters",
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.clear),
+                          label: const Text("Clear Filters"),
+                          onPressed: _clearAllFilters,
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
@@ -323,9 +479,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                         ),
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
-                      direction: DismissDirection.endToStart,
                       confirmDismiss:
-                          (_) => showDialog(
+                          (_) => showDialog<bool>(
                             context: context,
                             builder:
                                 (_) => AlertDialog(
@@ -352,22 +507,19 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           ),
                       onDismissed: (_) {
                         context.read<EmployeeBloc>().add(
-                          DeleteEmployee(id: employee.id!),
+                          DeleteEmployee(id: "${employee.id}"),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text("${employee.name} deleted"),
-                            behavior: SnackBarBehavior.floating,
                             action: SnackBarAction(
                               label: "UNDO",
                               onPressed: () {
-                                // Would need to implement undo functionality
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
                                       "Undo feature not implemented",
                                     ),
-                                    behavior: SnackBarBehavior.floating,
                                   ),
                                 );
                               },
@@ -384,18 +536,59 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           leading: CircleAvatar(
                             backgroundColor: Colors.red.withOpacity(0.2),
                             child: Text(
-                              (employee.role == "Manager")
-                                  ? "M"
-                                  : (employee.role == "Employee")
-                                  ? "E"
-                                  : "HR",
+                              employee.role.substring(0, 1).toUpperCase(),
                             ),
                           ),
                           title: Text(
                             employee.name,
-                            style: TextStyle(fontWeight: FontWeight.w500),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
-                          subtitle: Text(employee.managerName ?? ""),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(employee.email),
+                              Row(
+                                children: [
+                                  if (employee.role != 'Employee')
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        employee.role,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.blue.shade700,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  if (employee.role != 'Employee' &&
+                                      employee.departmentName != null)
+                                    const SizedBox(width: 8),
+                                ],
+                              ),
+                              if (employee.departmentName != null)
+                                Text("Dept: ${employee.departmentName}"),
+                              if (employee.managerName != null)
+                                Text("Manager: ${employee.managerName}"),
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              showEmployeeDialog(
+                                context: context,
+                                bloc: context.read<EmployeeBloc>(),
+                                employee: employee,
+                              );
+                            },
+                          ),
                         ),
                       ),
                     );
@@ -411,12 +604,11 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
         onPressed: () {
           showEmployeeDialog(
             context: context,
-            manager: manager,
             bloc: context.read<EmployeeBloc>(),
           );
         },
-        icon: (manager == null) ? Icon(Icons.remove_red_eye) : Icon(Icons.add),
-        label: (manager == null) ? Text("View Employee") : Text("Add Employee"),
+        icon: const Icon(Icons.add),
+        label: const Text("Add Employee"),
       ),
     );
   }
@@ -424,12 +616,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
 
 void showEmployeeDialog({
   required BuildContext context,
-  MangerModal? manager,
   EmployeeBloc? bloc,
   EmployeeModal? employee,
-  int? currentDepartmentId,
-  String? currentManagerName,
-  String? currentDepartmentName,
 }) {
   final formKey = GlobalKey<FormState>();
   final nameController = TextEditingController(text: employee?.name ?? '');
@@ -438,21 +626,30 @@ void showEmployeeDialog({
     text: employee?.address ?? '',
   );
   final dobController = TextEditingController(text: employee?.dob ?? '');
+  final idController = TextEditingController(text: "${employee?.id ?? ''}")
+    ..text = employee?.id?.toString() ?? '';
+
+  final departments = context.read<DepartmentBloc>().state.departments;
+  final managers =
+      context
+          .read<EmployeeBloc>()
+          .state
+          .employees
+          .where((emp) => emp.role == 'Manager')
+          .toList();
+
+  DepartmentModal? args =
+      ModalRoute.of(context)!.settings.arguments as DepartmentModal?;
   String selectedRole = employee?.role ?? 'Employee';
+  DepartmentModal? selectedDepartment;
+  EmployeeModal? selectedManager;
+
   Future<void> pickDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: Colors.blue),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -463,164 +660,188 @@ void showEmployeeDialog({
   showDialog(
     context: context,
     builder:
-        (_) => AlertDialog(
-          title: Text(employee != null ? 'Edit Employee' : 'Add Employee'),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name',
-                      prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator:
-                        (val) =>
-                            val == null || val.isEmpty ? 'Enter name' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (val) {
-                      if (val == null || val.isEmpty) {
-                        return 'Enter email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Address',
-                      prefixIcon: Icon(Icons.location_on),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedRole,
-                    decoration: const InputDecoration(
-                      labelText: "Employee Role",
-                      border: OutlineInputBorder(),
-                    ),
-                    items:
-                        ['Employee', 'Manager', 'Human Resource']
-                            .map(
-                              (os) =>
-                                  DropdownMenuItem(value: os, child: Text(os)),
-                            )
-                            .toList(),
-                    onChanged: (value) {
-                      selectedRole = value ?? 'Employee';
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  (selectedRole == 'Employee')
-                      ? DropdownButtonFormField<EmployeeModal>(
-                        // value: bloc?.state.employees.firstWhere((element) => element.role=='Manager').name,
-                        decoration: const InputDecoration(
-                          labelText: "Select Manager",
-                          border: OutlineInputBorder(),
+        (dialogContext) => StatefulBuilder(
+          builder:
+              (context, setState) => AlertDialog(
+                title: Text(
+                  employee != null ? 'Edit Employee' : 'Add Employee',
+                ),
+                content: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Full Name',
+                            prefixIcon: Icon(Icons.person),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator:
+                              (val) =>
+                                  val == null || val.isEmpty
+                                      ? 'Enter name'
+                                      : null,
                         ),
-                        items:
-                            bloc?.state.employees
-                                .where((element) => element.role == 'Manager')
-                                .map(
-                                  (os) => DropdownMenuItem(
-                                    value: os,
-                                    child: Text(os.name),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (value) {
-                          // selectedRole = value ?? 'Employee';
-                        },
-                      )
-                      : const SizedBox.shrink(),
-                  const SizedBox(height: 12),
-
-                  TextFormField(
-                    controller: dobController,
-                    decoration: InputDecoration(
-                      labelText: 'Date of Birth',
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.calendar_month),
-                        onPressed: () => pickDate(context),
-                      ),
-                      border: const OutlineInputBorder(),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email Address',
+                            prefixIcon: Icon(Icons.email),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator:
+                              (val) =>
+                                  val == null || val.isEmpty
+                                      ? 'Enter email'
+                                      : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: addressController,
+                          decoration: const InputDecoration(
+                            labelText: 'Address',
+                            prefixIcon: Icon(Icons.location_on),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: dobController,
+                          decoration: InputDecoration(
+                            labelText: 'Date of Birth',
+                            prefixIcon: const Icon(Icons.calendar_today),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.calendar_month),
+                              onPressed: () => pickDate(context),
+                            ),
+                            border: const OutlineInputBorder(),
+                          ),
+                          readOnly: true,
+                          onTap: () => pickDate(context),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: selectedRole,
+                          decoration: const InputDecoration(
+                            labelText: "Employee Role",
+                            border: OutlineInputBorder(),
+                          ),
+                          items:
+                              ['Employee', 'Manager', 'Human Resource']
+                                  .map(
+                                    (role) => DropdownMenuItem(
+                                      value: role,
+                                      child: Text(role),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedRole = value ?? 'Employee';
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<DepartmentModal>(
+                          value: selectedDepartment,
+                          decoration: const InputDecoration(
+                            labelText: "Select Department",
+                            border: OutlineInputBorder(),
+                          ),
+                          items:
+                              departments
+                                  .map(
+                                    (dept) => DropdownMenuItem(
+                                      value: dept,
+                                      child: Text(dept.name),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedDepartment = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        if (selectedRole == 'Employee')
+                          DropdownButtonFormField<EmployeeModal>(
+                            value: selectedManager,
+                            decoration: const InputDecoration(
+                              labelText: "Select Manager",
+                              border: OutlineInputBorder(),
+                            ),
+                            items:
+                                managers
+                                    .map(
+                                      (manager) => DropdownMenuItem(
+                                        value: manager,
+                                        child: Text(manager.name),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                selectedManager = value;
+                              });
+                            },
+                          ),
+                      ],
                     ),
-                    readOnly: true,
-                    onTap: () => pickDate(context),
                   ),
-                  const SizedBox(height: 24),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+
+                    child: const Text('CANCEL'),
+                  ),
+                  ElevatedButton.icon(
+                    icon: Icon(employee != null ? Icons.save : Icons.add),
+                    label: Text(employee != null ? 'UPDATE' : 'ADD'),
+                    onPressed: () {
+                      if (formKey.currentState!.validate()) {
+                        if (employee != null) {
+                          bloc?.add(
+                            UpdateEmployee(
+                              adminId: args!.id_admin,
+                              id: employee.id!,
+                              role: selectedRole,
+                              name: nameController.text,
+                              email: emailController.text,
+                              address: addressController.text,
+                              dob: dobController.text,
+                              managerName: selectedManager?.name ?? "",
+                              department: selectedDepartment?.name ?? "",
+                              departmentId: selectedDepartment?.id ?? "",
+                            ),
+                          );
+                        } else {
+                          bloc?.add(
+                            AddEmployee(
+                              adminId: args!.id_admin,
+                              id: idController.text,
+                              role: selectedRole,
+                              name: nameController.text,
+                              email: emailController.text,
+                              address: addressController.text,
+                              dob: dobController.text,
+                              managerName: selectedManager?.name ?? "",
+                              department: selectedDepartment?.name ?? "",
+                              departmentId: selectedDepartment?.id ?? "",
+                            ),
+                          );
+                        }
+                        Navigator.pop(context);
+                      }
+                    },
+                  ),
                 ],
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('CANCEL'),
-            ),
-            ElevatedButton.icon(
-              icon: Icon(employee != null ? Icons.save : Icons.add),
-              label: Text(employee != null ? 'UPDATE' : 'ADD'),
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  int managerId = manager?.id ?? 0;
-                  int departmentId = currentDepartmentId ?? manager?.id ?? 0;
-                  String managerName =
-                      currentManagerName ?? manager?.managerName ?? '';
-                  String departmentName =
-                      currentDepartmentName ?? manager?.departmentName ?? '';
-
-                  if (employee != null) {
-                    bloc?.add(
-                      UpdateEmployee(
-                        adminId: 1,
-                        id: employee.id!,
-                        role: selectedRole,
-                        name: nameController.text,
-                        email: emailController.text,
-                        address: addressController.text,
-                        dob: dobController.text,
-                        managerName: managerName,
-                        department: departmentName,
-                      ),
-                    );
-                  } else {
-                    bloc?.add(
-                      AddEmployee(
-                        adminId: 1,
-                        id: 0,
-                        role: selectedRole,
-                        departmentId: departmentId,
-                        name: nameController.text,
-                        email: emailController.text,
-                        address: addressController.text,
-                        dob: dobController.text,
-                        managerName: managerName,
-                        department: departmentName,
-                      ),
-                    );
-                  }
-
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
         ),
   );
 }

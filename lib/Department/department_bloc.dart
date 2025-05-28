@@ -1,8 +1,7 @@
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+
 import 'package:elaunch_management/Service/firebaseDatabase.dart';
 import 'package:equatable/equatable.dart';
 
@@ -23,8 +22,8 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
       FetchDepartments event,
       Emitter<DepartmentState> emit,
       ) async {
-    final fire = await FirebaseDbHelper.firebaseDbHelper
-        .fetchDepartments(event.adminId ?? 0);
+    final fire = await FirebaseDbHelper.firebase
+        .getDepartments("${event.adminId}");
     emit(DepartmentState(departments: fire));
   }
 
@@ -34,14 +33,15 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
       Emitter<DepartmentState> emit,
       ) async {
     final department = DepartmentModal(
+      id: "1",
       name: event.departmentName,
       date: event.dob,
-      id: event.id, id_admin: event.adminId,
+      id_admin: event.adminId,
     );
 
-    await FirebaseDbHelper.firebaseDbHelper.insertDepartment(department);
-    final departments = await FirebaseDbHelper.firebaseDbHelper
-        .fetchDepartments(event.id);
+    await FirebaseDbHelper.firebase.createDepartment(department);
+    final departments = await FirebaseDbHelper.firebase
+        .getDepartments(event.adminId );
     emit(DepartmentState(departments: departments));
   }
 
@@ -49,11 +49,11 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
       UpdateDepartment event,
       Emitter<DepartmentState> emit,
       ) async {
-    await FirebaseDbHelper.firebaseDbHelper
-        .updateDepartment(department: event.departmentModal);
+    await FirebaseDbHelper.firebase
+        .updateDepartment(event.departmentModal);
 
-    final departments = await FirebaseDbHelper.firebaseDbHelper
-        .fetchDepartments(event.departmentModal.id_admin);
+    final departments = await FirebaseDbHelper.firebase
+        .getDepartments(event.departmentModal.id_admin);
     emit(DepartmentState(departments: departments));
   }
 
@@ -61,9 +61,9 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
       DeleteDepartment event,
       Emitter<DepartmentState> emit,
       ) async {
-    await FirebaseDbHelper.firebaseDbHelper.deleteDepartment("${event.id}");
-    final departments = await FirebaseDbHelper.firebaseDbHelper
-        .fetchDepartments(event.adminId ?? 0);
+    await FirebaseDbHelper.firebase.deleteDepartment(event.id);
+    final departments = await FirebaseDbHelper.firebase
+        .getDepartments((event.adminId ?? 0) as String);
     emit(DepartmentState(departments: departments));
   }
 }

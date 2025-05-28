@@ -17,107 +17,66 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
 
 
   Future<void> _fetchSystemData(FetchSystem event, Emitter<SystemState> emit) async {
-    try {
-      // Commented out local DB fetching:
-      // final systems = await DbHelper.dbHelper.fetchSystems(
-      //   employeeId: event.employeeId,
-      //   adminId: event.adminId,
-      // );
 
 
-      final systems = await FirebaseDbHelper.firebaseDbHelper.fetchSystems(
+
+      final systems = await FirebaseDbHelper.firebase.getSystems(
         adminId: event.adminId,
         employeeId: event.employeeId,
       );
-
+    //
       emit(SystemState(systems: systems));
-    } catch (e) {
-      // handle error, maybe emit error state
-      print("Error fetching systems: $e");
-      emit(const SystemState(systems: []));
-    }
+
   }
 
   Future<void> _insertSystemData(AddSystem event, Emitter<SystemState> emit) async {
-    try {
-      // Commented out local DB insert:
-      // await DbHelper.dbHelper.insertIntoSystem(
-      //   systemName: event.systemName,
-      //   version: event.version ?? "",
-      //   operatingSystem: event.operatingSystem ?? "",
-      //   status: event.status ?? "available",
-      //   adminId: event.adminId,
-      //   managerId: event.managerId,
-      //   employeeId: event.employeeId,
-      //   employeeName: event.employeeName,
-      // );
 
+    final system = SystemModal(
+      systemName: event.systemName,
+      version: event.version ?? "",
+      operatingSystem: event.operatingSystem ?? "",
+      status: event.status ?? "available",
+      adminId: event.adminId,
 
-      await FirebaseDbHelper.firebaseDbHelper.insertSystem(
-        system: SystemModal(
-          systemName: event.systemName,
-          version: event.version ?? "",
-          operatingSystem: event.operatingSystem ?? "",
-          status: event.status ?? "available",
-          adminId: event.adminId,
-          managerId: event.managerId,
-          employeeId: event.employeeId,
-          employeeName: event.employeeName,
-        ),
-      );
+      employeeId: event.employeeId,
+      employeeName: event.employeeName,
+      id: "1",
+    );
 
-      add(FetchSystem(adminId: event.adminId, employeeId: event.employeeId));
-    } catch (e) {
-      print("Error inserting system: $e");
-    }
+      await FirebaseDbHelper.firebase.createSystem(system);
+
+      add(FetchSystem(adminId: "${event.adminId}", employeeId: event.employeeId));
+
   }
 
 
   Future<void> _updateSystemData(UpdateSystem event, Emitter<SystemState> emit) async {
-    try {
-      // Commented out local DB update:
-      // await DbHelper.dbHelper.updateSystem(
-      //   id: event.id,
-      //   systemName: event.systemName,
-      //   version: event.version ?? "",
-      //   operatingSystem: event.operatingSystem ?? "",
-      //   status: event.status ?? "available",
-      //   adminId: event.adminId,
-      //   managerId: event.managerId,
-      //   employeeId: event.employeeId,
-      // );
 
+    final system = SystemModal(
+      id: event.id,
+      systemName: event.systemName,
+      version: event.version ?? "",
+      operatingSystem: event.operatingSystem ?? "",
+      status: event.status ?? "available",
+      adminId: event.adminId,
+      employeeId: event.employeeId,
+      employeeName: event.employeeName,
 
-      await FirebaseDbHelper.firebaseDbHelper.updateSystem(
-        system: SystemModal(
-          id: event.id,
-          systemName: event.systemName,
-          version: event.version ?? "",
-          operatingSystem: event.operatingSystem ?? "",
-          status: event.status ?? "available",
-          adminId: event.adminId,
-          managerId: event.managerId,
-          employeeId: event.employeeId,
-        ),
-      );
+    );
+    await FirebaseDbHelper.firebase.updateSystem(
+      system,
+    );
 
-      add(FetchSystem(adminId: event.adminId, employeeId: event.employeeId));
-    } catch (e) {
-      print("Error updating system: $e");
-    }
+      add(FetchSystem(adminId: "${event.adminId}", employeeId: event.employeeId));
+
   }
 
 
   Future<void> _deleteSystemData(DeleteSystem event, Emitter<SystemState> emit) async {
-    try {
-      // Commented out local DB delete:
-      // await DbHelper.dbHelper.deleteSystem(event.id);
 
-      await FirebaseDbHelper.firebaseDbHelper.deleteSystem("${event.id}");
 
-    add(FetchSystem(adminId: event.adminId, employeeId: event.employeeId));
-    } catch (e) {
-    print("Error deleting system: $e");
-    }
+      await FirebaseDbHelper.firebase.deleteSystem("${event.id}");
+
+    add(FetchSystem(adminId: "${event.adminId}", employeeId: event.employeeId));
   }
 }

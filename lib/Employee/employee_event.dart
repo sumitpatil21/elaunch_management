@@ -9,19 +9,20 @@ abstract class EmployeeEvent extends Equatable {
 
 class FetchEmployees extends EmployeeEvent {
   final String? role;
-
+  final String? departmentId;
   const FetchEmployees({
     this.role,
+    this.departmentId,
   });
 
   @override
-  List<Object?> get props => [role];
+  List<Object?> get props => [role, departmentId];
 }
 
 class AddEmployee extends EmployeeEvent {
-  final int? id;
-  final int? adminId;
-  final int departmentId;
+  final String? id;
+  final String? adminId;
+  final String? departmentId;
   final String name;
   final String email;
   final String address;
@@ -33,7 +34,8 @@ class AddEmployee extends EmployeeEvent {
   const AddEmployee({
     this.id,
     this.adminId,
-    required this.departmentId,
+    this.departmentId,
+
     required this.name,
     required this.email,
     required this.address,
@@ -59,19 +61,22 @@ class AddEmployee extends EmployeeEvent {
 }
 
 class UpdateEmployee extends EmployeeEvent {
-  final int id;
-  final int? adminId;
+  final String id;
+  final String? adminId;
+  final String? departmentId;
   final String name;
   final String email;
   final String address;
   final String dob;
   final String role;
+
   final String managerName;
   final String department;
 
   const UpdateEmployee({
     required this.id,
     this.adminId,
+     this.departmentId,
     required this.name,
     required this.email,
     required this.address,
@@ -85,6 +90,7 @@ class UpdateEmployee extends EmployeeEvent {
   List<Object?> get props => [
     id,
     adminId,
+    departmentId,
     name,
     email,
     address,
@@ -96,7 +102,7 @@ class UpdateEmployee extends EmployeeEvent {
 }
 
 class DeleteEmployee extends EmployeeEvent {
-  final int id;
+  final String id;
   final int? adminId;
   final String? managerName;
   final String? departmentName;

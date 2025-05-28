@@ -2,10 +2,13 @@ part of 'admin_bloc.dart';
 
 abstract class AdminEvent extends Equatable {
   const AdminEvent();
+
+  @override
+  List<Object?> get props => [];
 }
 
 class AdminInsert extends AdminEvent {
-  final int id;
+  final String id;
   final String name;
   final String email;
   final String pass;
@@ -28,18 +31,22 @@ class AdminInsert extends AdminEvent {
 }
 
 class AdminFetch extends AdminEvent {
-  @override
-  List<Object?> get props => [];
+  const AdminFetch();
 }
 
 class AdminLogin extends AdminEvent {
   final String email;
+  final String password;
   final String check;
 
-  const AdminLogin({required this.email, required this.check});
+  const AdminLogin({
+    required this.email,
+    this.check = "isLogin",
+    required this.password,
+  });
 
   @override
-  List<Object?> get props => [email, check];
+  List<Object?> get props => [email, check, password];
 }
 
 class AdminLogout extends AdminEvent {

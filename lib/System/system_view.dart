@@ -18,19 +18,12 @@ class SystemView extends StatefulWidget {
       providers: [
         BlocProvider(
           create:
-              (context) =>
-                  SystemBloc()
-                    ..add(FetchSystem(adminId: args?.id)),
+              (context) => SystemBloc()..add(FetchSystem(adminId: args?.id)),
         ),
         BlocProvider(
-          create:
-              (context) =>
-                  EmployeeBloc()
-                    ..add(FetchEmployees()),
+          create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
-        BlocProvider(
-          create: (context) => AdminBloc()..add(AdminFetch()),
-        ),
+        BlocProvider(create: (context) => AdminBloc()..add(AdminFetch())),
       ],
       child: const SystemView(),
     );
@@ -42,6 +35,15 @@ class SystemView extends StatefulWidget {
 
 class _SystemViewState extends State<SystemView> {
   final TextEditingController searchController = TextEditingController();
+  String selectedStatusFilter = 'all'; // Default to show all
+
+  final List<String> statusFilters = [
+    'all',
+    'available',
+    'assigned',
+    'maintenance',
+    'retired',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -61,10 +63,11 @@ class _SystemViewState extends State<SystemView> {
           if (employeeBloc.state.employees.isEmpty) {
             employeeBloc.add(FetchEmployees());
           }
-          showManagerDialog(
+          showSystemDialog(
             context,
             bloc: employeeBloc,
             systemBloc: systemBloc,
+            adminId: args?.id,
           );
         },
         label: const Text("Add System"),
@@ -72,6 +75,7 @@ class _SystemViewState extends State<SystemView> {
       ),
       body: Column(
         children: [
+          // Search Bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -93,25 +97,110 @@ class _SystemViewState extends State<SystemView> {
               onChanged: (_) => setState(() {}),
             ),
           ),
+
+          // Status Filter Chips
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: statusFilters.length,
+              itemBuilder: (context, index) {
+                final status = statusFilters[index];
+                final isSelected = selectedStatusFilter == status;
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: FilterChip(
+                    label: Text(
+                      status == 'all' ? 'All' : status.toUpperCase(),
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        selectedStatusFilter = status;
+                      });
+                    },
+                    backgroundColor: Colors.grey.shade200,
+                    selectedColor: Colors.yellow.withOpacity(0.8),
+                    checkmarkColor: Colors.white,
+                    elevation: isSelected ? 4 : 1,
+                    pressElevation: 2,
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Systems List
           Expanded(
             child: BlocBuilder<SystemBloc, SystemState>(
               builder: (context, state) {
                 final query = searchController.text.toLowerCase();
+
+                // Apply both search and status filters
                 final filteredSystems =
                     state.systems.where((system) {
-                      return system.systemName.toLowerCase().contains(query) ||
+                      // Search filter
+                      final matchesSearch =
+                          system.systemName.toLowerCase().contains(query) ||
                           (system.version?.toLowerCase().contains(query) ??
                               false) ||
                           (system.employeeName?.toLowerCase().contains(query) ??
                               false);
+
+                      // Status filter
+                      final matchesStatus =
+                          selectedStatusFilter == 'all' ||
+                          (system.status ?? 'available') ==
+                              selectedStatusFilter;
+
+                      return matchesSearch && matchesStatus;
                     }).toList();
 
                 if (filteredSystems.isEmpty) {
                   return Center(
-                    child: Text(
-                      searchController.text.isNotEmpty
-                          ? 'No results for "${searchController.text}"'
-                          : 'No System found',
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.computer_outlined,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          searchController.text.isNotEmpty ||
+                                  selectedStatusFilter != 'all'
+                              ? 'No systems match your filters'
+                              : 'No systems found',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        if (searchController.text.isNotEmpty ||
+                            selectedStatusFilter != 'all')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  searchController.clear();
+                                  selectedStatusFilter = 'all';
+                                });
+                              },
+                              child: const Text('Clear Filters'),
+                            ),
+                          ),
+                      ],
                     ),
                   );
                 }
@@ -161,7 +250,11 @@ class _SystemViewState extends State<SystemView> {
                           ),
                       onDismissed: (_) {
                         context.read<SystemBloc>().add(
-                          DeleteSystem(id: system.id ?? 1),
+                          DeleteSystem(
+                            id: system.id ?? "1",
+                            adminId: "${args!.id}",
+                            employeeId: system.employeeId,
+                          ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -176,8 +269,13 @@ class _SystemViewState extends State<SystemView> {
                         elevation: 2,
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.yellow.withOpacity(0.2),
-                            child: const Icon(Icons.computer_outlined),
+                            backgroundColor: getStatusColor(
+                              system.status ?? 'available',
+                            ),
+                            child: const Icon(
+                              Icons.computer_outlined,
+                              color: Colors.white,
+                            ),
                           ),
                           title: Text(
                             system.systemName,
@@ -187,28 +285,49 @@ class _SystemViewState extends State<SystemView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(system.version ?? ""),
-                              Text(system.employeeName ?? "N/A"),
+                              Text(system.employeeName ?? "Unassigned"),
+                              Row(
+                                children: [
+                                  const Text("Status: "),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: getStatusColor(
+                                        system.status ?? 'available',
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      (system.status ?? 'available')
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.change_circle),
+                                icon: const Icon(Icons.edit),
                                 onPressed: () {
-                                  showManagerDialog(
+                                  showSystemDialog(
                                     context,
                                     system: system,
                                     bloc: context.read<EmployeeBloc>(),
                                     systemBloc: context.read<SystemBloc>(),
+                                    adminId: args?.id,
                                   );
                                 },
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                ),
                               ),
                             ],
                           ),
@@ -225,11 +344,27 @@ class _SystemViewState extends State<SystemView> {
     );
   }
 
-  void showManagerDialog(
+  Color getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'available':
+        return Colors.green;
+      case 'assigned':
+        return Colors.blue;
+      case 'maintenance':
+        return Colors.orange;
+      case 'retired':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void showSystemDialog(
     BuildContext context, {
     SystemModal? system,
     required EmployeeBloc bloc,
     required SystemBloc systemBloc,
+    String? adminId,
   }) {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(
@@ -250,7 +385,7 @@ class _SystemViewState extends State<SystemView> {
                       bloc.state.employees.isNotEmpty
                           ? bloc.state.employees.first
                           : EmployeeModal(
-                            id: -1,
+                            id: '-1',
                             name: "No employees available",
                             email: '',
                             address: '',
@@ -258,14 +393,13 @@ class _SystemViewState extends State<SystemView> {
                             role: "",
                             departmentName: "",
                             managerName: "",
+                            departmentId: "1",
+                            adminId: "",
                           ),
             )
             : (bloc.state.employees.isNotEmpty
                 ? bloc.state.employees.first
                 : null);
-
-    AdminModal? args =
-        ModalRoute.of(context)!.settings.arguments as AdminModal?;
 
     showDialog(
       context: context,
@@ -316,14 +450,12 @@ class _SystemViewState extends State<SystemView> {
                           border: OutlineInputBorder(),
                         ),
                         items:
-                            ['Windows', 'macOS', 'Linux']
-                                .map(
-                                  (os) => DropdownMenuItem(
-                                    value: os,
-                                    child: Text(os),
-                                  ),
-                                )
-                                .toList(),
+                            ['Windows', 'macOS', 'Linux'].map((os) {
+                              return DropdownMenuItem(
+                                value: os,
+                                child: Text(os),
+                              );
+                            }).toList(),
                         onChanged: (value) {
                           setState(() {
                             selectedOS = value ?? 'Windows';
@@ -335,18 +467,20 @@ class _SystemViewState extends State<SystemView> {
                         value: selectedStatus,
                         decoration: const InputDecoration(
                           labelText: "Status",
-
                           border: OutlineInputBorder(),
                         ),
                         items:
-                            ['available', 'assigned', 'maintenance', 'retired']
-                                .map(
-                                  (status) => DropdownMenuItem(
-                                    value: status,
-                                    child: Text(status),
-                                  ),
-                                )
-                                .toList(),
+                            [
+                              'available',
+                              'assigned',
+                              'maintenance',
+                              'retired',
+                            ].map((status) {
+                              return DropdownMenuItem(
+                                value: status,
+                                child: Text(status),
+                              );
+                            }).toList(),
                         onChanged: (value) {
                           setState(() {
                             selectedStatus = value ?? 'available';
@@ -405,9 +539,8 @@ class _SystemViewState extends State<SystemView> {
                             version: versionController.text,
                             status: selectedStatus,
                             operatingSystem: selectedOS,
-                         managerId: selectedEmployee?.id??1,
                             employeeId: selectedEmployee!.id,
-                            adminId: args?.id ?? 1,
+                            adminId: adminId,
                           ),
                         );
                       } else {
@@ -419,7 +552,7 @@ class _SystemViewState extends State<SystemView> {
                             operatingSystem: selectedOS,
                             employeeName: selectedEmployee!.name,
                             employeeId: selectedEmployee!.id,
-                            adminId: args?.id ?? 1,
+                            adminId: adminId,
                           ),
                         );
                       }

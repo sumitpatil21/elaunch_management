@@ -1,13 +1,13 @@
 class TestingDeviceModal {
-  int? id;
+  String? id;
   String deviceName;
   String? operatingSystem;
   String? osVersion;
   String status;
-  int? assignedToEmployeeId;
+  String? assignedToEmployeeId;
   String? lastCheckOutDate; // Consider using DateTime if you parse/format
   String? lastCheckInDate;  // Consider using DateTime
-  int? adminId;
+  String? adminId;
   String? assignedEmployeeName; // For data retrieved from JOIN
 
   TestingDeviceModal({

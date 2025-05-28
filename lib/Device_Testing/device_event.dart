@@ -10,8 +10,8 @@ class DeviceEvent extends Equatable {
 }
 
 class FetchDevice extends DeviceEvent {
-  final int? adminId;
-  final int? employeeId;
+  final String? adminId;
+  final String? employeeId;
 
   const FetchDevice({this.adminId, this.employeeId});
 
@@ -38,8 +38,8 @@ class UpdateDevice extends DeviceEvent {
 }
 
 class DeleteDevice extends DeviceEvent {
-  final int id;
-  final int? adminId;
+  final String id;
+  final String? adminId;
 
   const DeleteDevice({required this.id, this.adminId});
 

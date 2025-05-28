@@ -10,7 +10,7 @@ class FetchEmployee extends DashboardEvent {
 }
 
 class FetchDepartment extends DashboardEvent {
-  final int adminId;
+  final String adminId;
   const FetchDepartment(this.adminId);
   @override
   List<Object> get props => [adminId];

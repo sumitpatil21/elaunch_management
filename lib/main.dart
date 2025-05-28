@@ -5,7 +5,7 @@ import 'System/system_view.dart';
 import 'firebase_options.dart';
 import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
-import 'package:elaunch_management/Manager/manager_view.dart';
+import 'package:elaunch_management/Employee/manager_view.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_view.dart';
 import 'package:flutter/material.dart';
 
@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
     AdminView.routeName:AdminView.builder,
     DashboardView.routeName:DashboardView.builder,
     DepartmentScreen.routeName:DepartmentScreen.builder,
-    ManagerScreen.routeName:ManagerScreen.builder,
+    // ManagerScreen.routeName:ManagerScreen.builder,
     EmployeeScreen.routeName:EmployeeScreen.builder,
     SystemView.routeName:SystemView.builder,
     DeviceView.routeName:DeviceView.builder,

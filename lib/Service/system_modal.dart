@@ -1,14 +1,14 @@
 class SystemModal {
-  int? id;
+  String? id;
   String systemName;
   String? version;
   String? operatingSystem;
   String? status;
   String? employeeName;
 
-  int? adminId;
-  int? managerId;
-  int? employeeId;
+  String? adminId;
+
+  String? employeeId;
 
   SystemModal({
     this.id,
@@ -18,7 +18,7 @@ class SystemModal {
     this.status,
     this.employeeName,
     this.adminId,
-    this.managerId,
+
     this.employeeId,
   });
 
@@ -31,7 +31,7 @@ class SystemModal {
       status: json['status'],
       employeeName: json['employee_name'],
       adminId: json['id_admin'],
-      managerId: json['id_manager'],
+
       employeeId: json['id_employee'],
     );
   }
@@ -45,7 +45,7 @@ class SystemModal {
       'status': status,
       'employee_name': employeeName,
       'id_admin': adminId,
-      'id_manager': managerId,
+
       'id_employee': employeeId,
     };
   }

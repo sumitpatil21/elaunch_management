@@ -5,8 +5,8 @@ sealed class SystemEvent extends Equatable {
 }
 
 class FetchSystem extends SystemEvent {
-  final int? adminId;
-  final int? employeeId; // Added for consistency if needed for filtering
+  final String? adminId;
+  final String? employeeId; // Added for consistency if needed for filtering
 
   const FetchSystem({required this.adminId, this.employeeId});
 
@@ -20,9 +20,8 @@ class AddSystem extends SystemEvent {
   final String? operatingSystem;
   final String? status;
   final String? employeeName;
-  final int? adminId;
-  final int? managerId;
-  final int? employeeId;
+  final String? adminId;
+  final String? employeeId;
 
   const AddSystem({
     required this.systemName,
@@ -31,7 +30,7 @@ class AddSystem extends SystemEvent {
     this.status,
     this.employeeName,
     this.adminId,
-    this.managerId,
+
     this.employeeId,
   });
 
@@ -43,21 +42,20 @@ class AddSystem extends SystemEvent {
     status ?? "",
     employeeName ?? "",
     adminId ?? 0,
-    managerId ?? 0,
     employeeId ?? 0,
   ];
 }
 
 class UpdateSystem extends SystemEvent {
-  final int id;
+  final String id;
   final String systemName;
   final String? version;
   final String? operatingSystem;
   final String? status;
   final String? employeeName;
-  final int? adminId;
-  final int? managerId;
-  final int? employeeId;
+  final String? adminId;
+
+  final String? employeeId;
 
   const UpdateSystem({
     required this.id,
@@ -67,7 +65,7 @@ class UpdateSystem extends SystemEvent {
     this.status,
     this.employeeName,
     this.adminId,
-    this.managerId,
+
     this.employeeId,
   });
 
@@ -77,17 +75,18 @@ class UpdateSystem extends SystemEvent {
     systemName,
     version ?? "",
     employeeName ?? "",
-    adminId ?? 0,
-    managerId ?? 0,
+    adminId ?? '',
+    operatingSystem ?? "",
+    status ?? "",
     employeeId ?? 0,
   ];
 }
 
 class DeleteSystem extends SystemEvent {
-  final int id;
-  final int? adminId;
+  final String id;
+  final String? adminId;
 
-  final int? employeeId;
+  final String? employeeId;
 
   const DeleteSystem({
     required this.id,

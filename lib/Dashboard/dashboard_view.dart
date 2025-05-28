@@ -4,7 +4,7 @@ import 'package:elaunch_management/Dashboard/dashboard_bloc.dart';
 import 'package:elaunch_management/Department/department_view.dart';
 import 'package:elaunch_management/Device_Testing/device_view.dart';
 import 'package:elaunch_management/Employee/employee_view.dart';
-import 'package:elaunch_management/Manager/manager_view.dart';
+import 'package:elaunch_management/Employee/manager_view.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
 import 'package:flutter/material.dart';
@@ -30,28 +30,22 @@ class DashboardView extends StatefulWidget {
         ModalRoute.of(context)!.settings.arguments as AdminModal;
     return MultiBlocProvider(
       providers: [
+        BlocProvider(create: (context) => AdminBloc()),
         BlocProvider(
           create:
               (context) =>
-                  DashboardBloc(DashboardState())
-                    ..add(FetchDepartment(admin.id ?? 2)),
+                  DepartmentBloc()..add(FetchDepartments(adminId: admin.id)),
         ),
-        BlocProvider(create: (context) => AdminBloc()),
-        BlocProvider(create: (context) => DepartmentBloc()),
         BlocProvider(
           create:
               (context) => SystemBloc()..add(FetchSystem(adminId: admin.id)),
         ),
-        BlocProvider(create: (context) => DeviceBloc()..add(FetchDevice())),
         BlocProvider(
           create:
-              (context) =>
-                  EmployeeBloc()..add(FetchEmployees()),
+              (context) => DeviceBloc()..add(FetchDevice(adminId: admin.id)),
         ),
         BlocProvider(
-          create:
-              (context) =>
-                  ManagerBloc()..add(FetchManagers(adminId: admin.id ?? 1)),
+          create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
       ],
       child: DashboardView(),
@@ -90,14 +84,21 @@ class _DashboardViewState extends State<DashboardView> {
           IconButton(
             onPressed: () {
               context.read<AdminBloc>().add(AdminFetch());
-              context.read<EmployeeBloc>().add(
-                FetchEmployees(),
+              context.read<EmployeeBloc>().add(FetchEmployees());
+
+              context.read<DashboardBloc>().add(
+                FetchDepartment(admin.id ?? ""),
               );
-              context.read<ManagerBloc>().add(
-                FetchManagers(adminId: admin.id ?? 1),
-              );
-              context.read<DashboardBloc>().add(FetchDepartment(admin.id ?? 1));
               context.read<DashboardBloc>().add(FetchEmployee());
+              context.read<DepartmentBloc>().add(
+                FetchDepartments(adminId: admin.id ?? ""),
+              );
+              context.read<SystemBloc>().add(
+                FetchSystem(adminId: admin.id ?? ""),
+              );
+              context.read<DeviceBloc>().add(
+                FetchDevice(adminId: admin.id ?? ""),
+              );
             },
             icon: Icon(Icons.refresh),
           ),
@@ -128,9 +129,9 @@ class _DashboardViewState extends State<DashboardView> {
                 backgroundColor: Colors.white,
                 child: BlocBuilder<AdminBloc, AdminState>(
                   builder: (context, state) {
-                    if (state.adminList.isNotEmpty) {
+                    if (state.adminList != null) {
                       return Text(
-                        state.adminList.first.name.toString()[0].toUpperCase(),
+                        state.adminList!.first.name.toString()[0].toUpperCase(),
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -148,9 +149,9 @@ class _DashboardViewState extends State<DashboardView> {
               ),
               accountName: BlocBuilder<AdminBloc, AdminState>(
                 builder: (context, state) {
-                  if (state.adminList.isNotEmpty) {
+                  if (state.adminList != null) {
                     return Text(
-                      state.adminList.first.name.toString(),
+                      state.adminList!.first.name.toString(),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     );
                   } else {
@@ -160,8 +161,8 @@ class _DashboardViewState extends State<DashboardView> {
               ),
               accountEmail: BlocBuilder<AdminBloc, AdminState>(
                 builder: (context, state) {
-                  if (state.adminList.isNotEmpty) {
-                    return Text(state.adminList.first.email.toString());
+                  if (state.adminList!.isNotEmpty) {
+                    return Text(state.adminList!.first.email.toString());
                   } else {
                     return Text("");
                   }
@@ -180,24 +181,20 @@ class _DashboardViewState extends State<DashboardView> {
               leading: Icon(Icons.business),
               title: Text("Department"),
               onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  DepartmentScreen.routeName,
-                  arguments: context.read<AdminBloc>().state.adminList.first,
-                );
+                Navigator.pushNamed(context, DepartmentScreen.routeName);
               },
             ),
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text("Manager"),
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  ManagerScreen.routeName,
-                  arguments: ManagerScreenArguments(),
-                );
-              },
-            ),
+            // ListTile(
+            //   leading: Icon(Icons.person),
+            //   title: Text("Manager"),
+            //   onTap: () {
+            //     Navigator.pushNamed(
+            //       context,
+            //       ManagerScreen.routeName,
+            //       arguments: ManagerScreenArguments(),
+            //     );
+            //   },
+            // ),
             ListTile(
               leading: Icon(Icons.group),
               title: Text("Employee"),
@@ -206,7 +203,7 @@ class _DashboardViewState extends State<DashboardView> {
                 Navigator.pushNamed(
                   context,
                   EmployeeScreen.routeName,
-                  arguments: ManagerScreenArguments(departmentList: dept),
+                  arguments: dept.first,
                 );
               },
             ),
@@ -242,8 +239,9 @@ class _DashboardViewState extends State<DashboardView> {
                 context.read<AdminBloc>().add(
                   AdminLogin(
                     email:
-                        context.read<AdminBloc>().state.adminList.first.email,
-                    check: "Logout",
+                        context.read<AdminBloc>().state.adminList!.first.email,
+                    password:
+                        context.read<AdminBloc>().state.adminList!.first.pass,
                   ),
                 );
                 context.read<AdminBloc>().add(AdminLogout());
@@ -309,7 +307,7 @@ class _DashboardViewState extends State<DashboardView> {
                         context,
                         DepartmentScreen.routeName,
                         arguments:
-                            context.read<AdminBloc>().state.adminList.first,
+                            context.read<AdminBloc>().state.adminList!.first,
                       );
                     },
                     child: Card(
@@ -330,9 +328,9 @@ class _DashboardViewState extends State<DashboardView> {
                               ),
                             ),
                             SizedBox(height: 4),
-                            BlocBuilder<DashboardBloc, DashboardState>(
+                            BlocBuilder<DepartmentBloc, DepartmentState>(
                               builder: (context, state) {
-                                if (state.department.isEmpty) {
+                                if (state.departments.isEmpty) {
                                   return SizedBox(
                                     height: 15,
                                     width: 15,
@@ -340,60 +338,7 @@ class _DashboardViewState extends State<DashboardView> {
                                   );
                                 } else {
                                   return Text(
-                                    '${state.department.length}',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Manager Card
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        ManagerScreen.routeName,
-                        arguments: ManagerScreenArguments(),
-                      );
-                    },
-                    child: Card(
-                      elevation: 4,
-                      color: Colors.green,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.person, size: 32, color: Colors.white),
-                            SizedBox(height: 8),
-                            Text(
-                              'Managers',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            BlocBuilder<ManagerBloc, ManagerState>(
-                              builder: (context, state) {
-                                if (state.managers.isEmpty) {
-                                  return SizedBox(
-                                    height: 15,
-                                    width: 15,
-                                    child: Text("0"),
-                                  );
-                                } else {
-                                  return Text(
-                                    '${state.managers.length}',
+                                    '${state.departments.length}',
                                     style: TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
@@ -414,11 +359,7 @@ class _DashboardViewState extends State<DashboardView> {
                     onTap: () {
                       final dept =
                           context.read<DashboardBloc>().state.department;
-                      Navigator.pushNamed(
-                        context,
-                        EmployeeScreen.routeName,
-                        arguments: ManagerScreenArguments(departmentList: dept),
-                      );
+                      Navigator.pushNamed(context, EmployeeScreen.routeName);
                     },
                     child: Card(
                       elevation: 4,
@@ -524,7 +465,11 @@ class _DashboardViewState extends State<DashboardView> {
                   //Device Card
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, DeviceView.routeName);
+                      Navigator.pushNamed(
+                        context,
+                        DeviceView.routeName,
+                        arguments: admin,
+                      );
                     },
                     child: Card(
                       elevation: 4,
@@ -624,29 +569,23 @@ class _DashboardViewState extends State<DashboardView> {
                               ),
                             ),
                             Expanded(
-                              child: BlocBuilder<DashboardBloc, DashboardState>(
+                              child: BlocBuilder<DepartmentBloc, DepartmentState>(
                                 builder: (context, state) {
-                                  if (state.department.isEmpty) {
+                                  if (state.departments.isEmpty) {
                                     return Center(child: Text("No Department"));
-                                  } else if (state.department.isNotEmpty) {
+                                  } else if (state.departments.isNotEmpty) {
                                     return ListView.builder(
                                       padding: EdgeInsets.zero,
-                                      itemCount: state.department.length,
+                                      itemCount: state.departments.length,
                                       itemBuilder: (context, index) {
                                         return ListTile(
                                           trailing: GestureDetector(
                                             onTap: () {
                                               Navigator.pushNamed(
                                                 context,
-                                                ManagerScreen.routeName,
+                                                DepartmentScreen.routeName,
                                                 arguments:
-                                                    ManagerScreenArguments(
-                                                      department:
-                                                          state
-                                                              .department[index],
-                                                      departmentList:
-                                                          state.department,
-                                                    ),
+                                                    state.departments[index],
                                               );
                                             },
                                             child: Icon(
@@ -663,7 +602,7 @@ class _DashboardViewState extends State<DashboardView> {
                                             ),
                                           ),
                                           title: Text(
-                                            state.department[index].name,
+                                            state.departments[index].name,
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -685,96 +624,7 @@ class _DashboardViewState extends State<DashboardView> {
                       ),
                     ),
                     SizedBox(width: 10),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * .7,
-                      height: MediaQuery.of(context).size.height * 0.32,
-                      child: Card(
-                        elevation: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(8),
-                              color: Colors.green,
-                              width: double.infinity,
-                              child: Text(
-                                'Manager Overview',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Expanded(
-                              child: BlocBuilder<ManagerBloc, ManagerState>(
-                                builder: (context, state) {
-                                  if (state.managers.isEmpty) {
-                                    return Center(child: Text("No Manager"));
-                                  } else if (state.managers.isNotEmpty) {
-                                    return ListView.builder(
-                                      padding: EdgeInsets.zero,
-                                      itemCount: state.managers.length,
-                                      itemBuilder: (context, index) {
-                                        return ListTile(
-                                          trailing: GestureDetector(
-                                            onTap: () {
-                                              Navigator.pushNamed(
-                                                context,
-                                                EmployeeScreen.routeName,
-                                                arguments:
-                                                    ManagerScreenArguments(
-                                                      departmentList:
-                                                          context
-                                                              .read<
-                                                                DashboardBloc
-                                                              >()
-                                                              .state
-                                                              .department,
-                                                      manager:
-                                                          state.managers[index],
-                                                    ),
-                                              );
-                                            },
-                                            child: Icon(
-                                              Icons.arrow_forward_ios_rounded,
-                                              size: 17,
-                                            ),
-                                          ),
-                                          leading: CircleAvatar(
-                                            backgroundColor: Colors.green
-                                                .withOpacity(0.2),
-                                            child: Text(
-                                              state
-                                                  .managers[index]
-                                                  .managerName[0]
-                                                  .toUpperCase(),
-                                            ),
-                                          ),
-                                          title: Text(
-                                            state.managers[index].managerName,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          subtitle: Text('Manager'),
-                                        );
-                                      },
-                                    );
-                                  } else {
-                                    return Center(
-                                      child: Text('No managers found'),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
+
 
                     // Employee Overview Card
                     SizedBox(
@@ -820,10 +670,7 @@ class _DashboardViewState extends State<DashboardView> {
                                               Navigator.pushNamed(
                                                 context,
                                                 EmployeeScreen.routeName,
-                                                arguments:
-                                                    ManagerScreenArguments(
-                                                      departmentList: dept,
-                                                    ),
+                                                arguments: dept,
                                               );
                                             },
                                             child: Icon(
@@ -908,10 +755,7 @@ class _DashboardViewState extends State<DashboardView> {
                                               Navigator.pushNamed(
                                                 context,
                                                 EmployeeScreen.routeName,
-                                                arguments:
-                                                    ManagerScreenArguments(
-                                                      departmentList: dept,
-                                                    ),
+                                                arguments: dept,
                                               );
                                             },
                                             child: Icon(
@@ -994,10 +838,7 @@ class _DashboardViewState extends State<DashboardView> {
                                               Navigator.pushNamed(
                                                 context,
                                                 EmployeeScreen.routeName,
-                                                arguments:
-                                                    ManagerScreenArguments(
-                                                      departmentList: dept,
-                                                    ),
+                                                arguments: dept,
                                               );
                                             },
                                             child: Icon(

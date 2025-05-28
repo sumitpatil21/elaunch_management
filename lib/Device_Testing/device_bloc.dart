@@ -3,8 +3,6 @@ import 'package:elaunch_management/Service/device_modal.dart';
 import 'package:equatable/equatable.dart';
 
 import '../Service/firebaseDatabase.dart';
-
-
 import 'device_event.dart';
 
 part 'device_state.dart';
@@ -18,50 +16,27 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   }
 
   Future<void> _fetchDeviceData(FetchDevice event, Emitter<DeviceState> emit) async {
-    try {
-      // Local DB (commented)
-      // final devices = await DbHelper.dbHelper.fetchAllTestingDevices(adminId: event.adminId);
 
-      final devices = await FirebaseDbHelper.firebaseDbHelper.fetchDevices(adminId: event.adminId??1);
-      emit(DeviceState(devices: devices));
-    } catch (e) {
-      emit(DeviceState(devices: [], error: e.toString()));
-    }
+    final devices = await FirebaseDbHelper.firebase.getDevices(event.adminId??"");
+    emit(DeviceState(devices: devices));
   }
 
   Future<void> _insertDeviceData(AddDevice event, Emitter<DeviceState> emit) async {
-    try {
-      // Local DB (commented)
-      // await DbHelper.dbHelper.insertIntoTestingDevice(...);
+    await FirebaseDbHelper.firebase.createDevice(event.device);
 
-      await FirebaseDbHelper.firebaseDbHelper.insertDevice(event.device);
-      add(FetchDevice(adminId: event.device.adminId));
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+    add(FetchDevice(adminId: event.device.adminId ?? ""));
   }
 
   Future<void> _updateDeviceData(UpdateDevice event, Emitter<DeviceState> emit) async {
-    try {
-      // Local DB (commented)
-      // await DbHelper.dbHelper.updateTestingDevice(...);
-
-      await FirebaseDbHelper.firebaseDbHelper.updateDevice(event.device);
-      add(FetchDevice(adminId: event.device.adminId));
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+    await FirebaseDbHelper.firebase.updateDevice(event.device);
+    add(FetchDevice(adminId: event.device.adminId ?? ""));
   }
+
 
   Future<void> _deleteDeviceData(DeleteDevice event, Emitter<DeviceState> emit) async {
-    try {
-      // Local DB (commented)
-      // await DbHelper.dbHelper.deleteTestingDevice(event.id);
+    await FirebaseDbHelper.firebase.deleteDevice(event.id);
 
-      await FirebaseDbHelper.firebaseDbHelper.deleteDevice("${event.id}");
-      add(FetchDevice(adminId: event.adminId));
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
+    add(FetchDevice(adminId: event.adminId));
   }
 }
+

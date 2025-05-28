@@ -1,9 +1,11 @@
 class EmployeeModal {
-  int? id;
+  String? id;
   String name;
   String email;
   String address;
   String dob;
+  String adminId;
+  String departmentId;
   String role;
   String? managerName;
   String? departmentName;
@@ -14,8 +16,9 @@ class EmployeeModal {
     required this.email,
     required this.address,
     required this.dob,
+    required this.adminId,
     required this.role,
-
+    required this.departmentId,
     this.managerName,
     this.departmentName,
   });
@@ -28,6 +31,8 @@ class EmployeeModal {
       email: json['email'] ?? '',
       address: json['address'] ?? '',
       dob: json['dob'] ?? '',
+      adminId: json['adminId'] ?? 0,
+      departmentId: json['departmentId'] ?? 0,
       role: json['role'] ?? '',
 
       managerName: json['managerName'],
@@ -43,7 +48,8 @@ class EmployeeModal {
       'address': address,
       'dob': dob,
       'role': role,
-
+      'adminId': adminId,
+      'departmentId': departmentId,
       'managerName': managerName,
       'departmentName': departmentName,
     };
