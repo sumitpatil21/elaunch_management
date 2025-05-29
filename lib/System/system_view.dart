@@ -58,15 +58,10 @@ class _SystemViewState extends State<SystemView> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.yellow.withOpacity(0.2),
         onPressed: () {
-          final employeeBloc = context.read<EmployeeBloc>();
-          final systemBloc = context.read<SystemBloc>();
-          if (employeeBloc.state.employees.isEmpty) {
-            employeeBloc.add(FetchEmployees());
-          }
           showSystemDialog(
             context,
-            bloc: employeeBloc,
-            systemBloc: systemBloc,
+            employeeBloc: context.read<EmployeeBloc>()..add(FetchEmployees()),
+            systemBloc: context.read<SystemBloc>(),
             adminId: args?.id,
           );
         },
@@ -116,6 +111,7 @@ class _SystemViewState extends State<SystemView> {
                       status == 'all' ? 'All' : status.toUpperCase(),
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black87,
+
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
@@ -145,18 +141,19 @@ class _SystemViewState extends State<SystemView> {
               builder: (context, state) {
                 final query = searchController.text.toLowerCase();
 
-                // Apply both search and status filters
                 final filteredSystems =
                     state.systems.where((system) {
-                      // Search filter
                       final matchesSearch =
                           system.systemName.toLowerCase().contains(query) ||
                           (system.version?.toLowerCase().contains(query) ??
                               false) ||
                           (system.employeeName?.toLowerCase().contains(query) ??
+                              false) ||
+                          (system.operatingSystem?.toLowerCase().contains(
+                                query,
+                              ) ??
                               false);
 
-                      // Status filter
                       final matchesStatus =
                           selectedStatusFilter == 'all' ||
                           (system.status ?? 'available') ==
@@ -223,7 +220,7 @@ class _SystemViewState extends State<SystemView> {
                       ),
                       direction: DismissDirection.endToStart,
                       confirmDismiss:
-                          (_) => showDialog(
+                          (_) => showDialog<bool>(
                             context: context,
                             builder:
                                 (_) => AlertDialog(
@@ -252,8 +249,6 @@ class _SystemViewState extends State<SystemView> {
                         context.read<SystemBloc>().add(
                           DeleteSystem(
                             id: system.id ?? "1",
-                            adminId: "${args!.id}",
-                            employeeId: system.employeeId,
                           ),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -284,14 +279,18 @@ class _SystemViewState extends State<SystemView> {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(system.version ?? ""),
-                              Text(system.employeeName ?? "Unassigned"),
+                              Text(
+                                "${system.operatingSystem ?? ''} ${system.version ?? ''}",
+                              ),
+                              Text(
+                                "Assigned to: ${system.employeeName ?? 'Unassigned'}",
+                              ),
                               Row(
                                 children: [
                                   const Text("Status: "),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
+                                      horizontal: 4,
                                       vertical: 1,
                                     ),
                                     decoration: BoxDecoration(
@@ -323,7 +322,9 @@ class _SystemViewState extends State<SystemView> {
                                   showSystemDialog(
                                     context,
                                     system: system,
-                                    bloc: context.read<EmployeeBloc>(),
+                                    employeeBloc:
+                                        context.read<EmployeeBloc>()
+                                          ..add(FetchEmployees()),
                                     systemBloc: context.read<SystemBloc>(),
                                     adminId: args?.id,
                                   );
@@ -362,44 +363,45 @@ class _SystemViewState extends State<SystemView> {
   void showSystemDialog(
     BuildContext context, {
     SystemModal? system,
-    required EmployeeBloc bloc,
+    required EmployeeBloc employeeBloc,
     required SystemBloc systemBloc,
     String? adminId,
   }) {
     final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(
-      text: system?.systemName ?? '',
-    );
-    final versionController = TextEditingController(
-      text: system?.version ?? '',
-    );
-    String selectedStatus = system?.status ?? 'available';
-    String selectedOS = system?.operatingSystem ?? 'Windows';
+    final nameController = TextEditingController();
+    final versionController = TextEditingController();
 
-    EmployeeModal? selectedEmployee =
-        system != null && system.employeeId != null
-            ? bloc.state.employees.firstWhere(
-              (emp) => emp.id == system.employeeId,
-              orElse:
-                  () =>
-                      bloc.state.employees.isNotEmpty
-                          ? bloc.state.employees.first
-                          : EmployeeModal(
-                            id: '-1',
-                            name: "No employees available",
-                            email: '',
-                            address: '',
-                            dob: '',
-                            role: "",
-                            departmentName: "",
-                            managerName: "",
-                            departmentId: "1",
-                            adminId: "",
-                          ),
-            )
-            : (bloc.state.employees.isNotEmpty
-                ? bloc.state.employees.first
-                : null);
+    final unassignedEmployee = EmployeeModal(
+      id: '-1',
+      name: "Unassigned",
+      email: '',
+      address: '',
+      dob: '',
+      role: "",
+      departmentName: "",
+      managerName: "",
+      departmentId: "1",
+      adminId: "",
+    );
+
+    EmployeeModal? selectedEmployee = unassignedEmployee;
+    String selectedStatus = 'available';
+    String selectedOS = 'Windows';
+
+    // Pre-fill form if editing existing system
+    if (system != null) {
+      nameController.text = system.systemName;
+      versionController.text = system.version ?? '';
+      selectedStatus = system.status ?? 'available';
+      selectedOS = system.operatingSystem ?? 'Windows';
+
+      if (system.employeeId != null) {
+        selectedEmployee = employeeBloc.state.employees.firstWhere(
+          (emp) => emp.id == system.employeeId,
+          orElse: () => unassignedEmployee,
+        );
+      }
+    }
 
     showDialog(
       context: context,
@@ -430,6 +432,28 @@ class _SystemViewState extends State<SystemView> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedOS,
+                        decoration: const InputDecoration(
+                          labelText: "Operating System",
+                          border: OutlineInputBorder(),
+                        ),
+                        items:
+                            ['Windows', 'macOS', 'Linux']
+                                .map(
+                                  (os) => DropdownMenuItem(
+                                    value: os,
+                                    child: Text(os),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOS = value ?? 'Windows';
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
                       TextFormField(
                         controller: versionController,
                         validator:
@@ -444,43 +468,20 @@ class _SystemViewState extends State<SystemView> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: selectedOS,
-                        decoration: const InputDecoration(
-                          labelText: "Operating System",
-                          border: OutlineInputBorder(),
-                        ),
-                        items:
-                            ['Windows', 'macOS', 'Linux'].map((os) {
-                              return DropdownMenuItem(
-                                value: os,
-                                child: Text(os),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedOS = value ?? 'Windows';
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
                         value: selectedStatus,
                         decoration: const InputDecoration(
                           labelText: "Status",
                           border: OutlineInputBorder(),
                         ),
                         items:
-                            [
-                              'available',
-                              'assigned',
-                              'maintenance',
-                              'retired',
-                            ].map((status) {
-                              return DropdownMenuItem(
-                                value: status,
-                                child: Text(status),
-                              );
-                            }).toList(),
+                            ['available', 'assigned', 'maintenance', 'retired']
+                                .map(
+                                  (status) => DropdownMenuItem(
+                                    value: status,
+                                    child: Text(status),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             selectedStatus = value ?? 'available';
@@ -488,34 +489,31 @@ class _SystemViewState extends State<SystemView> {
                         },
                       ),
                       const SizedBox(height: 12),
-                      const Text("Select Employee"),
+                      const Text("Select Employee (Optional)"),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<EmployeeModal>(
-                        value:
-                            bloc.state.employees.contains(selectedEmployee)
-                                ? selectedEmployee
-                                : null,
+                        value: selectedEmployee,
                         decoration: const InputDecoration(
                           labelText: "Employee",
                           border: OutlineInputBorder(),
                         ),
-                        items:
-                            bloc.state.employees.map((emp) {
-                              return DropdownMenuItem<EmployeeModal>(
-                                value: emp,
-                                child: Text(emp.name),
-                              );
-                            }).toList(),
+                        items: [
+                          DropdownMenuItem<EmployeeModal>(
+                            value: unassignedEmployee,
+                            child: const Text("Unassigned"),
+                          ),
+                          ...employeeBloc.state.employees.map((emp) {
+                            return DropdownMenuItem<EmployeeModal>(
+                              value: emp,
+                              child: Text(emp.name),
+                            );
+                          }).toList(),
+                        ],
                         onChanged: (emp) {
                           setState(() {
-                            selectedEmployee = emp;
+                            selectedEmployee = emp ?? unassignedEmployee;
                           });
                         },
-                        validator:
-                            (value) =>
-                                value == null
-                                    ? 'Please select an employee'
-                                    : null,
                       ),
                     ],
                   ),
@@ -529,8 +527,7 @@ class _SystemViewState extends State<SystemView> {
                 ElevatedButton(
                   child: Text(system != null ? "Update" : "Add"),
                   onPressed: () {
-                    if (formKey.currentState!.validate() &&
-                        selectedEmployee != null) {
+                    if (formKey.currentState!.validate()) {
                       if (system != null) {
                         systemBloc.add(
                           UpdateSystem(
@@ -539,7 +536,10 @@ class _SystemViewState extends State<SystemView> {
                             version: versionController.text,
                             status: selectedStatus,
                             operatingSystem: selectedOS,
-                            employeeId: selectedEmployee!.id,
+                            employeeId:
+                                selectedEmployee?.id == '-1'
+                                    ? null
+                                    : selectedEmployee?.id,
                             adminId: adminId,
                           ),
                         );
@@ -550,12 +550,19 @@ class _SystemViewState extends State<SystemView> {
                             version: versionController.text,
                             status: selectedStatus,
                             operatingSystem: selectedOS,
-                            employeeName: selectedEmployee!.name,
-                            employeeId: selectedEmployee!.id,
+                            employeeName:
+                                selectedEmployee?.id == '-1'
+                                    ? null
+                                    : selectedEmployee?.name,
+                            employeeId:
+                                selectedEmployee?.id == '-1'
+                                    ? null
+                                    : selectedEmployee?.id,
                             adminId: adminId,
                           ),
                         );
                       }
+
                       Navigator.pop(context);
                     }
                   },

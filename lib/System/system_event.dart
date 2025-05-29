@@ -6,12 +6,11 @@ sealed class SystemEvent extends Equatable {
 
 class FetchSystem extends SystemEvent {
   final String? adminId;
-  final String? employeeId; // Added for consistency if needed for filtering
 
-  const FetchSystem({required this.adminId, this.employeeId});
+  const FetchSystem({required this.adminId});
 
   @override
-  List<Object> get props => [adminId ?? 0, employeeId ?? ""];
+  List<Object> get props => [adminId ?? "0"];
 }
 
 class AddSystem extends SystemEvent {

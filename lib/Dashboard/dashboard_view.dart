@@ -119,37 +119,18 @@ class _DashboardViewState extends State<DashboardView> {
               decoration: BoxDecoration(color: Theme.of(context).primaryColor),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
-                child: BlocBuilder<AdminBloc, AdminState>(
-                  builder: (context, state) {
-                    if (state.adminList != null) {
-                      return Text(
-                        state.adminList!.first.name.toString()[0].toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      );
-                    } else {
-                      return Icon(
-                        Icons.person,
-                        color: Theme.of(context).primaryColor,
-                      );
-                    }
-                  },
-                ),
+                child: Text(
+                  admin.name.toString()[0].toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                )
               ),
-              accountName: BlocBuilder<AdminBloc, AdminState>(
-                builder: (context, state) {
-                  if (state.adminList != null) {
-                    return Text(
-                      state.adminList!.first.name.toString(),
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    );
-                  } else {
-                    return Text("No user logged in");
-                  }
-                },
+              accountName: Text(
+                admin.name.toString(),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               accountEmail: BlocBuilder<AdminBloc, AdminState>(
                 builder: (context, state) {
@@ -351,7 +332,7 @@ class _DashboardViewState extends State<DashboardView> {
                   GestureDetector(
                     onTap: () {
                       final dept = context.read<DepartmentBloc>().state.departments;
-                      Navigator.pushNamed(context, EmployeeScreen.routeName);
+                      Navigator.pushNamed(context, EmployeeScreen.routeName,arguments: dept.first);
                     },
                     child: Card(
                       elevation: 4,
@@ -577,7 +558,7 @@ class _DashboardViewState extends State<DashboardView> {
                                                 context,
                                                 DepartmentScreen.routeName,
                                                 arguments:
-                                                    state.departments[index],
+                                                    admin,
                                               );
                                             },
                                             child: Icon(
@@ -658,7 +639,7 @@ class _DashboardViewState extends State<DashboardView> {
                                               Navigator.pushNamed(
                                                 context,
                                                 EmployeeScreen.routeName,
-                                                arguments: dept,
+                                                arguments: dept.first,
                                               );
                                             },
                                             child: Icon(
@@ -735,11 +716,10 @@ class _DashboardViewState extends State<DashboardView> {
                                         return ListTile(
                                           trailing: GestureDetector(
                                             onTap: () {
-                                              final dept = context.read<DepartmentBloc>().state.departments;
                                               Navigator.pushNamed(
                                                 context,
-                                                EmployeeScreen.routeName,
-                                                arguments: dept,
+                                                SystemView.routeName,
+                                                arguments: admin,
                                               );
                                             },
                                             child: Icon(
@@ -817,8 +797,8 @@ class _DashboardViewState extends State<DashboardView> {
                                               final dept = context.read<DepartmentBloc>().state.departments;
                                               Navigator.pushNamed(
                                                 context,
-                                                EmployeeScreen.routeName,
-                                                arguments: dept,
+                                                DeviceView.routeName,
+                                                arguments: admin,
                                               );
                                             },
                                             child: Icon(

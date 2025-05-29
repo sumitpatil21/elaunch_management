@@ -121,6 +121,7 @@ class FirebaseDbHelper {
   Future<List<EmployeeModal>> getEmployees({
     String? role,
     String? departmentId,
+    String? adminId,
   }) async {
     Query query = employees;
 
@@ -131,7 +132,12 @@ class FirebaseDbHelper {
         isEqualTo: departments.doc(departmentId),
       );
     }
-
+    if (adminId != null) {
+      query = query.where(
+        'adminRef',
+        isEqualTo: admins.doc(adminId),
+      );
+    }
     final snapshot = await query.get();
     log("start: ${snapshot.docs}");
     return snapshot.docs.map((doc) {
@@ -168,31 +174,22 @@ class FirebaseDbHelper {
     });
   }
 
-  Future<List<SystemModal>> getSystems({
-    String? adminId,
-    String? employeeId,
-  }) async {
-    Query query = systems;
+ Future<List<SystemModal>> getSystems(String adminId) async {
 
-    if (adminId != null) {
-      query = query.where('adminRef', isEqualTo: admins.doc(adminId));
-    }
-    if (employeeId != null) {
-      query = query.where('employeeRef', isEqualTo: employees.doc(employeeId));
-    }
+   final snapshot =
+   await devices.where('adminRef', isEqualTo: admins.doc(adminId)).get();
 
-    final snapshot = await query.get();
-    return snapshot.docs.map((doc) {
-      final data = doc.data()! as Map<String, dynamic>;
-      return SystemModal.fromJson({
-        ...data,
-        'id': doc.id,
-        'adminId': (data['adminRef'] as DocumentReference).id,
-        if (data.containsKey('employeeRef'))
-          'employeeId': (data['employeeRef'] as DocumentReference).id,
-      });
-    }).toList();
-  }
+   return snapshot.docs.map((doc) {
+     final data = doc.data()! as Map<String, dynamic>;
+     return SystemModal.fromJson({
+       ...data,
+       'id': doc.id,
+       'adminId': (data['adminRef'] as DocumentReference).id,
+     });
+   }).toList();
+
+
+ }
 
   Future<void> updateSystem(SystemModal system) async {
     if (system.id == null) return;

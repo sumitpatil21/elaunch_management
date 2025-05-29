@@ -19,7 +19,7 @@ class EmployeeScreen extends StatefulWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => EmployeeBloc()..add(FetchEmployees()),
+          create: (context) => EmployeeBloc()..add(FetchEmployees(adminId: args?.id_admin,departmentId: args?.id)),
         ),
         BlocProvider(
           create:
@@ -342,6 +342,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                 );
 
                 if (state.employees.isEmpty) {
+                  context.read<EmployeeBloc>().add(FetchEmployees());
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -353,16 +354,11 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Try adding some employees",
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          child: const Text("Refresh"),
+                          child: CircularProgressIndicator(),
                           onPressed: () {
-                            context.read<EmployeeBloc>().add(FetchEmployees());
+
                           },
                         ),
                       ],

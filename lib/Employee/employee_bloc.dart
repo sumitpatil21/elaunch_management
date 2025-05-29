@@ -25,6 +25,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     final employees = await FirebaseDbHelper.firebase.getEmployees(
       role: event.role,
       departmentId: event.departmentId,
+      adminId: event.adminId
     );
 
     emit(state.copyWith(employees: employees, filteredEmployees: employees));
@@ -48,7 +49,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
 
     await FirebaseDbHelper.firebase.createEmployee(employee);
-    add(FetchEmployees(role: event.role));
+    add(FetchEmployees(role: event.role,adminId: event.adminId));
   }
 
   Future<void> updateEmployeeData(

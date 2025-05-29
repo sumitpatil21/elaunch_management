@@ -1,4 +1,3 @@
-
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../Service/firebaseDatabase.dart';
@@ -9,27 +8,26 @@ part 'system_state.dart';
 
 class SystemBloc extends Bloc<SystemEvent, SystemState> {
   SystemBloc() : super(const SystemState()) {
-    on<FetchSystem>(_fetchSystemData);
-    on<AddSystem>(_insertSystemData);
-    on<UpdateSystem>(_updateSystemData);
-    on<DeleteSystem>(_deleteSystemData);
+    on<FetchSystem>(fetchSystemData);
+    on<AddSystem>(insertSystemData);
+    on<UpdateSystem>(updateSystemData);
+    on<DeleteSystem>(deleteSystemData);
   }
 
-
-  Future<void> _fetchSystemData(FetchSystem event, Emitter<SystemState> emit) async {
-
-
-
-      final systems = await FirebaseDbHelper.firebase.getSystems(
-        adminId: event.adminId,
-        employeeId: event.employeeId,
-      );
-      emit(SystemState(systems: systems));
-
+  Future<void> fetchSystemData(
+    FetchSystem event,
+    Emitter<SystemState> emit,
+  ) async {
+    final systems = await FirebaseDbHelper.firebase.getSystems(
+      event.adminId ?? "",
+    );
+    emit(SystemState(systems: systems));
   }
 
-  Future<void> _insertSystemData(AddSystem event, Emitter<SystemState> emit) async {
-
+  Future<void> insertSystemData(
+    AddSystem event,
+    Emitter<SystemState> emit,
+  ) async {
     final system = SystemModal(
       systemName: event.systemName,
       version: event.version ?? "",
@@ -42,15 +40,15 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
       id: "1",
     );
 
-      await FirebaseDbHelper.firebase.createSystem(system);
+    await FirebaseDbHelper.firebase.createSystem(system);
 
-      add(FetchSystem(adminId: "${event.adminId}", employeeId: event.employeeId));
-
+    add(FetchSystem(adminId: "${event.adminId}",));
   }
 
-
-  Future<void> _updateSystemData(UpdateSystem event, Emitter<SystemState> emit) async {
-
+  Future<void> updateSystemData(
+    UpdateSystem event,
+    Emitter<SystemState> emit,
+  ) async {
     final system = SystemModal(
       id: event.id,
       systemName: event.systemName,
@@ -60,22 +58,18 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
       adminId: event.adminId,
       employeeId: event.employeeId,
       employeeName: event.employeeName,
-
     );
-    await FirebaseDbHelper.firebase.updateSystem(
-      system,
-    );
+    await FirebaseDbHelper.firebase.updateSystem(system);
 
-      add(FetchSystem(adminId: "${event.adminId}", employeeId: event.employeeId));
-
+    add(FetchSystem(adminId: "${event.adminId}",));
   }
 
+  Future<void> deleteSystemData(
+    DeleteSystem event,
+    Emitter<SystemState> emit,
+  ) async {
+    await FirebaseDbHelper.firebase.deleteSystem(event.id);
 
-  Future<void> _deleteSystemData(DeleteSystem event, Emitter<SystemState> emit) async {
-
-
-      await FirebaseDbHelper.firebase.deleteSystem("${event.id}");
-
-    add(FetchSystem(adminId: "${event.adminId}", employeeId: event.employeeId));
+    add(FetchSystem(adminId: "${event.adminId}"));
   }
 }
