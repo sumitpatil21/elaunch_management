@@ -24,7 +24,6 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
         adminId: event.adminId,
         employeeId: event.employeeId,
       );
-    //
       emit(SystemState(systems: systems));
 
   }

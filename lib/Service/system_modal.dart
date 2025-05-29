@@ -45,7 +45,6 @@ class SystemModal {
       'status': status,
       'employee_name': employeeName,
       'id_admin': adminId,
-
       'id_employee': employeeId,
     };
   }

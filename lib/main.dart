@@ -44,7 +44,6 @@ class MyApp extends StatelessWidget {
     AdminView.routeName:AdminView.builder,
     DashboardView.routeName:DashboardView.builder,
     DepartmentScreen.routeName:DepartmentScreen.builder,
-    // ManagerScreen.routeName:ManagerScreen.builder,
     EmployeeScreen.routeName:EmployeeScreen.builder,
     SystemView.routeName:SystemView.builder,
     DeviceView.routeName:DeviceView.builder,

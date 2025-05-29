@@ -17,7 +17,7 @@ class FirebaseDbHelper {
   CollectionReference get systems => _firestore.collection('systems');
   CollectionReference get devices => _firestore.collection('devices');
 
-  // Admin Operations
+
   Future<String> createAdmin(AdminModal admin) async {
     final doc = await admins.add(admin.toJson());
     log("Admin created with ID: ${doc.id}");
@@ -55,7 +55,7 @@ class FirebaseDbHelper {
         .toList();
   }
 
-  // Department Operations
+
   Future<String> createDepartment(DepartmentModal department) async {
     if (!(await admins.doc(department.id_admin.toString()).get()).exists) {
       throw Exception('Admin does not exist');
@@ -105,7 +105,6 @@ class FirebaseDbHelper {
     await departments.doc(id).delete();
   }
 
-  // Employee Operations
   Future<String> createEmployee(EmployeeModal employee) async {
     if (!(await departments.doc(employee.departmentId).get()).exists) {
       throw Exception('Department does not exist');
@@ -160,7 +159,6 @@ class FirebaseDbHelper {
     await employees.doc(id).delete();
   }
 
-  // System Operations
   Future<void> createSystem(SystemModal system) async {
     await systems.add({
       ...system.toJson(),

@@ -12,26 +12,26 @@ part 'department_event.dart';
 part 'department_state.dart';
 
 class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
-  DepartmentBloc(): super(DepartmentState()){
+  DepartmentBloc() : super(DepartmentState()) {
     on<FetchDepartments>(fetchDepartmentsData);
     on<AddDepartment>(insertDepartmentData);
     on<UpdateDepartment>(updateDepartmentData);
     on<DeleteDepartment>(deleteDepartmentData);
   }
   Future<void> fetchDepartmentsData(
-      FetchDepartments event,
-      Emitter<DepartmentState> emit,
-      ) async {
-    final fire = await FirebaseDbHelper.firebase
-        .getDepartments("${event.adminId}");
+    FetchDepartments event,
+    Emitter<DepartmentState> emit,
+  ) async {
+    final fire = await FirebaseDbHelper.firebase.getDepartments(
+      "${event.adminId}",
+    );
     emit(DepartmentState(departments: fire));
   }
 
-
   Future<void> insertDepartmentData(
-      AddDepartment event,
-      Emitter<DepartmentState> emit,
-      ) async {
+    AddDepartment event,
+    Emitter<DepartmentState> emit,
+  ) async {
     final department = DepartmentModal(
       id: "1",
       name: event.departmentName,
@@ -40,33 +40,32 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
     );
 
     await FirebaseDbHelper.firebase.createDepartment(department);
-    final departments = await FirebaseDbHelper.firebase
-        .getDepartments(event.adminId );
+    final departments = await FirebaseDbHelper.firebase.getDepartments(
+      event.adminId,
+    );
     emit(DepartmentState(departments: departments));
   }
 
   Future<void> updateDepartmentData(
-      UpdateDepartment event,
-      Emitter<DepartmentState> emit,
-      ) async {
-    await FirebaseDbHelper.firebase
-        .updateDepartment(event.departmentModal);
+    UpdateDepartment event,
+    Emitter<DepartmentState> emit,
+  ) async {
+    await FirebaseDbHelper.firebase.updateDepartment(event.departmentModal);
 
-    final departments = await FirebaseDbHelper.firebase
-        .getDepartments(event.departmentModal.id_admin);
+    final departments = await FirebaseDbHelper.firebase.getDepartments(
+      event.departmentModal.id_admin,
+    );
     emit(DepartmentState(departments: departments));
   }
 
   Future<void> deleteDepartmentData(
-      DeleteDepartment event,
-      Emitter<DepartmentState> emit,
-      ) async {
+    DeleteDepartment event,
+    Emitter<DepartmentState> emit,
+  ) async {
     await FirebaseDbHelper.firebase.deleteDepartment(event.id);
-    final departments = await FirebaseDbHelper.firebase
-        .getDepartments((event.adminId ?? 0) as String);
+    final departments = await FirebaseDbHelper.firebase.getDepartments(
+      (event.adminId ?? 0) as String,
+    );
     emit(DepartmentState(departments: departments));
   }
 }
-
-
-

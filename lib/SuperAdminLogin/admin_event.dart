@@ -57,3 +57,10 @@ class AdminLogout extends AdminEvent {
   @override
   List<Object?> get props => [email];
 }
+class AdminLoginCheck extends AdminEvent {
+  final bool isLogin;
+  const AdminLoginCheck({required this.isLogin});
+  @override
+  List<Object?> get props => [isLogin];
+
+}

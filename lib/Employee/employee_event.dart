@@ -10,10 +10,7 @@ abstract class EmployeeEvent extends Equatable {
 class FetchEmployees extends EmployeeEvent {
   final String? role;
   final String? departmentId;
-  const FetchEmployees({
-    this.role,
-    this.departmentId,
-  });
+  const FetchEmployees({this.role, this.departmentId});
 
   @override
   List<Object?> get props => [role, departmentId];
@@ -76,7 +73,7 @@ class UpdateEmployee extends EmployeeEvent {
   const UpdateEmployee({
     required this.id,
     this.adminId,
-     this.departmentId,
+    this.departmentId,
     required this.name,
     required this.email,
     required this.address,
@@ -116,4 +113,36 @@ class DeleteEmployee extends EmployeeEvent {
 
   @override
   List<Object?> get props => [id, adminId, managerName, departmentName];
+}
+
+
+class FilterEmployeesByRole extends EmployeeEvent {
+  final String role;
+
+  const FilterEmployeesByRole({required this.role});
+
+  @override
+  List<Object?> get props => [role];
+}
+
+class FilterEmployeesByDepartment extends EmployeeEvent {
+  final String? department;
+
+  const FilterEmployeesByDepartment({this.department});
+
+  @override
+  List<Object?> get props => [department];
+}
+
+class FilterEmployeesByManager extends EmployeeEvent {
+  final String? manager;
+
+  const FilterEmployeesByManager({this.manager});
+
+  @override
+  List<Object?> get props => [manager];
+}
+
+class ResetEmployeeFilters extends EmployeeEvent {
+  const ResetEmployeeFilters();
 }

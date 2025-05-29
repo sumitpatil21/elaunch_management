@@ -21,7 +21,11 @@ class DeviceView extends StatefulWidget {
         ModalRoute.of(context)!.settings.arguments as AdminModal?;
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => DeviceBloc()..add(FetchDevice(adminId: args?.id??""))),
+        BlocProvider(
+          create:
+              (context) =>
+                  DeviceBloc()..add(FetchDevice(adminId: args?.id ?? "")),
+        ),
         BlocProvider(
           create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
@@ -138,7 +142,6 @@ class _DeviceViewState extends State<DeviceView> {
 
                 final filteredDevices =
                     state.devices.where((device) {
-                      // Search filter
                       final matchesSearch =
                           device.deviceName.toLowerCase().contains(query) ||
                           (device.osVersion?.toLowerCase().contains(query) ??
@@ -152,7 +155,6 @@ class _DeviceViewState extends State<DeviceView> {
                               ) ??
                               false);
 
-                      // Status filter
                       final matchesStatus =
                           selectedStatusFilter == 'all' ||
                           (device.status ?? 'available') ==
@@ -231,7 +233,9 @@ class _DeviceViewState extends State<DeviceView> {
                         elevation: 2,
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.purple.withOpacity(0.2),
+                            backgroundColor: getStatusColor(
+                              device.status ?? 'available',
+                            ),
                             child: const Icon(Icons.phone_android),
                           ),
                           title: Text(
@@ -292,12 +296,7 @@ class _DeviceViewState extends State<DeviceView> {
                                   );
                                 },
                               ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                ),
-                              ),
+
                             ],
                           ),
                         ),
@@ -351,8 +350,8 @@ class _DeviceViewState extends State<DeviceView> {
     );
 
     EmployeeModal? selectedEmployee = unassignedEmployee;
-    String selectedStatus = device?.status??'available';
-    String selectedOS = device?.status??'Android';
+    String selectedStatus = device?.status ?? 'available';
+    String selectedOS = device?.status ?? 'Android';
 
     AdminModal? args =
         ModalRoute.of(context)!.settings.arguments as AdminModal?;
@@ -507,7 +506,6 @@ class _DeviceViewState extends State<DeviceView> {
                         lastCheckInDate: device?.lastCheckInDate,
                         lastCheckOutDate: device?.lastCheckOutDate,
                         adminId: args?.id,
-
                       );
 
                       if (device != null) {

@@ -20,7 +20,6 @@ class AddDepartment extends DepartmentEvent {
   final String departmentName;
   final String dob, adminId;
   final int id;
-  // Removed int id since Firestore generates document IDs automatically
 
   const AddDepartment({
     required this.departmentName,
@@ -30,23 +29,21 @@ class AddDepartment extends DepartmentEvent {
   });
 
   @override
-  List<Object> get props => [departmentName, dob, adminId,id];
+  List<Object> get props => [departmentName, dob, adminId, id];
 }
 
 class UpdateDepartment extends DepartmentEvent {
   final DepartmentModal departmentModal;
 
-  const UpdateDepartment({
-    required this.departmentModal,
-  });
+  const UpdateDepartment({required this.departmentModal});
 
   @override
   List<Object> get props => [departmentModal];
 }
 
 class DeleteDepartment extends DepartmentEvent {
-  final String id; // Changed from int to String to match Firestore document IDs
-  final String? adminId; // Changed from int? to String?
+  final String id;
+  final String? adminId;
 
   const DeleteDepartment({required this.id, this.adminId});
 

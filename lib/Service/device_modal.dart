@@ -5,17 +5,17 @@ class TestingDeviceModal {
   String? osVersion;
   String status;
   String? assignedToEmployeeId;
-  String? lastCheckOutDate; // Consider using DateTime if you parse/format
-  String? lastCheckInDate;  // Consider using DateTime
+  String? lastCheckOutDate;
+  String? lastCheckInDate;
   String? adminId;
-  String? assignedEmployeeName; // For data retrieved from JOIN
+  String? assignedEmployeeName;
 
   TestingDeviceModal({
     this.id,
     required this.deviceName,
     this.operatingSystem,
     this.osVersion,
-    this.status = 'available', // Default value
+    this.status = 'available',
     this.assignedToEmployeeId,
     this.lastCheckOutDate,
     this.lastCheckInDate,
@@ -49,8 +49,6 @@ class TestingDeviceModal {
       'lastCheckOutDate': lastCheckOutDate,
       'lastCheckInDate': lastCheckInDate,
       'id_admin': adminId,
-      // 'assigned_employee_name' is typically not part of the insert/update payload
-      // unless you have a specific reason for it.
     };
   }
 }

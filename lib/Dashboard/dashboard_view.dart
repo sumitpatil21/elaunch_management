@@ -1,10 +1,7 @@
 import 'dart:developer';
-
-import 'package:elaunch_management/Dashboard/dashboard_bloc.dart';
 import 'package:elaunch_management/Department/department_view.dart';
 import 'package:elaunch_management/Device_Testing/device_view.dart';
 import 'package:elaunch_management/Employee/employee_view.dart';
-import 'package:elaunch_management/Employee/manager_view.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +12,7 @@ import '../Device_Testing/device_bloc.dart';
 import '../Device_Testing/device_event.dart';
 import '../Employee/employee_bloc.dart';
 
-import '../Manager/manager_bloc.dart';
+
 import '../Service/admin_modal.dart';
 import '../SuperAdminLogin/admin_view.dart';
 import '../System/system_view.dart';
@@ -85,11 +82,6 @@ class _DashboardViewState extends State<DashboardView> {
             onPressed: () {
               context.read<AdminBloc>().add(AdminFetch());
               context.read<EmployeeBloc>().add(FetchEmployees());
-
-              context.read<DashboardBloc>().add(
-                FetchDepartment(admin.id ?? ""),
-              );
-              context.read<DashboardBloc>().add(FetchEmployee());
               context.read<DepartmentBloc>().add(
                 FetchDepartments(adminId: admin.id ?? ""),
               );
@@ -181,7 +173,8 @@ class _DashboardViewState extends State<DashboardView> {
               leading: Icon(Icons.business),
               title: Text("Department"),
               onTap: () {
-                Navigator.pushNamed(context, DepartmentScreen.routeName);
+                Navigator.pushNamed(context, DepartmentScreen.routeName,arguments:
+                    context.read<AdminBloc>().state.adminList!.first,);
               },
             ),
             // ListTile(
@@ -199,7 +192,7 @@ class _DashboardViewState extends State<DashboardView> {
               leading: Icon(Icons.group),
               title: Text("Employee"),
               onTap: () {
-                final dept = context.read<DashboardBloc>().state.department;
+                final dept = context.read<DepartmentBloc>().state.departments;
                 Navigator.pushNamed(
                   context,
                   EmployeeScreen.routeName,
@@ -357,8 +350,7 @@ class _DashboardViewState extends State<DashboardView> {
                   // Employee Card
                   GestureDetector(
                     onTap: () {
-                      final dept =
-                          context.read<DashboardBloc>().state.department;
+                      final dept = context.read<DepartmentBloc>().state.departments;
                       Navigator.pushNamed(context, EmployeeScreen.routeName);
                     },
                     child: Card(
@@ -662,11 +654,7 @@ class _DashboardViewState extends State<DashboardView> {
                                         return ListTile(
                                           trailing: GestureDetector(
                                             onTap: () {
-                                              final dept =
-                                                  context
-                                                      .read<DashboardBloc>()
-                                                      .state
-                                                      .department;
+                                              final dept = context.read<DepartmentBloc>().state.departments;
                                               Navigator.pushNamed(
                                                 context,
                                                 EmployeeScreen.routeName,
@@ -747,11 +735,7 @@ class _DashboardViewState extends State<DashboardView> {
                                         return ListTile(
                                           trailing: GestureDetector(
                                             onTap: () {
-                                              final dept =
-                                                  context
-                                                      .read<DashboardBloc>()
-                                                      .state
-                                                      .department;
+                                              final dept = context.read<DepartmentBloc>().state.departments;
                                               Navigator.pushNamed(
                                                 context,
                                                 EmployeeScreen.routeName,
@@ -830,11 +814,7 @@ class _DashboardViewState extends State<DashboardView> {
                                         return ListTile(
                                           trailing: GestureDetector(
                                             onTap: () {
-                                              final dept =
-                                                  context
-                                                      .read<DashboardBloc>()
-                                                      .state
-                                                      .department;
+                                              final dept = context.read<DepartmentBloc>().state.departments;
                                               Navigator.pushNamed(
                                                 context,
                                                 EmployeeScreen.routeName,
