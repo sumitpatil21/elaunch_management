@@ -26,6 +26,7 @@ dependencies:
   firebase_core: ^2.0.0
   cloud_firestore: ^4.0.0
   flutterfire_cli: ^1.2.0
+  responsive_framework: any
   connectivity_plus: ^6.1.4
 
 dev_dependencies:

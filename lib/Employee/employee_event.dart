@@ -10,11 +10,11 @@ abstract class EmployeeEvent extends Equatable {
 class FetchEmployees extends EmployeeEvent {
   final String? role;
   final String? departmentId;
-  final String? adminId;
-  const FetchEmployees({this.role, this.departmentId, this.adminId});
+
+  const FetchEmployees({this.role, this.departmentId,});
 
   @override
-  List<Object?> get props => [role, departmentId, adminId];
+  List<Object?> get props => [role, departmentId];
 }
 
 class AddEmployee extends EmployeeEvent {
@@ -23,6 +23,7 @@ class AddEmployee extends EmployeeEvent {
   final String? departmentId;
   final String name;
   final String email;
+  final String password;
   final String address;
   final String dob;
   final String role;
@@ -33,9 +34,9 @@ class AddEmployee extends EmployeeEvent {
     this.id,
     this.adminId,
     this.departmentId,
-
     required this.name,
     required this.email,
+    required this.password,
     required this.address,
     required this.dob,
     required this.role,
@@ -50,6 +51,7 @@ class AddEmployee extends EmployeeEvent {
     departmentId,
     name,
     email,
+    password,
     address,
     dob,
     role,
@@ -64,6 +66,7 @@ class UpdateEmployee extends EmployeeEvent {
   final String? departmentId;
   final String name;
   final String email;
+  final String password;
   final String address;
   final String dob;
   final String role;
@@ -77,6 +80,7 @@ class UpdateEmployee extends EmployeeEvent {
     this.departmentId,
     required this.name,
     required this.email,
+    required this.password,
     required this.address,
     required this.dob,
     required this.role,
@@ -91,6 +95,7 @@ class UpdateEmployee extends EmployeeEvent {
     departmentId,
     name,
     email,
+    password,
     address,
     dob,
     role,
@@ -145,4 +150,16 @@ class FilterEmployeesByManager extends EmployeeEvent {
 
 class ResetEmployeeFilters extends EmployeeEvent {
   const ResetEmployeeFilters();
+}
+class EmployeeLogin extends EmployeeEvent {
+  final String email;
+  final String password;
+
+  const EmployeeLogin({
+    required this.email,
+    required this.password,
+  });
+
+  @override
+  List<Object?> get props => [email, password];
 }

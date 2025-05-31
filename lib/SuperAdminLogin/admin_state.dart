@@ -3,16 +3,22 @@ part of 'admin_bloc.dart';
 class AdminState extends Equatable {
   final List<AdminModal>? adminList;
   final bool isLogin;
+  final String? selectedRole;
+  final AdminModal? adminModal;
+  final EmployeeModal? employeeModal;
 
-  const AdminState({this.adminList, this.isLogin = true});
+  const AdminState({this.adminList, this.isLogin = true, this.selectedRole, this.adminModal, this.employeeModal});
 
-  AdminState copyWith({List<AdminModal>? adminList, bool? isLogin}) {
+  AdminState copyWith({List<AdminModal>? adminList, bool? isLogin, String? selectedRole, AdminModal? adminModal, EmployeeModal? employeeModal}) {
     return AdminState(
       adminList: adminList ?? this.adminList,
       isLogin: isLogin ?? this.isLogin,
+      selectedRole: selectedRole ?? this.selectedRole,
+      adminModal: adminModal ?? this.adminModal,
+      employeeModal: employeeModal ?? this.employeeModal,
     );
   }
 
   @override
-  List<Object?> get props => [adminList, isLogin];
+  List<Object?> get props => [adminList, isLogin, selectedRole, adminModal, employeeModal];
 }

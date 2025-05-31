@@ -23,7 +23,7 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
     Emitter<DepartmentState> emit,
   ) async {
     final fire = await FirebaseDbHelper.firebase.getDepartments(
-      "${event.adminId}",
+
     );
     emit(DepartmentState(departments: fire));
   }

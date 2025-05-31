@@ -5,7 +5,6 @@ import 'System/system_view.dart';
 import 'firebase_options.dart';
 import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
-import 'package:elaunch_management/Employee/manager_view.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_view.dart';
 import 'package:flutter/material.dart';
 
@@ -30,6 +29,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+
+
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(useMaterial3: true),
       themeMode: ThemeMode.dark,

@@ -16,7 +16,7 @@ class DepartmentScreen extends StatefulWidget {
       providers: [
         BlocProvider(
           create:
-              (_) => DepartmentBloc()..add(FetchDepartments(adminId: admin.id)),
+              (_) => DepartmentBloc()..add(FetchDepartments()),
         ),
       ],
       child: const DepartmentScreen(),
@@ -246,7 +246,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   }
                   Navigator.pop(context);
                   context.read<DepartmentBloc>().add(
-                    FetchDepartments(adminId: admin.id),
+                    FetchDepartments(),
                   );
                 }
               },

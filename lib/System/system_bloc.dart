@@ -19,7 +19,7 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     Emitter<SystemState> emit,
   ) async {
     final systems = await FirebaseDbHelper.firebase.getSystems(
-      event.adminId ?? "",
+
     );
     emit(SystemState(systems: systems));
   }
@@ -42,7 +42,7 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
 
     await FirebaseDbHelper.firebase.createSystem(system);
 
-    add(FetchSystem(adminId: "${event.adminId}",));
+    add(FetchSystem());
   }
 
   Future<void> updateSystemData(
@@ -61,7 +61,7 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     );
     await FirebaseDbHelper.firebase.updateSystem(system);
 
-    add(FetchSystem(adminId: "${event.adminId}",));
+    add(FetchSystem());
   }
 
   Future<void> deleteSystemData(
@@ -70,6 +70,6 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
   ) async {
     await FirebaseDbHelper.firebase.deleteSystem(event.id);
 
-    add(FetchSystem(adminId: "${event.adminId}"));
+    add(FetchSystem());
   }
 }

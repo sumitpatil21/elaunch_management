@@ -20,7 +20,6 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     Emitter<DeviceState> emit,
   ) async {
     final devices = await FirebaseDbHelper.firebase.getDevices(
-      event.adminId ?? "",
     );
     emit(DeviceState(devices: devices));
   }
@@ -31,7 +30,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   ) async {
     await FirebaseDbHelper.firebase.createDevice(event.device);
 
-    add(FetchDevice(adminId: event.device.adminId ?? ""));
+    add(FetchDevice());
   }
 
   Future<void> _updateDeviceData(
@@ -39,7 +38,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     Emitter<DeviceState> emit,
   ) async {
     await FirebaseDbHelper.firebase.updateDevice(event.device);
-    add(FetchDevice(adminId: event.device.adminId ?? ""));
+    add(FetchDevice());
   }
 
   Future<void> _deleteDeviceData(
@@ -48,6 +47,6 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   ) async {
     await FirebaseDbHelper.firebase.deleteDevice(event.id);
 
-    add(FetchDevice(adminId: event.adminId));
+    add(FetchDevice());
   }
 }

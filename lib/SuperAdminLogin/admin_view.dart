@@ -1,14 +1,22 @@
-import 'package:elaunch_management/Dashboard/dashboard_view.dart';
-import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:elaunch_management/Dashboard/dashboard_view.dart';
+import 'package:elaunch_management/Employee/employee_bloc.dart';
+import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 
 class AdminView extends StatefulWidget {
   static String routeName = "/admin";
   const AdminView({super.key});
 
   static Widget builder(BuildContext context) {
-    return BlocProvider(create: (context) => AdminBloc(), child: AdminView());
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => AdminBloc()),
+        BlocProvider(create: (context) => EmployeeBloc()),
+      ],
+      child: const AdminView(),
+    );
   }
 
   @override
@@ -17,376 +25,202 @@ class AdminView extends StatefulWidget {
 
 class _AdminViewState extends State<AdminView> {
   final formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final companyController = TextEditingController();
-  final fieldController = TextEditingController();
-  final idController = TextEditingController();
   bool isLoading = false;
+  String selectedRole = 'Admin';
 
 
-
-  void clearText() {
-    nameController.clear();
-    emailController.clear();
-    passwordController.clear();
-    companyController.clear();
-    fieldController.clear();
-    idController.clear();
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
+  void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
         behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
 
+  void loginLogic() {
+    if (formKey.currentState!.validate()) {
+      setState(() => isLoading = true);
+      final email = emailController.text.trim();
+      final password = passwordController.text;
+
+      if (selectedRole == 'Admin') {
+        context.read<AdminBloc>().add(AdminLogin(email: email, password: password));
+      } else {
+        context.read<EmployeeBloc>().add(EmployeeLogin(email: email, password: password));
+      }
+    }
+  }
+
+  bool get isMobile => MediaQuery.of(context).size.width < 600;
+  bool get isDesktop => MediaQuery.of(context).size.width >= 600;
+
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AdminBloc, AdminState>(
-      listener: (context, state) {
-        setState(() {
-          isLoading = false;
-        });
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AdminBloc, AdminState>(
+          listener: (context, state) {
+            if (state.adminList?.isNotEmpty == true) {
+              context.read<AdminBloc>().add(SelectRole(adminModal: state.adminList?.first));
+              Navigator.pushReplacementNamed(
+                context,
+                DashboardView.routeName,
+                arguments: state.adminList!.first,
+              );
+            } else if (state.adminList?.isEmpty == true && isLoading) {
+              setState(() => isLoading = false);
+              showSnackBar("Invalid admin credentials");
+            }
+          },
+        ),
+        BlocListener<EmployeeBloc, EmployeeState>(
+          listener: (context, state) {
+            if (state.loggedInEmployee != null) {
+              context.read<AdminBloc>().add(SelectRole(employeeModal: state.loggedInEmployee));
+              Navigator.pushReplacementNamed(
+                context,
+                DashboardView.routeName,
 
-        if (state.adminList?.isNotEmpty == true) {
-          if (state.isLogin) {
-            Navigator.of(context).pushReplacementNamed(
-              DashboardView.routeName,
-              arguments: state.adminList!.first,
-            );
-          } else {
-            _showSnackBar("Registered Successfully");
-            clearText();
-            context.read<AdminBloc>().add(AdminLoginCheck(isLogin: true));
-          }
-        } else if (state.adminList?.isEmpty == true && isLoading == false) {
-          _showSnackBar(
-            state.isLogin ? "Invalid email or password" : "Registration failed",
-            isError: true,
-          );
-        }
-      },
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              state.isLogin ? 'Super Admin Login' : 'Super Admin Register',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              );
+            } else if (state.loggedInEmployee == null && isLoading) {
+              setState(() => isLoading = false);
+              showSnackBar("Invalid employee credentials");
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        body: SafeArea(
+          child: isDesktop ? desktopLayout() : mobileLayout(),
+        ),
+      ),
+    );
+  }
+
+  Widget desktopLayout() {
+    return Row(
+      children: [
+        // Left
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade800, Colors.blue.shade900],
+              ),
             ),
-            backgroundColor: Colors.blue[600],
-            foregroundColor: Colors.white,
-            elevation: 0,
-          ),
-          body: Center(
-            child: SingleChildScrollView(
+            child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Container(
-                  constraints: BoxConstraints(maxWidth: 400),
-                  decoration: BoxDecoration(
+                padding: const EdgeInsets.all(40.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
 
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.business_center, size: 60, color: Colors.white),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'eLaunch Management',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Streamline your business operations',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
 
+        // Right
+        Expanded(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(40),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child:Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: EdgeInsets.all(isDesktop ? 40.0 : 20.0),
                     child: Form(
                       key: formKey,
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Icon(
-                            state.isLogin ? Icons.login : Icons.person_add,
-                            size: 64,
-                            color: Colors.blue[600],
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            state.isLogin ? 'Welcome Back!' : 'Create Account',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                          if (!isDesktop) ...[
+                            const Text(
+                              'Sign In',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                             ),
-                          ),
-
-                          SizedBox(height: 32),
-
-                          if (!state.isLogin) ...[
-                            TextFormField(
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: 'User ID',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.perm_identity,
-                                  color: Colors.blue[600],
-                                ),
-                                filled: true,
-
-                              ),
-                              controller: idController,
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) {
-                                  return 'Please enter user ID';
-                                }
-                                return null;
-                              },
-                            ),
-                            SizedBox(height: 16),
-
-                            TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Full Name',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.person,
-                                  color: Colors.blue[600],
-                                ),
-                                filled: true,
-                              ),
-                              controller: nameController,
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) {
-                                  return 'Please enter your name';
-                                }
-                                return null;
-                              },
-                            ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 20),
                           ],
 
-                          TextFormField(
-                            keyboardType: TextInputType.emailAddress,
+                          DropdownButtonFormField<String>(
+                            value: selectedRole,
                             decoration: InputDecoration(
-                              labelText: 'Email Address',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              prefixIcon: Icon(
-                                Icons.email,
-                                color: Colors.blue[600],
-                              ),
-                              filled: true,
-
+                              labelText: 'Login As',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              prefixIcon: const Icon(Icons.person_outline),
                             ),
-                            controller: emailController,
-                            validator: (value) {
-                              if (value?.isEmpty ?? true) {
-                                return 'Please enter email';
-                              }
-                              return null;
-                            },
+                            items: ['Admin', 'Employee'].map((role) {
+                              return DropdownMenuItem(value: role, child: Text(role));
+                            }).toList(),
+                            onChanged: (value) => setState(() => selectedRole = value!),
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
                           TextFormField(
+                            controller: emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              prefixIcon: const Icon(Icons.email_outlined),
+                            ),
+                            validator: (value) => value!.isEmpty ? 'Enter email' : null,
+                          ),
+                          const SizedBox(height: 20),
 
+
+                          TextFormField(
+                            controller: passwordController,
+                            obscureText: true,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              prefixIcon: Icon(
-                                Icons.lock,
-                                color: Colors.blue[600],
-                              ),
-                              filled: true,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              prefixIcon: const Icon(Icons.lock_outline),
                             ),
-                            controller: passwordController,
-                            validator: (value) {
-                              if (value?.isEmpty ?? true) {
-                                return 'Please enter password';
-                              }
-                              if (!state.isLogin && value!.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
-                              return null;
-                            },
+                            validator: (value) => value!.length < 4 ? 'Minimum 4 characters' : null,
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 30),
 
-                          if (!state.isLogin) ...[
-                            TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Company Name',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.business,
-                                  color: Colors.blue[600],
-                                ),
-                                filled: true,
-
-                              ),
-                              controller: companyController,
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) {
-                                  return 'Please enter company name';
-                                }
-                                return null;
-                              },
+                          ElevatedButton(
+                            onPressed: isLoading ? null : loginLogic,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
-                            SizedBox(height: 16),
-
-                            TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Field/Industry',
-
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.work,
-                                  color: Colors.blue[600],
-                                ),
-                                filled: true,
-
-                              ),
-                              controller: fieldController,
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) {
-                                  return 'Please enter field';
-                                }
-                                return null;
-                              },
-                            ),
-                            SizedBox(height: 24),
-                          ] else ...[
-                            SizedBox(height: 8),
-                          ],
-
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed:
-                                  isLoading
-                                      ? null
-                                      : () async {
-                                        if (formKey.currentState!.validate()) {
-                                          setState(() {
-                                            isLoading = true;
-                                          });
-
-                                          if (state.isLogin) {
-                                            context.read<AdminBloc>().add(
-                                              AdminLogin(
-                                                email:
-                                                    emailController.text.trim(),
-                                                password:
-                                                    passwordController.text,
-                                              ),
-                                            );
-                                          } else {
-                                            context.read<AdminBloc>().add(
-                                              AdminInsert(
-                                                id: idController.text.trim(),
-                                                name:
-                                                    nameController.text.trim(),
-                                                email:
-                                                    emailController.text.trim(),
-                                                pass: passwordController.text,
-                                                companyName:
-                                                    companyController.text
-                                                        .trim(),
-                                                field:
-                                                    fieldController.text.trim(),
-                                                check: "isLogout",
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[600],
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 2,
-                              ),
-                              child:
-                                  isLoading
-                                      ? SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
-                                              ),
-                                        ),
-                                      )
-                                      : Text(
-                                        state.isLogin
-                                            ? 'Sign In'
-                                            : 'Create Account',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                            ),
-                          ),
-                          SizedBox(height: 24),
-
-                          TextButton(
-                            onPressed:
-                                isLoading
-                                    ? null
-                                    : () {
-                                      clearText();
-                                      context.read<AdminBloc>().add(
-                                        AdminLoginCheck(
-                                          isLogin: !state.isLogin,
-                                        ),
-                                      );
-                                    },
-                            child: RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text:
-                                        state.isLogin
-                                            ? 'Don\'t have an account? '
-                                            : 'Already have an account? ',
-                                  ),
-                                  TextSpan(
-                                    text:
-                                        state.isLogin ? 'Register' : 'Sign In',
-                                    style: TextStyle(
-                                      color: Colors.blue[600],
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            child: isLoading
+                                ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                                : const Text('Sign In'),
                           ),
                         ],
                       ),
@@ -396,8 +230,124 @@ class _AdminViewState extends State<AdminView> {
               ),
             ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
+
+  Widget mobileLayout() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          mobileHeader(),
+          const SizedBox(height: 40),
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: EdgeInsets.all(isDesktop ? 40.0 : 20.0),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (!isDesktop) ...[
+                      const Text(
+                        'Sign In',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
+                    DropdownButtonFormField<String>(
+                      value: selectedRole,
+                      decoration: InputDecoration(
+                        labelText: 'Login As',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                      items: ['Admin', 'Employee'].map((role) {
+                        return DropdownMenuItem(value: role, child: Text(role));
+                      }).toList(),
+                      onChanged: (value) => setState(() => selectedRole = value!),
+                    ),
+                    const SizedBox(height: 20),
+
+                    TextFormField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        prefixIcon: const Icon(Icons.email_outlined),
+                      ),
+                      validator: (value) => value!.isEmpty ? 'Enter email' : null,
+                    ),
+                    const SizedBox(height: 20),
+
+
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                      ),
+                      validator: (value) => value!.length < 4 ? 'Minimum 4 characters' : null,
+                    ),
+                    const SizedBox(height: 30),
+
+                    ElevatedButton(
+                      onPressed: isLoading ? null : loginLogic,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                          : const Text('Sign In'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget mobileHeader() {
+    return Column(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.blue.shade600,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.business_center, size: 40, color: Colors.white),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'eLaunch Management',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'Welcome Back!',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+
 }

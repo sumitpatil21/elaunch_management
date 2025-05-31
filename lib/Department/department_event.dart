@@ -8,12 +8,12 @@ class DepartmentEvent extends Equatable {
 }
 
 class FetchDepartments extends DepartmentEvent {
-  final String? adminId;
 
-  const FetchDepartments({this.adminId});
+
+  const FetchDepartments();
 
   @override
-  List<Object> get props => [adminId ?? ""];
+  List<Object> get props => [];
 }
 
 class AddDepartment extends DepartmentEvent {

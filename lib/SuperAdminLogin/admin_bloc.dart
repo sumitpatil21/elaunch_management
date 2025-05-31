@@ -4,6 +4,8 @@ import 'package:elaunch_management/Service/admin_modal.dart';
 import 'package:elaunch_management/Service/firebaseDatabase.dart';
 import 'package:equatable/equatable.dart';
 
+import '../Service/employee_modal.dart';
+
 part 'admin_event.dart';
 part 'admin_state.dart';
 
@@ -14,10 +16,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<AdminLogin>(loginAdmin);
     on<AdminLogout>(logoutAdmin);
     on<AdminLoginCheck>(adminLoginCheck);
+    on<SelectRole>(selectRole);
   }
 
   Future<void> loginAdmin(AdminLogin event, Emitter<AdminState> emit) async {
-    try {
+
       final admins = await FirebaseDbHelper.firebase.getAdminByEmail(
         event.email,
       );
@@ -33,14 +36,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       );
 
       emit(state.copyWith(adminList: admins));
-    } catch (e) {
-      log("Login error: $e");
-      emit(state.copyWith(adminList: []));
-    }
+
   }
 
   Future<void> logoutAdmin(AdminLogout event, Emitter<AdminState> emit) async {
-    try {
+
       if (event.email != null) {
         await FirebaseDbHelper.firebase.updateAdminStatus(
           event.email!,
@@ -48,17 +48,14 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         );
       }
       emit(state.copyWith(adminList: []));
-    } catch (e) {
-      log("Logout error: $e");
-      emit(state.copyWith(adminList: []));
-    }
+
   }
 
   Future<void> insertIntoAdmin(
     AdminInsert event,
     Emitter<AdminState> emit,
   ) async {
-    try {
+
       await FirebaseDbHelper.firebase.createAdmin(
         AdminModal(
           id: event.id,
@@ -86,23 +83,21 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           ],
         ),
       );
-    } catch (e) {
-      log("Registration error: $e");
-      emit(state.copyWith(adminList: []));
-    }
+
   }
 
   Future<void> fetchAdmin(AdminFetch event, Emitter<AdminState> emit) async {
-    try {
+
       final allAdmins = await FirebaseDbHelper.firebase.getAllAdmins();
       emit(state.copyWith(adminList: allAdmins));
-    } catch (e) {
-      log("Fetch error: $e");
-      emit(state.copyWith(adminList: []));
-    }
+
   }
 
   adminLoginCheck(AdminLoginCheck event, Emitter<AdminState> emit) {
     emit(state.copyWith(isLogin: event.isLogin));
+  }
+
+  selectRole(SelectRole event, Emitter<AdminState> emit) {
+    emit(state.copyWith(selectedRole: event.selectedRole, adminModal: event.adminModal, employeeModal: event.employeeModal));
   }
 }

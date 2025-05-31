@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Department/department_bloc.dart';
+import '../Department/department_view.dart';
+import '../Device_Testing/device_view.dart';
 import '../Employee/employee_bloc.dart';
 import '../Service/department_modal.dart';
-import '../Service/manger_modal.dart';
 import '../Service/employee_modal.dart';
+import '../Service/admin_modal.dart';
+import '../SuperAdminLogin/admin_bloc.dart';
+import '../SuperAdminLogin/admin_view.dart';
+import '../System/system_view.dart';
 
 class EmployeeScreen extends StatefulWidget {
   static String routeName = "/emp";
@@ -13,20 +18,12 @@ class EmployeeScreen extends StatefulWidget {
   const EmployeeScreen({super.key});
 
   static Widget builder(BuildContext context) {
-    DepartmentModal? args =
-        ModalRoute.of(context)!.settings.arguments as DepartmentModal?;
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => EmployeeBloc()..add(FetchEmployees(adminId: args?.id_admin,departmentId: args?.id)),
+          create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
-        BlocProvider(
-          create:
-              (_) =>
-                  DepartmentBloc()
-                    ..add(FetchDepartments(adminId: args?.id_admin ?? "1")),
-        ),
+        BlocProvider(create: (_) => DepartmentBloc()..add(FetchDepartments())),
       ],
       child: const EmployeeScreen(),
     );
@@ -73,6 +70,9 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             builder:
                 (builderContext, setModalState) => Container(
                   padding: const EdgeInsets.all(20),
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,7 +211,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           if (tempDepartmentFilter != null) {
                             context.read<EmployeeBloc>().add(
                               FilterEmployeesByDepartment(
-                                department: tempDepartmentFilter,
+                                department: tempDepartmentFilter ?? "",
                               ),
                             );
                           } else {
@@ -223,7 +223,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           if (tempManagerFilter != null) {
                             context.read<EmployeeBloc>().add(
                               FilterEmployeesByManager(
-                                manager: tempManagerFilter,
+                                manager: tempManagerFilter ?? "",
                               ),
                             );
                           } else {
@@ -276,10 +276,144 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     }).toList();
   }
 
+  Drawer buildDrawer(BuildContext context, AdminModal? admin) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
+    return Drawer(
+      width: isTablet ? 300 : 240,
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                context.read<EmployeeBloc>().state.loggedInEmployee == null
+                    ? admin?.name[0].toUpperCase()??""
+                    : context
+                        .read<EmployeeBloc>()
+                        .state
+                        .loggedInEmployee!
+                        .name[0]
+                        .toUpperCase(),
+                style: TextStyle(
+                  fontSize: isTablet ? 28 : 24,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
+            accountName: Text(
+              context.read<EmployeeBloc>().state.loggedInEmployee == null
+                  ? admin?.name??""
+                  : context.read<EmployeeBloc>().state.loggedInEmployee!.name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: isTablet ? 16 : 14,
+              ),
+            ),
+            accountEmail: Text(
+              context.read<EmployeeBloc>().state.loggedInEmployee == null
+                  ? admin?.email??""
+                  : context.read<EmployeeBloc>().state.loggedInEmployee!.email,
+              style: TextStyle(fontSize: isTablet ? 14 : 12),
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.dashboard, size: isTablet ? 28 : 24),
+            title: Text(
+              "Dashboard",
+              style: TextStyle(fontSize: isTablet ? 18 : 16),
+            ),
+            selected: true,
+
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.business, size: isTablet ? 28 : 24),
+            title: Text(
+              "Department",
+              style: TextStyle(fontSize: isTablet ? 18 : 16),
+            ),
+            onTap: () {
+              Navigator.pushNamed(context, DepartmentScreen.routeName);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.group, size: isTablet ? 28 : 24),
+            title: Text(
+              "Employee",
+              style: TextStyle(fontSize: isTablet ? 18 : 16),
+            ),
+            onTap: () {
+              final dept = context.read<DepartmentBloc>().state.departments;
+              Navigator.pushNamed(
+                context,
+                EmployeeScreen.routeName,
+                arguments: dept.first,
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.phone_android_outlined,
+              size: isTablet ? 28 : 24,
+            ),
+            title: Text(
+              "Device",
+              style: TextStyle(fontSize: isTablet ? 18 : 16),
+            ),
+            onTap: () {
+              Navigator.pushNamed(context, DeviceView.routeName);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.computer_outlined, size: isTablet ? 28 : 24),
+            title: Text(
+              "System",
+              style: TextStyle(fontSize: isTablet ? 18 : 16),
+            ),
+            onTap: () {
+              Navigator.pushNamed(context, SystemView.routeName);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: Icon(
+              Icons.logout,
+              color: Colors.red,
+              size: isTablet ? 28 : 24,
+            ),
+            title: Text(
+              "Logout",
+              style: TextStyle(color: Colors.red, fontSize: isTablet ? 18 : 16),
+            ),
+            onTap: () {
+              context.read<AdminBloc>().add(
+                AdminLogin(
+                  email: context.read<AdminBloc>().state.adminList!.first.email,
+                  password:
+                      context.read<AdminBloc>().state.adminList!.first.pass,
+                ),
+              );
+              context.read<AdminBloc>().add(AdminLogout());
+              Navigator.of(context).pushNamed(AdminView.routeName);
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.width > 600;
+    final isDesktop = screenSize.width > 1024;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -288,31 +422,37 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
         ),
         backgroundColor: Colors.red.withOpacity(0.2),
         elevation: 2,
-        title: const Text(
+        title: Text(
           "Employees",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isTablet ? 22 : 18,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: Icon(Icons.filter_list, size: isTablet ? 28 : 24),
             onPressed: showFilterBottomSheet,
           ),
         ],
       ),
+      drawer: buildDrawer(context, null), // Pass your admin object here
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isTablet ? 24 : 16),
             child: TextField(
               controller: searchController,
               onChanged: (value) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Search employees...',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: TextStyle(fontSize: isTablet ? 16 : 14),
+
+                prefixIcon: Icon(Icons.search, size: isTablet ? 28 : 24),
                 suffixIcon:
                     searchController.text.isNotEmpty
                         ? IconButton(
-                          icon: const Icon(Icons.clear),
+                          icon: Icon(Icons.clear, size: isTablet ? 28 : 24),
                           onPressed: () {
                             searchController.clear();
                             setState(() {});
@@ -320,6 +460,10 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                         )
                         : null,
                 filled: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 20 : 16,
+                  vertical: isTablet ? 16 : 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -329,14 +473,13 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                   borderSide: const BorderSide(color: Colors.red, width: 1),
                 ),
               ),
+              style: TextStyle(fontSize: isTablet ? 16 : 14),
             ),
           ),
-
 
           Expanded(
             child: BlocBuilder<EmployeeBloc, EmployeeState>(
               builder: (context, state) {
-
                 final searchFilteredEmployees = searchFilteredEmployee(
                   state.filteredEmployees,
                 );
@@ -347,20 +490,15 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           "No employees found",
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: isTablet ? 20 : 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          child: CircularProgressIndicator(),
-                          onPressed: () {
-
-                          },
-                        ),
+                        SizedBox(height: isTablet ? 24 : 16),
+                        const CircularProgressIndicator(),
                       ],
                     ),
                   );
@@ -371,401 +509,211 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.search_off,
-                          size: 64,
+                          size: isTablet ? 80 : 64,
                           color: Colors.grey,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: isTablet ? 24 : 16),
+                        Text(
                           "No employees match your filters",
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: isTablet ? 20 : 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: isTablet ? 12 : 8),
                         Text(
                           "Try adjusting your search or filters",
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: isTablet ? 16 : 14,
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: isTablet ? 24 : 16),
                         ElevatedButton.icon(
-                          icon: const Icon(Icons.clear),
-                          label: const Text("Clear Filters"),
+                          icon: Icon(Icons.clear, size: isTablet ? 24 : 20),
+                          label: Text(
+                            "Clear Filters",
+
+                            style: TextStyle(fontSize: isTablet ? 16 : 14),
+                          ),
                           onPressed: clearAllFilters,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isTablet ? 24 : 16,
+                              vertical: isTablet ? 16 : 12,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   );
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: searchFilteredEmployees.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final employee = searchFilteredEmployees[index];
-                    return Dismissible(
-                      key: Key(employee.id.toString()),
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade700,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      confirmDismiss:
-                          (_) => showDialog<bool>(
-                            context: context,
-                            builder:
-                                (_) => AlertDialog(
-                                  title: const Text("Confirm Delete"),
-                                  content: Text(
-                                    "Are you sure you want to delete ${employee.name}?",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(context, false),
-                                      child: const Text("CANCEL"),
-                                    ),
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      onPressed:
-                                          () => Navigator.pop(context, true),
-                                      child: const Text("DELETE"),
-                                    ),
-                                  ],
-                                ),
-                          ),
-                      onDismissed: (_) {
-                        context.read<EmployeeBloc>().add(
-                          DeleteEmployee(id: "${employee.id}"),
-                        );
-
-                      },
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.red.withOpacity(0.2),
-                            child: Text(
-                              employee.role.substring(0, 1).toUpperCase(),
-                            ),
-                          ),
-                          title: Text(
-                            employee.name,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-
-                            children: [
-                              Text(employee.email),
-                              if (employee.departmentName != null)
-                                Text(
-                                  'Dept: ${employee.departmentName}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              if (employee.managerName != null &&
-                                  employee.managerName!.isNotEmpty)
-                                Text(
-                                  'Manager: ${employee.managerName}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              employee.role,
-                              style: TextStyle(
-                                color: Colors.red[700],
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          onTap: () {
-                            showEmployeeDialog(
-                              context: context,
-                              bloc: context.read<EmployeeBloc>(),
-                              employee: employee,
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                );
+                return isDesktop
+                    ? _buildDesktopLayout(searchFilteredEmployees, isTablet)
+                    : _buildMobileLayout(searchFilteredEmployees, isTablet);
               },
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.red.withOpacity(0.2),
-        onPressed: () {
-          showEmployeeDialog(
+    );
+  }
+
+  Widget _buildMobileLayout(List<EmployeeModal> employees, bool isTablet) {
+    return ListView.separated(
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      itemCount: employees.length,
+      separatorBuilder: (_, __) => SizedBox(height: isTablet ? 12 : 8),
+      itemBuilder: (context, index) {
+        final employee = employees[index];
+        return _buildEmployeeCard(employee, isTablet);
+      },
+    );
+  }
+
+  Widget _buildDesktopLayout(List<EmployeeModal> employees, bool isTablet) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(24),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: employees.length,
+      itemBuilder: (context, index) {
+        final employee = employees[index];
+        return _buildEmployeeCard(employee, true);
+      },
+    );
+  }
+
+  Widget _buildEmployeeCard(EmployeeModal employee, bool isTablet) {
+    return Dismissible(
+      key: Key(employee.id.toString()),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: Colors.red.shade700,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          Icons.delete,
+          color: Colors.white,
+          size: isTablet ? 32 : 24,
+        ),
+      ),
+      confirmDismiss:
+          (_) => showDialog<bool>(
             context: context,
-            bloc: context.read<EmployeeBloc>(),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text("Add Employee"),
+            builder:
+                (_) => AlertDialog(
+                  title: Text(
+                    "Confirm Delete",
+                    style: TextStyle(fontSize: isTablet ? 20 : 18),
+                  ),
+                  content: Text(
+                    "Are you sure you want to delete ${employee.name}?",
+                    style: TextStyle(fontSize: isTablet ? 16 : 14),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text(
+                        "CANCEL",
+                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text(
+                        "DELETE",
+                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                      ),
+                    ),
+                  ],
+                ),
+          ),
+      onDismissed: (_) {
+        context.read<EmployeeBloc>().add(DeleteEmployee(id: "${employee.id}"));
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 20 : 16,
+            vertical: isTablet ? 12 : 8,
+          ),
+          leading: CircleAvatar(
+            backgroundColor: Colors.red.withOpacity(0.2),
+            radius: isTablet ? 28 : 24,
+            child: Text(
+              employee.role.substring(0, 1).toUpperCase(),
+              style: TextStyle(
+                fontSize: isTablet ? 20 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          title: Text(
+            employee.name,
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: isTablet ? 18 : 16,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                employee.email,
+                style: TextStyle(fontSize: isTablet ? 14 : 12),
+              ),
+              if (employee.departmentName != null)
+                Text(
+                  'Dept: ${employee.departmentName}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: isTablet ? 12 : 10,
+                  ),
+                ),
+              if (employee.managerName != null &&
+                  employee.managerName!.isNotEmpty)
+                Text(
+                  'Manager: ${employee.managerName}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: isTablet ? 12 : 10,
+                  ),
+                ),
+            ],
+          ),
+          trailing: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isTablet ? 12 : 8,
+              vertical: isTablet ? 6 : 4,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              employee.role,
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.w500,
+                fontSize: isTablet ? 14 : 12,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
-}
-
-void showEmployeeDialog({
-  required BuildContext context,
-  EmployeeBloc? bloc,
-  EmployeeModal? employee,
-}) {
-  final formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController(text: employee?.name ?? '');
-  final emailController = TextEditingController(text: employee?.email ?? '');
-  final addressController = TextEditingController(
-    text: employee?.address ?? '',
-  );
-  final dobController = TextEditingController(text: employee?.dob ?? '');
-  final idController = TextEditingController(text: "${employee?.id ?? ''}")
-    ..text = employee?.id?.toString() ?? '';
-
-  final departments = context.read<DepartmentBloc>().state.departments;
-  final managers =
-      context
-          .read<EmployeeBloc>()
-          .state
-          .employees
-          .where((emp) => emp.role == 'Manager')
-          .toList();
-
-  DepartmentModal? args =
-      ModalRoute.of(context)!.settings.arguments as DepartmentModal?;
-  String selectedRole = employee?.role ?? 'Employee';
-  DepartmentModal? selectedDepartment;
-  EmployeeModal? selectedManager;
-
-  Future<void> pickDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (picked != null) {
-      dobController.text = "${picked.day}/${picked.month}/${picked.year}";
-    }
-  }
-
-  showDialog(
-    context: context,
-    builder:
-        (dialogContext) => StatefulBuilder(
-          builder:
-              (context, setState) => AlertDialog(
-                title: Text(
-                  employee != null ? 'Edit Employee' : 'Add Employee',
-                ),
-                content: Form(
-                  key: formKey,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Full Name',
-                            prefixIcon: Icon(Icons.person),
-                            border: OutlineInputBorder(),
-                          ),
-                          validator:
-                              (val) =>
-                                  val == null || val.isEmpty
-                                      ? 'Enter name'
-                                      : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: emailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email Address',
-                            prefixIcon: Icon(Icons.email),
-                            border: OutlineInputBorder(),
-                          ),
-                          validator:
-                              (val) =>
-                                  val == null || val.isEmpty
-                                      ? 'Enter email'
-                                      : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: addressController,
-                          decoration: const InputDecoration(
-                            labelText: 'Address',
-                            prefixIcon: Icon(Icons.location_on),
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: dobController,
-                          decoration: InputDecoration(
-                            labelText: 'Date of Birth',
-                            prefixIcon: const Icon(Icons.calendar_today),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_month),
-                              onPressed: () => pickDate(context),
-                            ),
-                            border: const OutlineInputBorder(),
-                          ),
-                          readOnly: true,
-                          onTap: () => pickDate(context),
-                        ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          value: selectedRole,
-                          decoration: const InputDecoration(
-                            labelText: "Employee Role",
-                            border: OutlineInputBorder(),
-                          ),
-                          items:
-                              ['Employee', 'Manager', 'Human Resource']
-                                  .map(
-                                    (role) => DropdownMenuItem(
-                                      value: role,
-                                      child: Text(role),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              selectedRole = value ?? 'Employee';
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<DepartmentModal>(
-                          value: selectedDepartment,
-                          decoration: const InputDecoration(
-                            labelText: "Select Department",
-                            border: OutlineInputBorder(),
-                          ),
-                          items:
-                              departments
-                                  .map(
-                                    (dept) => DropdownMenuItem(
-                                      value: dept,
-                                      child: Text(dept.name),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              selectedDepartment = value;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        if (selectedRole == 'Employee')
-                          DropdownButtonFormField<EmployeeModal>(
-                            value: selectedManager,
-                            decoration: const InputDecoration(
-                              labelText: "Select Manager",
-                              border: OutlineInputBorder(),
-                            ),
-                            items:
-                                managers
-                                    .map(
-                                      (manager) => DropdownMenuItem(
-                                        value: manager,
-                                        child: Text(manager.name),
-                                      ),
-                                    )
-                                    .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedManager = value;
-                              });
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('CANCEL'),
-                  ),
-                  ElevatedButton.icon(
-                    icon: Icon(employee != null ? Icons.save : Icons.add),
-                    label: Text(employee != null ? 'UPDATE' : 'ADD'),
-                    onPressed: () {
-                      if (formKey.currentState!.validate()) {
-                        if (employee != null) {
-                          bloc?.add(
-                            UpdateEmployee(
-                              adminId: args!.id_admin,
-                              id: employee.id!,
-                              role: selectedRole,
-                              name: nameController.text,
-                              email: emailController.text,
-                              address: addressController.text,
-                              dob: dobController.text,
-                              managerName: selectedManager?.name ?? "",
-                              department: selectedDepartment?.name ?? "",
-                              departmentId: selectedDepartment?.id ?? "",
-                            ),
-                          );
-                        } else {
-                          bloc?.add(
-                            AddEmployee(
-                              adminId: args!.id_admin,
-                              id: idController.text,
-                              role: selectedRole,
-                              name: nameController.text,
-                              email: emailController.text,
-                              address: addressController.text,
-                              dob: dobController.text,
-                              managerName: selectedManager?.name ?? "",
-                              department: selectedDepartment?.name ?? "",
-                              departmentId: selectedDepartment?.id ?? "",
-                            ),
-                          );
-                        }
-                        Navigator.pop(context);
-                      }
-                    },
-                  ),
-                ],
-              ),
-        ),
-  );
 }

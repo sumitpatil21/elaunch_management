@@ -64,3 +64,15 @@ class AdminLoginCheck extends AdminEvent {
   List<Object?> get props => [isLogin];
 
 }
+
+
+class SelectRole extends AdminEvent {
+  final String? selectedRole;
+  final AdminModal? adminModal;
+  final EmployeeModal? employeeModal;
+
+  const SelectRole({ this.selectedRole, this.adminModal, this.employeeModal});
+  @override
+  List<Object?> get props => [selectedRole, adminModal, employeeModal];
+
+}

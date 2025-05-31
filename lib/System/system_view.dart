@@ -18,7 +18,7 @@ class SystemView extends StatefulWidget {
       providers: [
         BlocProvider(
           create:
-              (context) => SystemBloc()..add(FetchSystem(adminId: args?.id)),
+              (context) => SystemBloc()..add(FetchSystem()),
         ),
         BlocProvider(
           create: (context) => EmployeeBloc()..add(FetchEmployees()),
@@ -122,8 +122,8 @@ class _SystemViewState extends State<SystemView> {
                         selectedStatusFilter = status;
                       });
                     },
-                    backgroundColor: Colors.grey.shade200,
-                    selectedColor: Colors.yellow.withOpacity(0.8),
+                    backgroundColor: getStatusColor(status),
+                    selectedColor: getStatusColor(status),
                     checkmarkColor: Colors.white,
                     elevation: isSelected ? 4 : 1,
                     pressElevation: 2,
@@ -356,7 +356,7 @@ class _SystemViewState extends State<SystemView> {
       case 'retired':
         return Colors.red;
       default:
-        return Colors.grey;
+        return Colors.yellow.withOpacity(0.2);
     }
   }
 
@@ -375,6 +375,7 @@ class _SystemViewState extends State<SystemView> {
       id: '-1',
       name: "Unassigned",
       email: '',
+      password: '',
       address: '',
       dob: '',
       role: "",
@@ -388,7 +389,7 @@ class _SystemViewState extends State<SystemView> {
     String selectedStatus = 'available';
     String selectedOS = 'Windows';
 
-    // Pre-fill form if editing existing system
+
     if (system != null) {
       nameController.text = system.systemName;
       versionController.text = system.version ?? '';

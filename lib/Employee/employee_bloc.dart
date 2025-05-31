@@ -1,3 +1,4 @@
+
 import 'package:bloc/bloc.dart';
 import 'package:elaunch_management/Service/firebaseDatabase.dart';
 import 'package:elaunch_management/Service/employee_modal.dart';
@@ -16,29 +17,61 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     on<FilterEmployeesByManager>(filterManager);
     on<ResetEmployeeFilters>(resetFilters);
     on<FilterEmployeesByRole>(filterRole);
+    on<EmployeeLogin>(employeeLogin);
+  }
+
+  Future<void> employeeLogin(
+      EmployeeLogin event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    try {
+
+      final employee = await FirebaseDbHelper.firebase.getEmployeeByEmailAndPassword(
+        email: event.email,
+        password: event.password,
+      );
+
+      if (employee != null) {
+        emit(state.copyWith(
+          loggedInEmployee: employee,
+          isLoggedIn: true,
+        ));
+      } else {
+        emit(state.copyWith(
+          loggedInEmployee: null,
+          isLoggedIn: false,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        loggedInEmployee: null,
+        isLoggedIn: false,
+      ));
+    }
   }
 
   Future<void> fetchEmployeesData(
-    FetchEmployees event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FetchEmployees event,
+      Emitter<EmployeeState> emit,
+      ) async {
     final employees = await FirebaseDbHelper.firebase.getEmployees(
-      role: event.role,
-      departmentId: event.departmentId,
-      adminId: event.adminId
+        role: event.role,
+        departmentId: event.departmentId,
+
     );
 
     emit(state.copyWith(employees: employees, filteredEmployees: employees));
   }
 
   Future<void> insertEmployeeData(
-    AddEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      AddEmployee event,
+      Emitter<EmployeeState> emit,
+      ) async {
     final employee = EmployeeModal(
       id: event.id,
       name: event.name,
       email: event.email,
+      password: event.password,
       address: event.address,
       dob: event.dob,
       role: event.role,
@@ -49,17 +82,18 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
 
     await FirebaseDbHelper.firebase.createEmployee(employee);
-    add(FetchEmployees(role: event.role,adminId: event.adminId));
+    add(FetchEmployees(role: event.role,));
   }
 
   Future<void> updateEmployeeData(
-    UpdateEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      UpdateEmployee event,
+      Emitter<EmployeeState> emit,
+      ) async {
     final updated = EmployeeModal(
       id: event.id,
       name: event.name,
       email: event.email,
+      password: event.password,
       address: event.address,
       dob: event.dob,
       role: event.role,
@@ -74,46 +108,47 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   }
 
   Future<void> deleteEmployeeData(
-    DeleteEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      DeleteEmployee event,
+      Emitter<EmployeeState> emit,
+      ) async {
     await FirebaseDbHelper.firebase.deleteEmployee(event.id.toString());
 
     final updatedEmployees =
-        state.employees.where((e) => e.id != event.id.toString()).toList();
+    state.employees.where((e) => e.id != event.id.toString()).toList();
 
     emit(state.copyWith(employees: updatedEmployees));
     applyAllFilters(emit);
   }
 
   Future<void> filterRole(
-    FilterEmployeesByRole event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FilterEmployeesByRole event,
+      Emitter<EmployeeState> emit,
+      ) async {
     emit(state.copyWith(roleFilter: event.role == 'All' ? null : event.role));
     applyAllFilters(emit);
   }
 
   Future<void> filterDepartment(
-    FilterEmployeesByDepartment event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FilterEmployeesByDepartment event,
+      Emitter<EmployeeState> emit,
+      ) async {
     emit(state.copyWith(departmentFilter: event.department));
     applyAllFilters(emit);
   }
 
+
   Future<void> filterManager(
-    FilterEmployeesByManager event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FilterEmployeesByManager event,
+      Emitter<EmployeeState> emit,
+      ) async {
     emit(state.copyWith(managerFilter: event.manager));
     applyAllFilters(emit);
   }
 
   Future<void> resetFilters(
-    ResetEmployeeFilters event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      ResetEmployeeFilters event,
+      Emitter<EmployeeState> emit,
+      ) async {
     emit(
       state.copyWith(
         filteredEmployees: state.employees,
