@@ -34,18 +34,17 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       if (employee != null) {
         emit(state.copyWith(
           loggedInEmployee: employee,
-          isLoggedIn: true,
+
         ));
       } else {
         emit(state.copyWith(
           loggedInEmployee: null,
-          isLoggedIn: false,
+
         ));
       }
     } catch (e) {
       emit(state.copyWith(
         loggedInEmployee: null,
-        isLoggedIn: false,
       ));
     }
   }

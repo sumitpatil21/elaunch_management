@@ -20,33 +20,105 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  late StreamSubscription _subscription;
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController animationController;
+  late Animation<double> scale;
 
   @override
   void initState() {
     super.initState();
+
+    animationController = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    );
+
+    scale = Tween<double>(begin: 0.5, end: 1.0).animate(animationController);
+
+    animationController.forward();
+
+
     final adminBloc = context.read<AdminBloc>();
-    adminBloc.add(AdminFetch());
-    Future.delayed(Duration(seconds: 2)).then((_) {
-      if (adminBloc.state.adminList?.isNotEmpty==true) {
-        Navigator.of(context).pushReplacementNamed(DashboardView.routeName,arguments: adminBloc.state.adminList?.first);
+    Future.delayed(Duration(seconds: 3)).then((_) {
+      if (adminBloc.state.selectedRole!=null) {
+        Navigator.of(context).pushReplacementNamed(
+          DashboardView.routeName,
+          arguments:
+              adminBloc.state.employeeModal != null
+                  ? SelectRole(
+                    employeeModal: adminBloc.state.employeeModal,
+                    selectedRole: "Employee",
+                  )
+                  : SelectRole(
+                    adminModal: adminBloc.state.adminModal,
+                    selectedRole: "Admin",
+                  ),
+        );
       } else {
         Navigator.of(context).pushReplacementNamed(AdminView.routeName);
-   }
-      });
+      }
+    });
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Icon(Icons.manage_accounts),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF283653),Color(0xFF283653).withOpacity(0.2)],
+          ),
+        ),
+        child: AnimatedBuilder(
+          animation: animationController,
+          builder: (context, child) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image(
+                    image: NetworkImage('assest/image/Elaunch Letter E Logo.png'),
+                    height: 50,
+                  ),
+
+                  SizedBox(height: 30),
+
+                  Text(
+                    'eLaunch',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 2,
+                    ),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  Text(
+                    'Launch Your Success',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                      letterSpacing: 1,
+                    ),
+                  ),
+
+                  SizedBox(height: 50),
+
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                    strokeWidth: 2,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 }
-

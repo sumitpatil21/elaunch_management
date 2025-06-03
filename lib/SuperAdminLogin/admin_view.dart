@@ -1,4 +1,4 @@
-
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:elaunch_management/Dashboard/dashboard_view.dart';
@@ -28,7 +28,6 @@ class _AdminViewState extends State<AdminView> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool isLoading = false;
-  String selectedRole = 'Admin';
 
 
   void showSnackBar(String message) {
@@ -47,10 +46,14 @@ class _AdminViewState extends State<AdminView> {
       final email = emailController.text.trim();
       final password = passwordController.text;
 
-      if (selectedRole == 'Admin') {
-        context.read<AdminBloc>().add(AdminLogin(email: email, password: password));
+      if (context.read<AdminBloc>().state.selectedRole == 'Admin') {
+        context.read<AdminBloc>().add(
+          AdminLogin(email: email, password: password),
+        );
       } else {
-        context.read<EmployeeBloc>().add(EmployeeLogin(email: email, password: password));
+        context.read<EmployeeBloc>().add(
+          EmployeeLogin(email: email, password: password),
+        );
       }
     }
   }
@@ -64,12 +67,18 @@ class _AdminViewState extends State<AdminView> {
       listeners: [
         BlocListener<AdminBloc, AdminState>(
           listener: (context, state) {
-            if (state.adminList?.isNotEmpty == true) {
-              context.read<AdminBloc>().add(SelectRole(adminModal: state.adminList?.first));
+            if (state.isLogin &&
+                state.adminModal != null &&
+                state.selectedRole == "Admin") {
+              log(state.adminModal?.name ?? "Data Not Found");
+              setState(() => isLoading = false);
               Navigator.pushReplacementNamed(
                 context,
                 DashboardView.routeName,
-                arguments: state.adminList!.first,
+                arguments: SelectRole(
+                  adminModal: state.adminModal,
+                  selectedRole: "Admin",
+                ),
               );
             } else if (state.adminList?.isEmpty == true && isLoading) {
               setState(() => isLoading = false);
@@ -80,11 +89,16 @@ class _AdminViewState extends State<AdminView> {
         BlocListener<EmployeeBloc, EmployeeState>(
           listener: (context, state) {
             if (state.loggedInEmployee != null) {
-              context.read<AdminBloc>().add(SelectRole(employeeModal: state.loggedInEmployee));
+              log(state.loggedInEmployee!.name);
+
+              setState(() => isLoading = false);
               Navigator.pushReplacementNamed(
                 context,
                 DashboardView.routeName,
-
+                arguments: SelectRole(
+                  employeeModal: state.loggedInEmployee,
+                  selectedRole: "Employee",
+                ),
               );
             } else if (state.loggedInEmployee == null && isLoading) {
               setState(() => isLoading = false);
@@ -94,9 +108,7 @@ class _AdminViewState extends State<AdminView> {
         ),
       ],
       child: Scaffold(
-        body: SafeArea(
-          child: isDesktop ? desktopLayout() : mobileLayout(),
-        ),
+        body: SafeArea(child: isDesktop ? desktopLayout() : mobileLayout()),
       ),
     );
   }
@@ -109,7 +121,7 @@ class _AdminViewState extends State<AdminView> {
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.blue.shade800, Colors.blue.shade900],
+                colors: [Color(0xFF283653),Color(0xFF283653).withOpacity(0.2)],
               ),
             ),
             child: Center(
@@ -120,7 +132,11 @@ class _AdminViewState extends State<AdminView> {
 
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.business_center, size: 60, color: Colors.white),
+                    const Icon(
+                      Icons.business_center,
+                      size: 60,
+                      color: Colors.white,
+                    ),
                     const SizedBox(height: 20),
                     const Text(
                       'eLaunch Management',
@@ -133,10 +149,7 @@ class _AdminViewState extends State<AdminView> {
                     const SizedBox(height: 10),
                     const Text(
                       'Streamline your business operations',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 18, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -152,7 +165,7 @@ class _AdminViewState extends State<AdminView> {
               padding: const EdgeInsets.all(40),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
-                child:Card(
+                child: Card(
                   elevation: 4,
                   child: Padding(
                     padding: EdgeInsets.all(isDesktop ? 40.0 : 20.0),
@@ -165,22 +178,33 @@ class _AdminViewState extends State<AdminView> {
                             const Text(
                               'Sign In',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(height: 20),
                           ],
 
                           DropdownButtonFormField<String>(
-                            value: selectedRole,
+                            value: "Admin",
                             decoration: InputDecoration(
                               labelText: 'Login As',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               prefixIcon: const Icon(Icons.person_outline),
                             ),
-                            items: ['Admin', 'Employee'].map((role) {
-                              return DropdownMenuItem(value: role, child: Text(role));
-                            }).toList(),
-                            onChanged: (value) => setState(() => selectedRole = value!),
+                            items:
+                                ['Admin', 'Employee'].map((role) {
+                                  return DropdownMenuItem(
+                                    value: role,
+                                    child: Text(role),
+                                  );
+                                }).toList(),
+                            onChanged:
+                                (value) =>
+                                    setState(() => context.read<AdminBloc>().add(SelectRole(selectedRole: value!))),
                           ),
                           const SizedBox(height: 20),
 
@@ -188,23 +212,32 @@ class _AdminViewState extends State<AdminView> {
                             controller: emailController,
                             decoration: InputDecoration(
                               labelText: 'Email',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               prefixIcon: const Icon(Icons.email_outlined),
                             ),
-                            validator: (value) => value!.isEmpty ? 'Enter email' : null,
+                            validator:
+                                (value) =>
+                                    value!.isEmpty ? 'Enter email' : null,
                           ),
                           const SizedBox(height: 20),
-
 
                           TextFormField(
                             controller: passwordController,
                             obscureText: true,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               prefixIcon: const Icon(Icons.lock_outline),
                             ),
-                            validator: (value) => value!.length < 4 ? 'Minimum 4 characters' : null,
+                            validator:
+                                (value) =>
+                                    value!.length < 4
+                                        ? 'Minimum 4 characters'
+                                        : null,
                           ),
                           const SizedBox(height: 30),
 
@@ -212,15 +245,20 @@ class _AdminViewState extends State<AdminView> {
                             onPressed: isLoading ? null : loginLogic,
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                            child: isLoading
-                                ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                                : const Text('Sign In'),
+                            child:
+                                isLoading
+                                    ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : const Text('Sign In'),
                           ),
                         ],
                       ),
@@ -256,22 +294,32 @@ class _AdminViewState extends State<AdminView> {
                       const Text(
                         'Sign In',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 20),
                     ],
 
                     DropdownButtonFormField<String>(
-                      value: selectedRole,
+                      value: "Admin",
                       decoration: InputDecoration(
                         labelText: 'Login As',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         prefixIcon: const Icon(Icons.person_outline),
                       ),
-                      items: ['Admin', 'Employee'].map((role) {
-                        return DropdownMenuItem(value: role, child: Text(role));
-                      }).toList(),
-                      onChanged: (value) => setState(() => selectedRole = value!),
+                      items:
+                          ['Admin', 'Employee'].map((role) {
+                            return DropdownMenuItem(
+                              value: role,
+                              child: Text(role),
+                            );
+                          }).toList(),
+                      onChanged:
+                          (value) => setState(() => context.read<AdminBloc>().add(SelectRole(selectedRole: value!))),
                     ),
                     const SizedBox(height: 20),
 
@@ -279,23 +327,29 @@ class _AdminViewState extends State<AdminView> {
                       controller: emailController,
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         prefixIcon: const Icon(Icons.email_outlined),
                       ),
-                      validator: (value) => value!.isEmpty ? 'Enter email' : null,
+                      validator:
+                          (value) => value!.isEmpty ? 'Enter email' : null,
                     ),
                     const SizedBox(height: 20),
-
 
                     TextFormField(
                       controller: passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         prefixIcon: const Icon(Icons.lock_outline),
                       ),
-                      validator: (value) => value!.length < 4 ? 'Minimum 4 characters' : null,
+                      validator:
+                          (value) =>
+                              value!.length < 4 ? 'Minimum 4 characters' : null,
                     ),
                     const SizedBox(height: 30),
 
@@ -303,15 +357,20 @@ class _AdminViewState extends State<AdminView> {
                       onPressed: isLoading ? null : loginLogic,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      child: isLoading
-                          ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                          : const Text('Sign In'),
+                      child:
+                          isLoading
+                              ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text('Sign In'),
                     ),
                   ],
                 ),
@@ -333,7 +392,11 @@ class _AdminViewState extends State<AdminView> {
             color: Colors.blue.shade600,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.business_center, size: 40, color: Colors.white),
+          child: const Icon(
+            Icons.business_center,
+            size: 40,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 20),
         const Text(
@@ -345,9 +408,7 @@ class _AdminViewState extends State<AdminView> {
           'Welcome Back!',
           style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
-      ],
+       ],
     );
   }
-
-
 }

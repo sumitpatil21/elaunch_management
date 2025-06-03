@@ -6,8 +6,8 @@ class EmployeeState extends Equatable {
   final String? roleFilter;
   final String? departmentFilter;
   final String? managerFilter;
-  final EmployeeModal? loggedInEmployee; // Add this
-  final bool isLoggedIn; // Add this
+  final EmployeeModal? loggedInEmployee;
+
 
   const EmployeeState({
     this.employees = const [],
@@ -16,7 +16,7 @@ class EmployeeState extends Equatable {
     this.departmentFilter,
     this.managerFilter,
     this.loggedInEmployee, // Add this
-    this.isLoggedIn = false, // Add this
+
   });
 
 
@@ -26,8 +26,8 @@ class EmployeeState extends Equatable {
     String? roleFilter,
     String? departmentFilter,
     String? managerFilter,
-    EmployeeModal? loggedInEmployee, // Add this
-    bool? isLoggedIn, // Add this
+    EmployeeModal? loggedInEmployee,
+
   }) {
     return EmployeeState(
       employees: employees ?? this.employees,
@@ -35,8 +35,8 @@ class EmployeeState extends Equatable {
       roleFilter: roleFilter ?? this.roleFilter,
       departmentFilter: departmentFilter ?? this.departmentFilter,
       managerFilter: managerFilter ?? this.managerFilter,
-      loggedInEmployee: loggedInEmployee ?? this.loggedInEmployee, // Add this
-      isLoggedIn: isLoggedIn ?? this.isLoggedIn, // Add this
+      loggedInEmployee: loggedInEmployee ?? this.loggedInEmployee,
+
     );
   }
 
@@ -47,7 +47,7 @@ class EmployeeState extends Equatable {
     roleFilter,
     departmentFilter,
     managerFilter,
-    loggedInEmployee, // Add this
-    isLoggedIn, // Add this
+    loggedInEmployee,
+
   ];
 }

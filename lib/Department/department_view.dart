@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Service/admin_modal.dart';
 import '../Service/department_modal.dart';
+import '../SuperAdminLogin/admin_bloc.dart';
 import 'department_bloc.dart';
 
 class DepartmentScreen extends StatefulWidget {
@@ -10,8 +11,7 @@ class DepartmentScreen extends StatefulWidget {
   const DepartmentScreen({super.key});
 
   static Widget builder(BuildContext context) {
-    late AdminModal admin =
-        ModalRoute.of(context)!.settings.arguments as AdminModal;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -36,6 +36,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    SelectRole? user =
+    ModalRoute.of(context)!.settings.arguments as SelectRole?;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.withOpacity(0.2),
@@ -112,12 +114,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(
-                            onPressed: () {
-                              _showDepartmentDialog(
-                                dept: state.departments[index],
-                              );
-                            },
+                          if(user?.employeeModal==null)IconButton(
+                            onPressed: () => _showDepartmentDialog(dept: dept),
                             icon: const Icon(Icons.edit),
                           ),
                           IconButton(

@@ -12,8 +12,7 @@ class SystemView extends StatefulWidget {
   const SystemView({super.key});
 
   static Widget builder(BuildContext context) {
-    AdminModal? args =
-        ModalRoute.of(context)!.settings.arguments as AdminModal?;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -47,8 +46,8 @@ class _SystemViewState extends State<SystemView> {
 
   @override
   Widget build(BuildContext context) {
-    AdminModal? args =
-        ModalRoute.of(context)!.settings.arguments as AdminModal?;
+    SelectRole? user =
+    ModalRoute.of(context)!.settings.arguments as SelectRole?;
 
     return Scaffold(
       appBar: AppBar(
@@ -62,7 +61,7 @@ class _SystemViewState extends State<SystemView> {
             context,
             employeeBloc: context.read<EmployeeBloc>()..add(FetchEmployees()),
             systemBloc: context.read<SystemBloc>(),
-            adminId: args?.id,
+            adminId: user?.adminModal?.id,
           );
         },
         label: const Text("Add System"),
@@ -287,7 +286,7 @@ class _SystemViewState extends State<SystemView> {
                               ),
                               Row(
                                 children: [
-                                  const Text("Status: "),
+                                  const Text("Status:"),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 4,
@@ -304,7 +303,7 @@ class _SystemViewState extends State<SystemView> {
                                           .toUpperCase(),
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 10,
+                                        fontSize: 8,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -316,20 +315,22 @@ class _SystemViewState extends State<SystemView> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () {
-                                  showSystemDialog(
-                                    context,
-                                    system: system,
-                                    employeeBloc:
-                                        context.read<EmployeeBloc>()
-                                          ..add(FetchEmployees()),
-                                    systemBloc: context.read<SystemBloc>(),
-                                    adminId: args?.id,
-                                  );
-                                },
-                              ),
+                             (user?.employeeModal==null)?IconButton(
+                               icon: const Icon(Icons.edit),
+                               onPressed: () {
+                                 showSystemDialog(
+                                   context,
+                                   system: system,
+                                   employeeBloc:
+                                   context.read<EmployeeBloc>()
+                                     ..add(FetchEmployees()),
+                                   systemBloc: context.read<SystemBloc>(),
+                                   adminId: user?.adminModal?.id,
+                                 );
+                               },
+                             ):ElevatedButton(onPressed: () {
+
+                             }, child: Text("Apply",style: TextStyle(color: Colors.green),),),
                             ],
                           ),
                         ),

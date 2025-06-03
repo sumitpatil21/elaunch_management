@@ -1,6 +1,7 @@
 import 'package:elaunch_management/Service/firebaseDatabase.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'Device_Testing/device_view.dart';
+import 'Leave/leave_view.dart';
 import 'System/system_view.dart';
 import 'firebase_options.dart';
 import 'package:elaunch_management/Dashboard/splaceScreen.dart';
@@ -48,5 +49,6 @@ class MyApp extends StatelessWidget {
     EmployeeScreen.routeName:EmployeeScreen.builder,
     SystemView.routeName:SystemView.builder,
     DeviceView.routeName:DeviceView.builder,
+    LeaveView.routeName:LeaveView.builder,
   };
 }

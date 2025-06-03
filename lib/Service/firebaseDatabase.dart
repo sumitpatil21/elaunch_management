@@ -5,6 +5,7 @@ import 'package:elaunch_management/Service/system_modal.dart';
 import 'admin_modal.dart';
 import 'department_modal.dart';
 import 'employee_modal.dart';
+import 'leave_modal.dart';
 
 class FirebaseDbHelper {
   FirebaseDbHelper._();
@@ -16,8 +17,9 @@ class FirebaseDbHelper {
   CollectionReference get employees => firestore.collection('employees');
   CollectionReference get systems => firestore.collection('systems');
   CollectionReference get devices => firestore.collection('devices');
+  CollectionReference get leaves => firestore.collection('leaves');
 
-  // ==================== ADMIN METHODS ====================
+
   Future<String> createAdmin(AdminModal admin) async {
     final doc = await admins.add(admin.toJson());
     log("Admin created with ID: ${doc.id}");
@@ -303,5 +305,19 @@ class FirebaseDbHelper {
 
   Future<void> deleteDevice(String id) async {
     await devices.doc(id).delete();
+  }
+
+  // leaves
+   Future<void> addLeave(Leave leave) async {
+    await leaves.add(leave.toMap());
+  }
+
+   Future<void> deleteLeave(String id) async {
+    await leaves.doc(id).delete();
+  }
+
+   Future<List<Leave>> fetchLeaves() async {
+    final snapshot = await leaves.get();
+    return snapshot.docs.map((doc) => Leave.fromMap(doc as Map<String, dynamic>)).toList();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -276,305 +278,321 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     }).toList();
   }
 
-  Drawer buildDrawer(BuildContext context, AdminModal? admin) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-
-    return Drawer(
-      width: isTablet ? 300 : 240,
-      child: Column(
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Text(
-                context.read<EmployeeBloc>().state.loggedInEmployee == null
-                    ? admin?.name[0].toUpperCase()??""
-                    : context
-                        .read<EmployeeBloc>()
-                        .state
-                        .loggedInEmployee!
-                        .name[0]
-                        .toUpperCase(),
-                style: TextStyle(
-                  fontSize: isTablet ? 28 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-            ),
-            accountName: Text(
+  Widget buildDrawerContent(AdminModal? admin, bool isWeb) {
+    return Column(
+      children: [
+        UserAccountsDrawerHeader(
+          decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+          currentAccountPicture: CircleAvatar(
+            backgroundColor: Colors.white,
+            child: Text(
               context.read<EmployeeBloc>().state.loggedInEmployee == null
-                  ? admin?.name??""
-                  : context.read<EmployeeBloc>().state.loggedInEmployee!.name,
+                  ? admin?.name[0].toUpperCase() ?? ""
+                  : context
+                      .read<EmployeeBloc>()
+                      .state
+                      .loggedInEmployee!
+                      .name[0]
+                      .toUpperCase(),
               style: TextStyle(
+                fontSize: isWeb ? 28 : 24,
                 fontWeight: FontWeight.bold,
-                fontSize: isTablet ? 16 : 14,
+                color: Theme.of(context).primaryColor,
               ),
             ),
-            accountEmail: Text(
-              context.read<EmployeeBloc>().state.loggedInEmployee == null
-                  ? admin?.email??""
-                  : context.read<EmployeeBloc>().state.loggedInEmployee!.email,
-              style: TextStyle(fontSize: isTablet ? 14 : 12),
+          ),
+          accountName: Text(
+            context.read<EmployeeBloc>().state.loggedInEmployee == null
+                ? admin?.name ?? ""
+                : context.read<EmployeeBloc>().state.loggedInEmployee!.name,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isWeb ? 16 : 14,
             ),
           ),
-          ListTile(
-            leading: Icon(Icons.dashboard, size: isTablet ? 28 : 24),
-            title: Text(
-              "Dashboard",
-              style: TextStyle(fontSize: isTablet ? 18 : 16),
-            ),
-            selected: true,
+          accountEmail: Text(
+            context.read<EmployeeBloc>().state.loggedInEmployee == null
+                ? admin?.email ?? ""
+                : context.read<EmployeeBloc>().state.loggedInEmployee!.email,
+            style: TextStyle(fontSize: isWeb ? 14 : 12),
+          ),
+        ),
+        ListTile(
+          leading: Icon(Icons.dashboard, size: isWeb ? 28 : 24),
+          title: Text("Dashboard", style: TextStyle(fontSize: isWeb ? 18 : 16)),
+          selected: true,
+          onTap: () {
+            if (!isWeb) Navigator.pop(context);
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.business, size: isWeb ? 28 : 24),
+          title: Text(
+            "Department",
 
-            onTap: () {
-              Navigator.pop(context);
-            },
+            style: TextStyle(fontSize: isWeb ? 18 : 16),
           ),
-          ListTile(
-            leading: Icon(Icons.business, size: isTablet ? 28 : 24),
-            title: Text(
-              "Department",
-              style: TextStyle(fontSize: isTablet ? 18 : 16),
-            ),
-            onTap: () {
-              Navigator.pushNamed(context, DepartmentScreen.routeName);
-            },
+          onTap: () {
+            Navigator.pushNamed(context, DepartmentScreen.routeName);
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.group, size: isWeb ? 28 : 24),
+          title: Text("Employee", style: TextStyle(fontSize: isWeb ? 18 : 16)),
+          onTap: () {
+            final dept = context.read<DepartmentBloc>().state.departments;
+            Navigator.pushNamed(
+              context,
+              EmployeeScreen.routeName,
+              arguments: dept.first,
+            );
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.phone_android_outlined, size: isWeb ? 28 : 24),
+          title: Text("Device", style: TextStyle(fontSize: isWeb ? 18 : 16)),
+          onTap: () {
+            Navigator.pushNamed(context, DeviceView.routeName);
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.computer_outlined, size: isWeb ? 28 : 24),
+          title: Text("System", style: TextStyle(fontSize: isWeb ? 18 : 16)),
+          onTap: () {
+            Navigator.pushNamed(context, SystemView.routeName);
+          },
+        ),
+        const Divider(),
+        ListTile(
+          leading: Icon(Icons.logout, color: Colors.red, size: isWeb ? 28 : 24),
+          title: Text(
+            "Logout",
+            style: TextStyle(color: Colors.red, fontSize: isWeb ? 18 : 16),
           ),
-          ListTile(
-            leading: Icon(Icons.group, size: isTablet ? 28 : 24),
-            title: Text(
-              "Employee",
-              style: TextStyle(fontSize: isTablet ? 18 : 16),
+          onTap: () {
+            context.read<AdminBloc>().add(
+              AdminLogin(
+                email: context.read<AdminBloc>().state.adminList!.first.email,
+                password: context.read<AdminBloc>().state.adminList!.first.pass,
+              ),
+            );
+            context.read<AdminBloc>().add(AdminLogout());
+            Navigator.of(context).pushNamed(AdminView.routeName);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget buildMainContent(bool isWeb) {
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.all(isWeb ? 24 : 16),
+          child: TextField(
+            controller: searchController,
+            onChanged: (value) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Search employees...',
+              hintStyle: TextStyle(fontSize: isWeb ? 16 : 14),
+              prefixIcon: Icon(Icons.search, size: isWeb ? 28 : 24),
+              suffixIcon:
+                  searchController.text.isNotEmpty
+                      ? IconButton(
+                        icon: Icon(Icons.clear, size: isWeb ? 28 : 24),
+                        onPressed: () {
+                          searchController.clear();
+                          setState(() {});
+                        },
+                      )
+                      : null,
+              filled: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: isWeb ? 20 : 16,
+                vertical: isWeb ? 16 : 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red, width: 1),
+              ),
             ),
-            onTap: () {
-              final dept = context.read<DepartmentBloc>().state.departments;
-              Navigator.pushNamed(
-                context,
-                EmployeeScreen.routeName,
-                arguments: dept.first,
+            style: TextStyle(fontSize: isWeb ? 16 : 14),
+          ),
+        ),
+        Expanded(
+          child: BlocBuilder<EmployeeBloc, EmployeeState>(
+            builder: (context, state) {
+              final searchFilteredEmployees = searchFilteredEmployee(
+                state.filteredEmployees,
               );
+
+              if (state.employees.isEmpty) {
+                context.read<EmployeeBloc>().add(FetchEmployees());
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "No employees found",
+                        style: TextStyle(
+                          fontSize: isWeb ? 20 : 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: isWeb ? 24 : 16),
+                      const CircularProgressIndicator(),
+                    ],
+                  ),
+                );
+              }
+
+              if (searchFilteredEmployees.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: isWeb ? 80 : 64,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: isWeb ? 24 : 16),
+                      Text(
+                        "No employees match your filters",
+                        style: TextStyle(
+                          fontSize: isWeb ? 20 : 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: isWeb ? 12 : 8),
+                      Text(
+                        "Try adjusting your search or filters",
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: isWeb ? 16 : 14,
+                        ),
+                      ),
+                      SizedBox(height: isWeb ? 24 : 16),
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.clear, size: isWeb ? 24 : 20),
+                        label: Text(
+                          "Clear Filters",
+                          style: TextStyle(fontSize: isWeb ? 16 : 14),
+                        ),
+                        onPressed: clearAllFilters,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWeb ? 24 : 16,
+                            vertical: isWeb ? 16 : 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return isWeb
+                  ? _buildWebLayout(searchFilteredEmployees)
+                  : _buildMobileLayout(searchFilteredEmployees);
             },
           ),
-          ListTile(
-            leading: Icon(
-              Icons.phone_android_outlined,
-              size: isTablet ? 28 : 24,
-            ),
-            title: Text(
-              "Device",
-              style: TextStyle(fontSize: isTablet ? 18 : 16),
-            ),
-            onTap: () {
-              Navigator.pushNamed(context, DeviceView.routeName);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.computer_outlined, size: isTablet ? 28 : 24),
-            title: Text(
-              "System",
-              style: TextStyle(fontSize: isTablet ? 18 : 16),
-            ),
-            onTap: () {
-              Navigator.pushNamed(context, SystemView.routeName);
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: Icon(
-              Icons.logout,
-              color: Colors.red,
-              size: isTablet ? 28 : 24,
-            ),
-            title: Text(
-              "Logout",
-              style: TextStyle(color: Colors.red, fontSize: isTablet ? 18 : 16),
-            ),
-            onTap: () {
-              context.read<AdminBloc>().add(
-                AdminLogin(
-                  email: context.read<AdminBloc>().state.adminList!.first.email,
-                  password:
-                      context.read<AdminBloc>().state.adminList!.first.pass,
-                ),
-              );
-              context.read<AdminBloc>().add(AdminLogout());
-              Navigator.of(context).pushNamed(AdminView.routeName);
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final isTablet = screenSize.width > 600;
-    final isDesktop = screenSize.width > 1024;
+    final isWeb = screenSize.width > 800;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back),
-        ),
-        backgroundColor: Colors.red.withOpacity(0.2),
-        elevation: 2,
-        title: Text(
-          "Employees",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: isTablet ? 22 : 18,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list, size: isTablet ? 28 : 24),
-            onPressed: showFilterBottomSheet,
-          ),
-        ],
-      ),
-      drawer: buildDrawer(context, null), // Pass your admin object here
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(isTablet ? 24 : 16),
-            child: TextField(
-              controller: searchController,
-              onChanged: (value) => setState(() {}),
-              decoration: InputDecoration(
-                hintText: 'Search employees...',
-                hintStyle: TextStyle(fontSize: isTablet ? 16 : 14),
 
-                prefixIcon: Icon(Icons.search, size: isTablet ? 28 : 24),
-                suffixIcon:
-                    searchController.text.isNotEmpty
-                        ? IconButton(
-                          icon: Icon(Icons.clear, size: isTablet ? 28 : 24),
-                          onPressed: () {
-                            searchController.clear();
-                            setState(() {});
-                          },
-                        )
-                        : null,
-                filled: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 20 : 16,
-                  vertical: isTablet ? 16 : 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red, width: 1),
-                ),
+    if (isWeb) {
+
+      return Scaffold(
+        body: Row(
+          children: [
+
+            Container(
+              width: 300,
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).drawerTheme.backgroundColor ??
+                    Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(2, 0),
+                  ),
+                ],
               ),
-              style: TextStyle(fontSize: isTablet ? 16 : 14),
+              child: buildDrawerContent(null, true),
             ),
-          ),
-
-          Expanded(
-            child: BlocBuilder<EmployeeBloc, EmployeeState>(
-              builder: (context, state) {
-                final searchFilteredEmployees = searchFilteredEmployee(
-                  state.filteredEmployees,
-                );
-
-                if (state.employees.isEmpty) {
-                  context.read<EmployeeBloc>().add(FetchEmployees());
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "No employees found",
-                          style: TextStyle(
-                            fontSize: isTablet ? 20 : 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: isTablet ? 24 : 16),
-                        const CircularProgressIndicator(),
-                      ],
+            Expanded(
+              child: Scaffold(
+                appBar: AppBar(
+                  backgroundColor: Colors.red.withOpacity(0.2),
+                  elevation: 2,
+                  automaticallyImplyLeading: false, // Remove hamburger menu
+                  title: const Text(
+                    "Employees",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.filter_list, size: 28),
+                      onPressed: showFilterBottomSheet,
                     ),
-                  );
-                }
-
-                if (searchFilteredEmployees.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: isTablet ? 80 : 64,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: isTablet ? 24 : 16),
-                        Text(
-                          "No employees match your filters",
-                          style: TextStyle(
-                            fontSize: isTablet ? 20 : 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: isTablet ? 12 : 8),
-                        Text(
-                          "Try adjusting your search or filters",
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: isTablet ? 16 : 14,
-                          ),
-                        ),
-                        SizedBox(height: isTablet ? 24 : 16),
-                        ElevatedButton.icon(
-                          icon: Icon(Icons.clear, size: isTablet ? 24 : 20),
-                          label: Text(
-                            "Clear Filters",
-
-                            style: TextStyle(fontSize: isTablet ? 16 : 14),
-                          ),
-                          onPressed: clearAllFilters,
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isTablet ? 24 : 16,
-                              vertical: isTablet ? 16 : 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return isDesktop
-                    ? _buildDesktopLayout(searchFilteredEmployees, isTablet)
-                    : _buildMobileLayout(searchFilteredEmployees, isTablet);
-              },
+                  ],
+                ),
+                body: buildMainContent(true),
+              ),
             ),
+          ],
+        ),
+      );
+    } else {
+      // Mobile layout with standard drawer
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.red.withOpacity(0.2),
+          elevation: 2,
+          title: const Text(
+            "Employees",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-        ],
-      ),
-    );
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.filter_list, size: 24),
+              onPressed: showFilterBottomSheet,
+            ),
+          ],
+        ),
+        drawer: Drawer(width: 240, child: buildDrawerContent(null, false)),
+        body: buildMainContent(false),
+      );
+    }
   }
 
-  Widget _buildMobileLayout(List<EmployeeModal> employees, bool isTablet) {
+  Widget _buildMobileLayout(List<EmployeeModal> employees) {
     return ListView.separated(
-      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      padding: const EdgeInsets.all(16),
       itemCount: employees.length,
-      separatorBuilder: (_, __) => SizedBox(height: isTablet ? 12 : 8),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final employee = employees[index];
-        return _buildEmployeeCard(employee, isTablet);
+        return _buildEmployeeCard(employee, false);
       },
     );
   }
 
-  Widget _buildDesktopLayout(List<EmployeeModal> employees, bool isTablet) {
+  Widget _buildWebLayout(List<EmployeeModal> employees) {
     return GridView.builder(
       padding: const EdgeInsets.all(24),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -591,7 +609,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     );
   }
 
-  Widget _buildEmployeeCard(EmployeeModal employee, bool isTablet) {
+  Widget _buildEmployeeCard(EmployeeModal employee, bool isWeb) {
     return Dismissible(
       key: Key(employee.id.toString()),
       background: Container(
@@ -601,11 +619,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
           color: Colors.red.shade700,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: isTablet ? 32 : 24,
-        ),
+        child: Icon(Icons.delete, color: Colors.white, size: isWeb ? 32 : 24),
       ),
       confirmDismiss:
           (_) => showDialog<bool>(
@@ -614,18 +628,18 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                 (_) => AlertDialog(
                   title: Text(
                     "Confirm Delete",
-                    style: TextStyle(fontSize: isTablet ? 20 : 18),
+                    style: TextStyle(fontSize: isWeb ? 20 : 18),
                   ),
                   content: Text(
                     "Are you sure you want to delete ${employee.name}?",
-                    style: TextStyle(fontSize: isTablet ? 16 : 14),
+                    style: TextStyle(fontSize: isWeb ? 16 : 14),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
                       child: Text(
                         "CANCEL",
-                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                        style: TextStyle(fontSize: isWeb ? 16 : 14),
                       ),
                     ),
                     TextButton(
@@ -633,7 +647,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                       onPressed: () => Navigator.pop(context, true),
                       child: Text(
                         "DELETE",
-                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                        style: TextStyle(fontSize: isWeb ? 16 : 14),
                       ),
                     ),
                   ],
@@ -647,16 +661,16 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
         elevation: 2,
         child: ListTile(
           contentPadding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 20 : 16,
-            vertical: isTablet ? 12 : 8,
+            horizontal: isWeb ? 20 : 16,
+            vertical: isWeb ? 12 : 8,
           ),
           leading: CircleAvatar(
             backgroundColor: Colors.red.withOpacity(0.2),
-            radius: isTablet ? 28 : 24,
+            radius: isWeb ? 28 : 24,
             child: Text(
               employee.role.substring(0, 1).toUpperCase(),
               style: TextStyle(
-                fontSize: isTablet ? 20 : 16,
+                fontSize: isWeb ? 20 : 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -665,22 +679,19 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             employee.name,
             style: TextStyle(
               fontWeight: FontWeight.w500,
-              fontSize: isTablet ? 18 : 16,
+              fontSize: isWeb ? 18 : 16,
             ),
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                employee.email,
-                style: TextStyle(fontSize: isTablet ? 14 : 12),
-              ),
+              Text(employee.email, style: TextStyle(fontSize: isWeb ? 14 : 12)),
               if (employee.departmentName != null)
                 Text(
                   'Dept: ${employee.departmentName}',
                   style: TextStyle(
                     color: Colors.grey[600],
-                    fontSize: isTablet ? 12 : 10,
+                    fontSize: isWeb ? 12 : 10,
                   ),
                 ),
               if (employee.managerName != null &&
@@ -689,15 +700,15 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                   'Manager: ${employee.managerName}',
                   style: TextStyle(
                     color: Colors.grey[600],
-                    fontSize: isTablet ? 12 : 10,
+                    fontSize: isWeb ? 12 : 10,
                   ),
                 ),
             ],
           ),
           trailing: Container(
             padding: EdgeInsets.symmetric(
-              horizontal: isTablet ? 12 : 8,
-              vertical: isTablet ? 6 : 4,
+              horizontal: isWeb ? 12 : 8,
+              vertical: isWeb ? 6 : 4,
             ),
             decoration: BoxDecoration(
               color: Colors.red.withOpacity(0.1),
@@ -708,7 +719,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
               style: TextStyle(
                 color: Colors.red.shade700,
                 fontWeight: FontWeight.w500,
-                fontSize: isTablet ? 14 : 12,
+                fontSize: isWeb ? 14 : 12,
               ),
             ),
           ),
