@@ -16,6 +16,8 @@ import '../Employee/employee_bloc.dart';
 import '../Leave/leave_view.dart';
 import '../Service/admin_modal.dart';
 import '../SuperAdminLogin/admin_view.dart';
+import '../System/system_event.dart';
+import '../System/system_state.dart';
 import '../System/system_view.dart';
 
 class DashboardView extends StatefulWidget {
@@ -383,6 +385,54 @@ class _DashboardViewState extends State<DashboardView> {
                                 ),
                               ),
                             ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  DeviceView.routeName,
+                                  arguments: user
+                                );
+                              },
+                              child: Card(
+                                elevation: 4,
+                                color: Colors.green,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.leave_bags_at_home_outlined,
+                                        size: 32,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Leaves',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8),
+                                      BlocBuilder<DeviceBloc, DeviceState>(
+                                        builder: (context, state) {
+                                          return Text(
+                                            '${state.devices.length}',
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
 
@@ -634,30 +684,7 @@ class _DashboardViewState extends State<DashboardView> {
                                     },
                                   ),
                                 ),
-                                Card(
-                                  elevation: 2,
-                                  child: ListTile(
-                                    tileColor: Colors.grey,
-                                    leading: Icon(
-                                      Icons.calendar_today,
-                                      color: Colors.white,
-                                    ),
-                                    title: Text(
-                                      'Calendar',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      // TODO: Implement calendar logic for blank UI
-                                      Navigator.pushNamed(context, LeaveView.routeName);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Calendar feature coming soon!')),
-                                      );
-                                    },
-                                  ),
-                                ),
+
                             ],
                           )
                         else
@@ -981,60 +1008,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 ),
                               ),
                               // Leave Apply Button
-                              if (user.employeeModal != null)
-                                Card(
-                                  elevation: 2,
-                                  child: ListTile(
-                                    tileColor: Colors.green,
-                                    leading: Icon(
-                                      Icons.calendar_today,
-                                      color: Colors.white,
-                                    ),
-                                    title: Text(
-                                      'Apply for Leave',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      // TODO: Implement leave application logic
-                                      Navigator.pushNamed(context, LeaveView.routeName);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              'Leave application feature coming soon!'),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              if (user.employeeModal == null && user.adminModal == null) // Show calendar for blank UI
-                                Card(
-                                  elevation: 2,
-                                  child: ListTile(
-                                    tileColor: Colors.grey,
-                                    leading: Icon(
-                                      Icons.calendar_today,
-                                      color: Colors.white,
-                                    ),
-                                    title: Text(
-                                      'Calendar',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      // TODO: Implement calendar logic for blank UI
-                                      Navigator.pushNamed(context, LeaveView.routeName);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Calendar feature coming soon!')),
-                                      );
-                                    },
-                                  ),
-                                ),
+
 
                             ],
                           ),
@@ -1109,7 +1083,7 @@ class _DashboardViewState extends State<DashboardView> {
           }, Icon(Icons.phone_android_outlined)),
           buildListTile(context, "Leave", () {
             Navigator.pushNamed(context, LeaveView.routeName,arguments: user);
-          }, Icon(Icons.calendar_today)),
+          }, Icon(  Icons.leave_bags_at_home_outlined,)),
           Divider(),
 
           ListTile(

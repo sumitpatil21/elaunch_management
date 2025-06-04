@@ -1,3 +1,7 @@
+import 'dart:developer';
+
+import 'package:elaunch_management/System/system_event.dart';
+import 'package:elaunch_management/System/system_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:elaunch_management/Service/admin_modal.dart';
@@ -12,17 +16,19 @@ class SystemView extends StatefulWidget {
   const SystemView({super.key});
 
   static Widget builder(BuildContext context) {
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create:
-              (context) => SystemBloc()..add(FetchSystem()),
+              (context) =>
+                  SystemBloc()
+                    ..add(const FetchSystem())
+                    ..add(const FetchRequests()),
         ),
         BlocProvider(
-          create: (context) => EmployeeBloc()..add(FetchEmployees()),
+          create: (context) => EmployeeBloc()..add(const FetchEmployees()),
         ),
-        BlocProvider(create: (context) => AdminBloc()..add(AdminFetch())),
+        BlocProvider(create: (context) => AdminBloc()..add(const AdminFetch())),
       ],
       child: const SystemView(),
     );
@@ -34,7 +40,7 @@ class SystemView extends StatefulWidget {
 
 class _SystemViewState extends State<SystemView> {
   final TextEditingController searchController = TextEditingController();
-  String selectedStatusFilter = 'all'; // Default to show all
+  String selectedStatusFilter = 'all';
 
   final List<String> statusFilters = [
     'all',
@@ -47,26 +53,78 @@ class _SystemViewState extends State<SystemView> {
   @override
   Widget build(BuildContext context) {
     SelectRole? user =
-    ModalRoute.of(context)!.settings.arguments as SelectRole?;
+        ModalRoute.of(context)!.settings.arguments as SelectRole?;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.yellow.withOpacity(0.2),
         title: const Text("System"),
+        actions: [
+          if (user?.adminModal != null)
+            BlocBuilder<SystemBloc, SystemState>(
+              builder: (context, state) {
+                final requestCount = state.requests.length;
+                return Stack(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        context.read<SystemBloc>().add(const FetchRequests());
+                        showRequestDialog(context, state.systems);
+                      },
+                      child: const Text(
+                        "Requests",
+                        style: TextStyle(color: Colors.yellow),
+                      ),
+                    ),
+                    if (requestCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '$requestCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.yellow.withOpacity(0.2),
-        onPressed: () {
-          showSystemDialog(
-            context,
-            employeeBloc: context.read<EmployeeBloc>()..add(FetchEmployees()),
-            systemBloc: context.read<SystemBloc>(),
-            adminId: user?.adminModal?.id,
-          );
-        },
-        label: const Text("Add System"),
-        icon: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          user?.adminModal != null
+              ? FloatingActionButton.extended(
+                backgroundColor: Colors.yellow.withOpacity(0.2),
+
+                onPressed: () {
+                  showSystemDialog(
+                    context,
+                    employeeBloc:
+                        context.read<EmployeeBloc>()
+                          ..add(const FetchEmployees()),
+                    systemBloc: context.read<SystemBloc>(),
+                    adminId: user?.adminModal?.id,
+                  );
+                },
+                label: const Text("Add System"),
+                icon: const Icon(Icons.add),
+              )
+              : null,
       body: Column(
         children: [
           // Search Bar
@@ -110,7 +168,6 @@ class _SystemViewState extends State<SystemView> {
                       status == 'all' ? 'All' : status.toUpperCase(),
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black87,
-
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
@@ -123,216 +180,175 @@ class _SystemViewState extends State<SystemView> {
                     },
                     backgroundColor: getStatusColor(status),
                     selectedColor: getStatusColor(status),
-                    checkmarkColor: Colors.white,
-                    elevation: isSelected ? 4 : 1,
-                    pressElevation: 2,
                   ),
                 );
               },
             ),
           ),
 
-          const SizedBox(height: 8),
-
           // Systems List
           Expanded(
             child: BlocBuilder<SystemBloc, SystemState>(
               builder: (context, state) {
-                final query = searchController.text.toLowerCase();
-
-                final filteredSystems =
+                List<SystemModal> filteredSystems =
                     state.systems.where((system) {
-                      final matchesSearch =
-                          system.systemName.toLowerCase().contains(query) ||
-                          (system.version?.toLowerCase().contains(query) ??
-                              false) ||
-                          (system.employeeName?.toLowerCase().contains(query) ??
-                              false) ||
-                          (system.operatingSystem?.toLowerCase().contains(
-                                query,
-                              ) ??
-                              false);
-
+                      final matchesSearch = system.systemName
+                          .toLowerCase()
+                          .contains(searchController.text.toLowerCase());
                       final matchesStatus =
                           selectedStatusFilter == 'all' ||
-                          (system.status ?? 'available') ==
-                              selectedStatusFilter;
-
+                          system.status == selectedStatusFilter;
                       return matchesSearch && matchesStatus;
                     }).toList();
 
                 if (filteredSystems.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.computer_outlined,
-                          size: 64,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          searchController.text.isNotEmpty ||
-                                  selectedStatusFilter != 'all'
-                              ? 'No systems match your filters'
-                              : 'No systems found',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        if (searchController.text.isNotEmpty ||
-                            selectedStatusFilter != 'all')
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  searchController.clear();
-                                  selectedStatusFilter = 'all';
-                                });
-                              },
-                              child: const Text('Clear Filters'),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
+                  return const Center(child: Text('No systems found'));
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
                   itemCount: filteredSystems.length,
                   itemBuilder: (context, index) {
                     final system = filteredSystems[index];
-                    return Dismissible(
-                      key: Key(system.id.toString()),
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade700,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      direction: DismissDirection.endToStart,
-                      confirmDismiss:
-                          (_) => showDialog<bool>(
-                            context: context,
-                            builder:
-                                (_) => AlertDialog(
-                                  title: const Text("Confirm Delete"),
-                                  content: Text(
-                                    "Are you sure you want to delete ${system.systemName}?",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(context, false),
-                                      child: const Text("CANCEL"),
-                                    ),
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      onPressed:
-                                          () => Navigator.pop(context, true),
-                                      child: const Text("DELETE"),
-                                    ),
-                                  ],
-                                ),
-                          ),
-                      onDismissed: (_) {
-                        context.read<SystemBloc>().add(
-                          DeleteSystem(
-                            id: system.id ?? "1",
-                          ),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("${system.systemName} deleted"),
-                          ),
-                        );
-                      },
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: getStatusColor(
-                              system.status ?? 'available',
-                            ),
-                            child: const Icon(
-                              Icons.computer_outlined,
-                              color: Colors.white,
-                            ),
-                          ),
-                          title: Text(
-                            system.systemName,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${system.operatingSystem ?? ''} ${system.version ?? ''}",
-                              ),
-                              Text(
-                                "Assigned to: ${system.employeeName ?? 'Unassigned'}",
-                              ),
-                              Row(
-                                children: [
-                                  const Text("Status:"),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: getStatusColor(
-                                        system.status ?? 'available',
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      (system.status ?? 'available')
-                                          .toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                             (user?.employeeModal==null)?IconButton(
-                               icon: const Icon(Icons.edit),
-                               onPressed: () {
-                                 showSystemDialog(
-                                   context,
-                                   system: system,
-                                   employeeBloc:
-                                   context.read<EmployeeBloc>()
-                                     ..add(FetchEmployees()),
-                                   systemBloc: context.read<SystemBloc>(),
-                                   adminId: user?.adminModal?.id,
-                                 );
-                               },
-                             ):ElevatedButton(onPressed: () {
 
-                             }, child: Text("Apply",style: TextStyle(color: Colors.green),),),
-                            ],
-                          ),
+                    // Check if system is already requested by current user
+                    final isAlreadyRequested =
+                        system.isRequested == true &&
+                        system.requestedBy == user?.employeeModal?.id;
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          system.systemName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("OS: ${system.operatingSystem ?? 'Unknown'}"),
+                            Text("Version: ${system.version ?? 'Unknown'}"),
+                            Text(
+                              "Employee: ${system.employeeName ?? 'Unassigned'}",
+                            ),
+                            Row(
+                              children: [
+                                const Text("Status: "),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: getStatusColor(
+                                      system.status ?? 'available',
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    (system.status ?? 'available')
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (user?.employeeModal != null &&
+                                system.status == 'available')
+                              ElevatedButton(
+                                onPressed:
+                                    isAlreadyRequested
+                                        ? () {
+                                          // Cancel request
+                                          context.read<SystemBloc>().add(
+                                            CancelRequest(
+                                              requestId: system.id!,
+                                              systemId: system.id!,
+                                            ),
+                                          );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Request cancelled successfully!',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        : () {
+                                          // Submit request
+                                          context.read<SystemBloc>().add(
+                                            RequestSystem(
+                                              system: SystemModal(
+                                                id: system.id,
+                                                systemName: system.systemName,
+                                                version: system.version,
+                                                status: system.status,
+                                                employeeName:
+                                                    system.employeeName,
+                                                employeeId: system.employeeId,
+                                                adminId: system.adminId,
+
+                                                isRequested: true,
+                                                requestedBy:
+                                                    user?.employeeModal?.id,
+                                                requestedByName:
+                                                    user?.employeeModal?.name,
+                                                requestedAt: DateTime.now(),
+                                                requestStatus: 'pending',
+                                                operatingSystem:
+                                                    system.operatingSystem,
+                                              ),
+                                            ),
+                                          );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Request submitted successfully!',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                child: Text(
+                                  isAlreadyRequested ? "Cancel" : "Apply",
+                                  style: TextStyle(
+                                    color:
+                                        isAlreadyRequested
+                                            ? Colors.red
+                                            : Colors.green,
+                                  ),
+                                ),
+                              )
+                            else if (user?.adminModal != null)
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  showSystemDialog(
+                                    context,
+                                    system: system,
+                                    employeeBloc:
+                                        context.read<EmployeeBloc>()
+                                          ..add(const FetchEmployees()),
+                                    systemBloc: context.read<SystemBloc>(),
+                                    adminId: user?.adminModal?.id,
+                                  );
+                                },
+                              ),
+                          ],
                         ),
                       ),
                     );
@@ -359,6 +375,88 @@ class _SystemViewState extends State<SystemView> {
       default:
         return Colors.yellow.withOpacity(0.2);
     }
+  }
+
+  void showRequestDialog(BuildContext context, List<SystemModal> systemState) {
+    final pendingRequests =
+        systemState
+            .where((system) => system.requestStatus == 'pending')
+            .toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Pending Requests (${pendingRequests.length})'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child:
+                pendingRequests.isEmpty
+                    ? const Center(child: Text('No pending requests'))
+                    : ListView.builder(
+                      itemCount: pendingRequests.length,
+                      itemBuilder: (context, index) {
+                        final request = pendingRequests[index];
+                        return Card(
+                          child: ListTile(
+                            title: Text(request.systemName),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Requested by: ${request.requestedByName}',
+                                ),
+                                if (request.requestedAt != null)
+                                  Text('Date: ${request.requestedAt!}'),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.check,
+                                    color: Colors.green,
+                                  ),
+                                  onPressed: () {
+                                    context.read<SystemBloc>().add(
+                                      ApproveRequest(
+                                        systemId: request.id!,
+                                        employeeId: request.requestedBy!,
+                                      ),
+                                    );
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () {
+                                    context.read<SystemBloc>().add(
+                                      RejectRequest(systemId: request.id!),
+                                    );
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void showSystemDialog(
@@ -389,7 +487,6 @@ class _SystemViewState extends State<SystemView> {
     EmployeeModal? selectedEmployee = unassignedEmployee;
     String selectedStatus = 'available';
     String selectedOS = 'Windows';
-
 
     if (system != null) {
       nameController.text = system.systemName;
@@ -509,7 +606,7 @@ class _SystemViewState extends State<SystemView> {
                               value: emp,
                               child: Text(emp.name),
                             );
-                          }).toList(),
+                          }),
                         ],
                         onChanged: (emp) {
                           setState(() {
@@ -533,16 +630,22 @@ class _SystemViewState extends State<SystemView> {
                       if (system != null) {
                         systemBloc.add(
                           UpdateSystem(
-                            id: system.id!,
-                            systemName: nameController.text,
-                            version: versionController.text,
-                            status: selectedStatus,
-                            operatingSystem: selectedOS,
-                            employeeId:
-                                selectedEmployee?.id == '-1'
-                                    ? null
-                                    : selectedEmployee?.id,
-                            adminId: adminId,
+                            system: SystemModal(
+                              id: system.id,
+                              systemName: nameController.text,
+                              version: versionController.text,
+                              status: selectedStatus,
+                              operatingSystem: selectedOS,
+                              employeeName:
+                                  selectedEmployee?.id == '-1'
+                                      ? null
+                                      : selectedEmployee?.name,
+                              employeeId:
+                                  selectedEmployee?.id == '-1'
+                                      ? null
+                                      : selectedEmployee?.id,
+                              adminId: adminId,
+                            ),
                           ),
                         );
                       } else {
@@ -564,7 +667,6 @@ class _SystemViewState extends State<SystemView> {
                           ),
                         );
                       }
-
                       Navigator.pop(context);
                     }
                   },

@@ -5,10 +5,14 @@ class SystemModal {
   String? operatingSystem;
   String? status;
   String? employeeName;
-
   String? adminId;
-
   String? employeeId;
+  bool? isRequested;
+  String? requestedBy;
+  String? requestedByName;
+  DateTime? requestedAt;
+  String? requestStatus;
+  String? requestId;
 
   SystemModal({
     this.id,
@@ -18,8 +22,13 @@ class SystemModal {
     this.status,
     this.employeeName,
     this.adminId,
-
     this.employeeId,
+    this.isRequested,
+    this.requestedBy,
+    this.requestedByName,
+    this.requestedAt,
+    this.requestStatus,
+    this.requestId,
   });
 
   factory SystemModal.fromJson(Map<String, dynamic> json) {
@@ -31,8 +40,15 @@ class SystemModal {
       status: json['status'],
       employeeName: json['employee_name'],
       adminId: json['id_admin'],
-
       employeeId: json['id_employee'],
+      isRequested: json['is_requested'],
+      requestedBy: json['requested_by'],
+      requestedByName: json['requested_by_name'],
+      requestedAt: json['requested_at'] != null
+          ? DateTime.parse(json['requested_at'])
+          : null,
+      requestStatus: json['request_status'],
+      requestId: json['request_id'],
     );
   }
 
@@ -46,6 +62,12 @@ class SystemModal {
       'employee_name': employeeName,
       'id_admin': adminId,
       'id_employee': employeeId,
+      'is_requested': isRequested,
+      'requested_by': requestedBy,
+      'requested_by_name': requestedByName,
+      'requested_at': requestedAt?.toIso8601String(),
+      'request_status': requestStatus,
+      'request_id': requestId,
     };
   }
 }

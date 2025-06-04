@@ -28,7 +28,7 @@ class _AdminViewState extends State<AdminView> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool isLoading = false;
-
+  String selectedRole = 'Admin';
 
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -46,7 +46,7 @@ class _AdminViewState extends State<AdminView> {
       final email = emailController.text.trim();
       final password = passwordController.text;
 
-      if (context.read<AdminBloc>().state.selectedRole == 'Admin') {
+      if (selectedRole == 'Admin') {
         context.read<AdminBloc>().add(
           AdminLogin(email: email, password: password),
         );
@@ -187,7 +187,7 @@ class _AdminViewState extends State<AdminView> {
                           ],
 
                           DropdownButtonFormField<String>(
-                            value: "Admin",
+                            value: selectedRole,
                             decoration: InputDecoration(
                               labelText: 'Login As',
                               border: OutlineInputBorder(
@@ -204,7 +204,7 @@ class _AdminViewState extends State<AdminView> {
                                 }).toList(),
                             onChanged:
                                 (value) =>
-                                    setState(() => context.read<AdminBloc>().add(SelectRole(selectedRole: value!))),
+                                    setState(() => selectedRole = value!),
                           ),
                           const SizedBox(height: 20),
 
@@ -303,7 +303,7 @@ class _AdminViewState extends State<AdminView> {
                     ],
 
                     DropdownButtonFormField<String>(
-                      value: "Admin",
+                      value: selectedRole,
                       decoration: InputDecoration(
                         labelText: 'Login As',
                         border: OutlineInputBorder(
@@ -319,7 +319,7 @@ class _AdminViewState extends State<AdminView> {
                             );
                           }).toList(),
                       onChanged:
-                          (value) => setState(() => context.read<AdminBloc>().add(SelectRole(selectedRole: value!))),
+                          (value) => setState(() => selectedRole = value!),
                     ),
                     const SizedBox(height: 20),
 

@@ -1,31 +1,44 @@
-
-
+import 'package:elaunch_management/Service/leave_modal.dart';
 import 'package:equatable/equatable.dart';
 
-import '../Service/leave_modal.dart';
-
-class LeaveEvent extends Equatable {
-  const LeaveEvent();
+abstract class LeaveEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
+class FetchLeaves extends LeaveEvent {
+  final String? employeeId;
+
+  FetchLeaves({this.employeeId});
+
+  @override
+  List<Object?> get props => [employeeId];
+}
+
 class AddLeave extends LeaveEvent {
-  final Leave leave;
-  const AddLeave(this.leave);
+  final LeaveModal leave;
+
+  AddLeave(this.leave);
+
+  @override
+  List<Object?> get props => [leave];
 }
 
 class DeleteLeave extends LeaveEvent {
   final String id;
-  const DeleteLeave(this.id);
+
+  DeleteLeave(this.id);
+
   @override
   List<Object?> get props => [id];
 }
 
-class FetchLeaves extends LeaveEvent {
-  final String? employeeId;
-  const FetchLeaves({this.employeeId});
-  @override
-  List<Object?> get props => [employeeId];
+class UpdateLeaveStatus extends LeaveEvent {
 
+  final LeaveModal leaveModal;
+
+   UpdateLeaveStatus(this.leaveModal);
+
+  @override
+  List<Object?> get props => [leaveModal];
 }
