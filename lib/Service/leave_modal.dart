@@ -12,6 +12,7 @@ class LeaveModal {
   final int duration;
   final String employeeName;
   final String? leaveType;
+  final String? notify;
 
 
   LeaveModal({
@@ -25,11 +26,13 @@ class LeaveModal {
     required this.duration,
     required this.employeeName,
     required this.leaveType,
+    required this.notify,
 
   });
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'employeeId': employeeId,
       'reason': reason,
       'startDate': startDate,
@@ -39,6 +42,8 @@ class LeaveModal {
       'duration': duration,
       'employeeName': employeeName,
       'leaveType': leaveType,
+      'notify': notify,
+
 
     };
   }
@@ -55,7 +60,7 @@ class LeaveModal {
       duration: map['duration'],
       employeeName: map['employeeName'],
       leaveType: map['leaveType'],
-
+      notify: map['notify'],
     );
   }
 }

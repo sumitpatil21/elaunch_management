@@ -38,7 +38,6 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
       adminId: event.adminId,
       employeeId: event.employeeId,
       employeeName: event.employeeName,
-      id: "1",
     );
 
     await FirebaseDbHelper.firebase.createSystem(system);
@@ -83,8 +82,7 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     Emitter<SystemState> emit,
   ) async {
     await FirebaseDbHelper.firebase.approveSystemRequest(
-      event.systemId,
-      event.employeeId,
+      event.system,
     );
     add(const FetchRequests());
     add(const FetchSystem());
@@ -94,8 +92,9 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     RejectRequest event,
     Emitter<SystemState> emit,
   ) async {
-    await FirebaseDbHelper.firebase.rejectSystemRequest(event.systemId);
+    await FirebaseDbHelper.firebase.rejectSystemRequest(event.system);
     add(const FetchRequests());
+    add(const FetchSystem());
   }
 
   Future<void> cancelRequestData(
@@ -104,5 +103,6 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
   ) async {
     await FirebaseDbHelper.firebase.cancelSystemRequest(event.systemId,event.requestId);
     add(const FetchRequests());
+    add(const FetchSystem());
   }
 }

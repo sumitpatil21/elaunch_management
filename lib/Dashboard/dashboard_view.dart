@@ -389,7 +389,7 @@ class _DashboardViewState extends State<DashboardView> {
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
-                                  DeviceView.routeName,
+                                  LeaveView.routeName,
                                   arguments: user
                                 );
                               },

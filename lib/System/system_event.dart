@@ -89,30 +89,29 @@
 
   class ApproveRequest extends SystemEvent {
 
-    final String systemId;
-    final String employeeId;
+    final SystemModal system;
 
     const ApproveRequest({
 
-      required this.systemId,
-      required this.employeeId,
+      required this.system,
+
     });
 
     @override
-    List<Object> get props => [systemId, employeeId];
+    List<Object> get props => [system];
   }
 
   class RejectRequest extends SystemEvent {
 
-    final String systemId;
+    final SystemModal system;
 
     const RejectRequest({
 
-      required this.systemId,
+      required this.system,
     });
 
     @override
-    List<Object> get props => [ systemId];
+    List<Object> get props => [ system];
   }
 
   class CancelRequest extends SystemEvent {

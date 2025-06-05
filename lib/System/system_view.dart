@@ -69,7 +69,13 @@ class _SystemViewState extends State<SystemView> {
                     TextButton(
                       onPressed: () {
                         context.read<SystemBloc>().add(const FetchRequests());
-                        showRequestDialog(context, state.systems);
+                        log(state.requests.toString());
+                        showRequestDialog(
+                          context,
+                          state.requests,
+                          context.read<SystemBloc>(),
+                          user?.employeeModal,
+                        );
                       },
                       child: const Text(
                         "Requests",
@@ -377,27 +383,27 @@ class _SystemViewState extends State<SystemView> {
     }
   }
 
-  void showRequestDialog(BuildContext context, List<SystemModal> systemState) {
-    final pendingRequests =
-        systemState
-            .where((system) => system.requestStatus == 'pending')
-            .toList();
-
+  void showRequestDialog(
+    BuildContext context,
+    List<SystemModal> systemState,
+    SystemBloc systemBloc,
+    EmployeeModal? employee,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Pending Requests (${pendingRequests.length})'),
+          title: Text('Pending Requests (${systemState.length})'),
           content: SizedBox(
             width: double.maxFinite,
             height: 400,
             child:
-                pendingRequests.isEmpty
+                systemState.isEmpty
                     ? const Center(child: Text('No pending requests'))
                     : ListView.builder(
-                      itemCount: pendingRequests.length,
+                      itemCount: systemState.length,
                       itemBuilder: (context, index) {
-                        final request = pendingRequests[index];
+                        final request = systemState[index];
                         return Card(
                           child: ListTile(
                             title: Text(request.systemName),
@@ -420,10 +426,24 @@ class _SystemViewState extends State<SystemView> {
                                     color: Colors.green,
                                   ),
                                   onPressed: () {
-                                    context.read<SystemBloc>().add(
+                                    systemBloc.add(
                                       ApproveRequest(
-                                        systemId: request.id!,
-                                        employeeId: request.requestedBy!,
+                                        system: SystemModal(
+                                          id: request.id,
+                                          systemName: request.systemName,
+                                          version: request.version,
+                                          status: "assigned",
+                                          employeeName: employee?.name,
+                                          employeeId: employee?.id,
+                                          adminId: request.adminId,
+                                          isRequested: true,
+                                          requestedByName: employee?.name,
+                                          requestedAt: request.requestedAt,
+                                          requestStatus: 'approved',
+                                          operatingSystem:
+                                              request.operatingSystem,
+                                          requestId: employee?.id,
+                                        ),
                                       ),
                                     );
                                     Navigator.pop(context);
@@ -435,8 +455,24 @@ class _SystemViewState extends State<SystemView> {
                                     color: Colors.red,
                                   ),
                                   onPressed: () {
-                                    context.read<SystemBloc>().add(
-                                      RejectRequest(systemId: request.id!),
+                                    systemBloc.add(
+                                      RejectRequest(
+                                        system: SystemModal(
+                                          id: request.id,
+                                          systemName: request.systemName,
+                                          version: request.version,
+                                          status: request.status,
+                                          employeeName: employee?.name,
+                                          employeeId: employee?.id,
+                                          adminId: request.adminId, /////
+                                          isRequested: false,
+                                          requestedByName: employee?.name,
+                                          requestedAt: request.requestedAt,
+                                          requestStatus: 'rejected',
+                                          operatingSystem:
+                                              request.operatingSystem,
+                                        ),
+                                      ),
                                     );
                                     Navigator.pop(context);
                                   },
