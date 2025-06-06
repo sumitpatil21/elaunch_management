@@ -52,7 +52,7 @@ class _SystemViewState extends State<SystemView> {
 
   @override
   Widget build(BuildContext context) {
-    SelectRole? user =
+    SelectRole? loginEmployee =
         ModalRoute.of(context)!.settings.arguments as SelectRole?;
 
     return Scaffold(
@@ -60,7 +60,7 @@ class _SystemViewState extends State<SystemView> {
         backgroundColor: Colors.yellow.withOpacity(0.2),
         title: const Text("System"),
         actions: [
-          if (user?.adminModal != null)
+          if (loginEmployee?.adminModal != null)
             BlocBuilder<SystemBloc, SystemState>(
               builder: (context, state) {
                 final requestCount = state.requests.length;
@@ -69,12 +69,12 @@ class _SystemViewState extends State<SystemView> {
                     TextButton(
                       onPressed: () {
                         context.read<SystemBloc>().add(const FetchRequests());
-                        log(state.requests.toString());
+                        log('Requests: ${state.requests.toString()}');
                         showRequestDialog(
                           context,
                           state.requests,
                           context.read<SystemBloc>(),
-                          user?.employeeModal,
+                          loginEmployee?.employeeModal,
                         );
                       },
                       child: const Text(
@@ -113,10 +113,9 @@ class _SystemViewState extends State<SystemView> {
         ],
       ),
       floatingActionButton:
-          user?.adminModal != null
+          loginEmployee?.adminModal != null
               ? FloatingActionButton.extended(
                 backgroundColor: Colors.yellow.withOpacity(0.2),
-
                 onPressed: () {
                   showSystemDialog(
                     context,
@@ -124,7 +123,7 @@ class _SystemViewState extends State<SystemView> {
                         context.read<EmployeeBloc>()
                           ..add(const FetchEmployees()),
                     systemBloc: context.read<SystemBloc>(),
-                    adminId: user?.adminModal?.id,
+                    adminId: loginEmployee?.adminModal?.id,
                   );
                 },
                 label: const Text("Add System"),
@@ -216,10 +215,9 @@ class _SystemViewState extends State<SystemView> {
                   itemBuilder: (context, index) {
                     final system = filteredSystems[index];
 
-                    // Check if system is already requested by current user
                     final isAlreadyRequested =
                         system.isRequested == true &&
-                        system.requestedBy == user?.employeeModal?.id;
+                        system.requestId == loginEmployee?.employeeModal?.id;
 
                     return Card(
                       margin: const EdgeInsets.symmetric(
@@ -270,8 +268,10 @@ class _SystemViewState extends State<SystemView> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (user?.employeeModal != null &&
-                                system.status == 'available')
+
+                            if (loginEmployee?.employeeModal != null &&
+                                (system.status == 'available' ||
+                                    isAlreadyRequested))
                               ElevatedButton(
                                 onPressed:
                                     isAlreadyRequested
@@ -279,7 +279,11 @@ class _SystemViewState extends State<SystemView> {
                                           // Cancel request
                                           context.read<SystemBloc>().add(
                                             CancelRequest(
-                                              requestId: system.id!,
+                                              requestId:
+                                                  loginEmployee!
+                                                      .employeeModal!
+                                                      .id ??
+                                                  "",
                                               systemId: system.id!,
                                             ),
                                           );
@@ -306,12 +310,15 @@ class _SystemViewState extends State<SystemView> {
                                                     system.employeeName,
                                                 employeeId: system.employeeId,
                                                 adminId: system.adminId,
-
                                                 isRequested: true,
-                                                requestedBy:
-                                                    user?.employeeModal?.id,
+                                                requestId:
+                                                    loginEmployee
+                                                        ?.employeeModal
+                                                        ?.id,
                                                 requestedByName:
-                                                    user?.employeeModal?.name,
+                                                    loginEmployee
+                                                        ?.employeeModal
+                                                        ?.name,
                                                 requestedAt: DateTime.now(),
                                                 requestStatus: 'pending',
                                                 operatingSystem:
@@ -339,7 +346,7 @@ class _SystemViewState extends State<SystemView> {
                                   ),
                                 ),
                               )
-                            else if (user?.adminModal != null)
+                            else if (loginEmployee?.adminModal != null)
                               IconButton(
                                 icon: const Icon(Icons.edit),
                                 onPressed: () {
@@ -350,7 +357,7 @@ class _SystemViewState extends State<SystemView> {
                                         context.read<EmployeeBloc>()
                                           ..add(const FetchEmployees()),
                                     systemBloc: context.read<SystemBloc>(),
-                                    adminId: user?.adminModal?.id,
+                                    adminId: loginEmployee?.adminModal?.id,
                                   );
                                 },
                               ),
@@ -411,7 +418,7 @@ class _SystemViewState extends State<SystemView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Requested by: ${request.requestedByName}',
+                                  'Requested by: ${request.requestedByName ?? 'Unknown'}',
                                 ),
                                 if (request.requestedAt != null)
                                   Text('Date: ${request.requestedAt!}'),
@@ -426,6 +433,7 @@ class _SystemViewState extends State<SystemView> {
                                     color: Colors.green,
                                   ),
                                   onPressed: () {
+                                    // Fixed: Use the request's data for approval
                                     systemBloc.add(
                                       ApproveRequest(
                                         system: SystemModal(
@@ -433,16 +441,22 @@ class _SystemViewState extends State<SystemView> {
                                           systemName: request.systemName,
                                           version: request.version,
                                           status: "assigned",
-                                          employeeName: employee?.name,
-                                          employeeId: employee?.id,
+                                          employeeName:
+                                              request
+                                                  .requestedByName, // Use the requester's name
+                                          employeeId:
+                                              request
+                                                  .requestId, // Use the requester's ID
                                           adminId: request.adminId,
-                                          isRequested: true,
-                                          requestedByName: employee?.name,
+                                          isRequested: false,
+                                          requestedByName:
+                                              request.requestedByName,
                                           requestedAt: request.requestedAt,
                                           requestStatus: 'approved',
                                           operatingSystem:
                                               request.operatingSystem,
-                                          requestId: employee?.id,
+                                          requestId:
+                                              null, // Clear request ID after approval
                                         ),
                                       ),
                                     );
@@ -454,6 +468,7 @@ class _SystemViewState extends State<SystemView> {
                                     Icons.close,
                                     color: Colors.red,
                                   ),
+
                                   onPressed: () {
                                     systemBloc.add(
                                       RejectRequest(
@@ -461,16 +476,18 @@ class _SystemViewState extends State<SystemView> {
                                           id: request.id,
                                           systemName: request.systemName,
                                           version: request.version,
-                                          status: request.status,
-                                          employeeName: employee?.name,
-                                          employeeId: employee?.id,
-                                          adminId: request.adminId, /////
+                                          status:
+                                              "available", // Fixed: Set back to available, not "Unassigned"
+                                          employeeName: null,
+                                          employeeId: null,
+                                          adminId: request.adminId,
                                           isRequested: false,
-                                          requestedByName: employee?.name,
+                                          requestedByName: null,
                                           requestedAt: request.requestedAt,
                                           requestStatus: 'rejected',
                                           operatingSystem:
                                               request.operatingSystem,
+                                          requestId: null,
                                         ),
                                       ),
                                     );
@@ -563,6 +580,7 @@ class _SystemViewState extends State<SystemView> {
                                     : null,
                         decoration: const InputDecoration(
                           labelText: "System Name",
+
                           border: OutlineInputBorder(),
                         ),
                       ),

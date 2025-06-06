@@ -30,6 +30,7 @@ dependencies:
   connectivity_plus: ^6.1.4
   table_calendar: any
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

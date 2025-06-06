@@ -19,8 +19,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     FetchDevice event,
     Emitter<DeviceState> emit,
   ) async {
-    final devices = await FirebaseDbHelper.firebase.getDevices(
-    );
+    final devices = await FirebaseDbHelper.firebase.getDevices();
     emit(DeviceState(devices: devices));
   }
 

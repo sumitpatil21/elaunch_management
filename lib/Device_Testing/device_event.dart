@@ -10,13 +10,12 @@ class DeviceEvent extends Equatable {
 }
 
 class FetchDevice extends DeviceEvent {
-
   final String? employeeId;
 
-  const FetchDevice({ this.employeeId});
+  const FetchDevice({this.employeeId});
 
   @override
-  List<Object?> get props => [ employeeId];
+  List<Object?> get props => [employeeId];
 }
 
 class AddDevice extends DeviceEvent {

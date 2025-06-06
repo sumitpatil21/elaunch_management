@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,6 +9,8 @@ import 'dashboard_view.dart';
 
 class SplashScreen extends StatefulWidget {
   static String routeName = "/";
+
+  const SplashScreen({super.key});
   static Widget builder(BuildContext context) {
     return MultiBlocProvider(
       providers: [BlocProvider(create: (context) => AdminBloc())],
@@ -17,7 +18,9 @@ class SplashScreen extends StatefulWidget {
     );
   }
 
-  _SplashScreenState createState() => _SplashScreenState();
+  _SplashScreenState createState() {
+    return _SplashScreenState();
+  }
 }
 
 class _SplashScreenState extends State<SplashScreen>

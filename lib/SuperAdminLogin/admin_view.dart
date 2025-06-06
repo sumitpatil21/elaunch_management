@@ -121,7 +121,7 @@ class _AdminViewState extends State<AdminView> {
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF283653),Color(0xFF283653).withOpacity(0.2)],
+                colors: [Color(0xFF283653), Color(0xFF283653).withOpacity(0.2)],
               ),
             ),
             child: Center(
@@ -408,7 +408,7 @@ class _AdminViewState extends State<AdminView> {
           'Welcome Back!',
           style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
-       ],
+      ],
     );
   }
 }

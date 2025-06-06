@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:elaunch_management/Service/device_modal.dart';
@@ -20,11 +19,10 @@ class FirebaseDbHelper {
   CollectionReference get devices => firestore.collection('devices');
   CollectionReference get leaves => firestore.collection('leaves');
 
-
-  Future<String> createAdmin(AdminModal admin) async {
+  Future<void> createAdmin(AdminModal admin) async {
     final doc = await admins.add(admin.toJson());
     log("Admin created with ID: ${doc.id}");
-    return doc.id;
+
   }
 
   Future<void> updateAdminStatus(String email, String status) async {
@@ -51,14 +49,14 @@ class FirebaseDbHelper {
     return snapshot.docs
         .map(
           (doc) => AdminModal.fromJson({
-        ...doc.data() as Map<String, dynamic>,
-        'id': doc.id,
-      }),
-    )
+            ...doc.data() as Map<String, dynamic>,
+            'id': doc.id,
+          }),
+        )
         .toList();
   }
 
-  Future<String> createDepartment(DepartmentModal department) async {
+  Future<void> createDepartment(DepartmentModal department) async {
     if (!(await admins.doc(department.id_admin.toString()).get()).exists) {
       throw Exception('Admin does not exist');
     }
@@ -70,8 +68,6 @@ class FirebaseDbHelper {
       'adminRef': admins.doc(department.id_admin.toString()),
       'createdAt': FieldValue.serverTimestamp(),
     });
-
-    return docRef.id;
   }
 
   Future<List<DepartmentModal>> getDepartments([String? adminId]) async {
@@ -108,8 +104,8 @@ class FirebaseDbHelper {
   Future<void> deleteDepartment(String id) async {
     final hasEmployees =
         (await employees
-            .where('departmentRef', isEqualTo: departments.doc(id))
-            .get())
+                .where('departmentRef', isEqualTo: departments.doc(id))
+                .get())
             .docs
             .isNotEmpty;
 
@@ -119,7 +115,7 @@ class FirebaseDbHelper {
     await departments.doc(id).delete();
   }
 
-  Future<String> createEmployee(EmployeeModal employee) async {
+  Future<void> createEmployee(EmployeeModal employee) async {
     if (!(await departments.doc(employee.departmentId).get()).exists) {
       throw Exception('Department does not exist');
     }
@@ -132,38 +128,31 @@ class FirebaseDbHelper {
       'adminRef': admins.doc(employee.adminId),
       'createdAt': FieldValue.serverTimestamp(),
     });
-
-    return docRef.id;
   }
 
   Future<EmployeeModal?> getEmployeeByEmailAndPassword({
     required String email,
     required String password,
   }) async {
-    try {
-      final snapshot =
-      await firestore
-          .collection('employees')
-          .where('email', isEqualTo: email)
-          .where('password', isEqualTo: password)
-          .limit(1)
-          .get();
+    final snapshot =
+        await firestore
+            .collection('employees')
+            .where('email', isEqualTo: email)
+            .where('password', isEqualTo: password)
+            .limit(1)
+            .get();
 
-      if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
-        final data = doc.data();
-        return EmployeeModal.fromJson({
-          ...data,
-          'id': doc.id,
-          'departmentId': (data['departmentRef'] as DocumentReference).id,
-          'adminId': (data['adminRef'] as DocumentReference).id,
-        });
-      }
-      return null;
-    } catch (e) {
-      print('Error getting employee by email and password: $e');
-      return null;
+    if (snapshot.docs.isNotEmpty) {
+      final doc = snapshot.docs.first;
+      final data = doc.data();
+      return EmployeeModal.fromJson({
+        ...data,
+        'id': doc.id,
+        'departmentId': (data['departmentRef'] as DocumentReference).id,
+        'adminId': (data['adminRef'] as DocumentReference).id,
+      });
     }
+    return null;
   }
 
   Future<List<EmployeeModal>> getEmployees({
@@ -217,19 +206,17 @@ class FirebaseDbHelper {
     await employees.doc(id).delete();
   }
 
-  Future<String> createSystem(SystemModal system) async {
+  Future<void> createSystem(SystemModal system) async {
     final docRef = systems.doc();
 
     await docRef.set({
-    ...system.toJson(),
-    'id': docRef.id,
-    'adminRef': admins.doc(system.adminId.toString()),
-    if (system.employeeId != null)
-    'employeeRef': employees.doc(system.employeeId.toString()),
-    'createdAt': FieldValue.serverTimestamp(),
+      ...system.toJson(),
+      'id': docRef.id,
+      'adminRef': admins.doc(system.adminId.toString()),
+      if (system.employeeId != null)
+        'employeeRef': employees.doc(system.employeeId.toString()),
+      'createdAt': FieldValue.serverTimestamp(),
     });
-
-    return docRef.id;
   }
 
   Future<List<SystemModal>> getSystems([String? adminId]) async {
@@ -274,17 +261,14 @@ class FirebaseDbHelper {
     await systems.doc(id).delete();
   }
 
-  // Enhanced device creation with auto ID
-  Future<String> createDevice(TestingDeviceModal device) async {
-    final docRef = devices.doc(); // Generate new document reference
+  Future<void> createDevice(TestingDeviceModal device) async {
+    final docRef = devices.doc();
     await docRef.set({
       ...device.toJson(),
-      'id': docRef.id, // Store the ID in the document
+      'id': docRef.id,
       'adminRef': admins.doc(device.adminId.toString()),
       'createdAt': FieldValue.serverTimestamp(),
     });
-
-    return docRef.id;
   }
 
   Future<List<TestingDeviceModal>> getDevices([String? adminId]) async {
@@ -327,203 +311,139 @@ class FirebaseDbHelper {
 
   Future<void> createSystemRequests(SystemModal system) async {
     await systems.doc(system.id).update({
-      'isRequested': true,
-      'requestedBy': system.requestedBy,
+      'isRequested': system.isRequested ?? true,
+      'requestId': system.requestId,
       'requestedByName': system.requestedByName,
-      'requestedAt': FieldValue.serverTimestamp(),
-      'requestStatus': 'pending',
+      'requestedAt':
+          system.requestedAt != null ? FieldValue.serverTimestamp() : null,
+      'requestStatus': system.requestStatus ?? 'pending',
     });
   }
 
   Future<List<SystemModal>> fetchRequests() async {
-    final snapshot = await systems
-        .where('isRequested', isEqualTo: true)
-        .where('requestStatus', isEqualTo: 'pending')
-        .get();
+    final snapshot =
+        await systems
+            .where('isRequested', isEqualTo: true)
+            .where('requestStatus', isEqualTo: 'pending')
+            .get();
 
     return snapshot.docs.map((doc) {
       final data = doc.data() as Map<String, dynamic>;
-      return SystemModal.fromJson({
-        'id': doc.id,
-        ...data,
-      });
+      return SystemModal.fromJson({...data, 'id': doc.id});
     }).toList();
   }
 
-  Future<void> approveSystemRequest(SystemModal systemId) async {
-    await systems.doc(systemId.id).update(systemId.toJson());
+  Future<void> approveSystemRequest(SystemModal system) async {
+    await systems.doc(system.id).update({
+      'systemName': system.systemName,
+      'version': system.version,
+      'operatingSystem': system.operatingSystem,
+      'status': system.status,
+      'employee_name': system.employeeName,
+      'id_employee': system.employeeId,
+      'id_admin': system.adminId,
+      'isRequested': false,
+      'requested_by_name': null,
+      'requestId': null,
+      'request_status': 'approved',
+      'approvedAt': FieldValue.serverTimestamp(),
+    });
   }
 
-
-  Future<void> rejectSystemRequest(SystemModal systemId) async {
-    await systems.doc(systemId.id).update(systemId.toJson());
+  Future<void> rejectSystemRequest(SystemModal system) async {
+    await systems.doc(system.id).update({
+      'systemName': system.systemName,
+      'version': system.version,
+      'operatingSystem': system.operatingSystem,
+      'status': 'available',
+      'employee_name': null,
+      'id_employee': null,
+      'id_admin': system.adminId,
+      'isRequested': false,
+      'requested_by_name': null,
+      'requestId': null,
+      'request_status': 'rejected',
+      'rejectedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> cancelSystemRequest(String systemId, String requestId) async {
     await systems.doc(systemId).update({
       'isRequested': false,
-      'requestStatus': 'cancelled',
+      'request_status': 'cancelled',
+      'requestId': null,
+      'requested_by_name': null,
+      'requestedAt': null, // Clear the request timestamp
       'cancelledAt': FieldValue.serverTimestamp(),
     });
   }
-  Future<String> createLeaves(LeaveModal leave) async {
-    try {
-      final docRef = leaves.doc();
-      final leaveData = {
-        ...leave.toMap(),
-        'id': docRef.id,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
 
-      await docRef.set(leaveData);
-      return docRef.id;
-    } catch (e) {
-      throw Exception('Failed to create leave: $e');
-    }
+  Future<String> createLeaves(LeaveModal leave) async {
+    final docRef = leaves.doc();
+    final leaveData = {
+      ...leave.toMap(),
+      'id': docRef.id,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    await docRef.set(leaveData);
+    print('Leave created successfully with ID: ${docRef.id}');
+    return docRef.id;
   }
 
-  Future<List<LeaveModal>> getLeaves({String? employeeId, String? status}) async {
-    try {
-      Query query = leaves.orderBy('createdAt', descending: true);
+  Future<List<LeaveModal>> getLeaves({
+    String? employeeId,
+    String? status,
+  }) async {
+    Query query = leaves.orderBy('createdAt', descending: true);
 
-      if (employeeId != null && employeeId.isNotEmpty) {
-        query = query.where('employeeId', isEqualTo: employeeId);
-      }
-
-      if (status != null && status.isNotEmpty && status != 'all') {
-        query = query.where('status', isEqualTo: status);
-      }
-
-      final snapshot = await query.get();
-
-      return snapshot.docs.map((doc) {
-        final data = doc.data()! as Map<String, dynamic>;
-        return LeaveModal.fromMap({
-          ...data,
-          'id': doc.id,
-        });
-      }).toList();
-    } catch (e) {
-      throw Exception('Failed to get leaves: $e');
+    if (employeeId != null && employeeId.isNotEmpty) {
+      query = query.where('employeeId', isEqualTo: employeeId);
     }
+
+    if (status != null && status.isNotEmpty && status != 'all') {
+      query = query.where('status', isEqualTo: status);
+    }
+
+    final snapshot = await query.get();
+    print('Retrieved ${snapshot.docs.length} leaves from Firestore');
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data()! as Map<String, dynamic>;
+      return LeaveModal.fromMap({...data, 'id': doc.id});
+    }).toList();
   }
 
   Future<void> updateLeaves(LeaveModal leave) async {
-    try {
-      final updateData = {
-        ...leave.toMap(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      await leaves.doc(leave.id).update(updateData);
-    } catch (e) {
-      throw Exception('Failed to update leave: $e');
+    if (leave.id.isEmpty) {
+      throw Exception('Leave ID is required for update');
     }
+
+    final updateData = {
+      ...leave.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    await leaves.doc(leave.id).update(updateData);
+    print('Leave updated successfully: ${leave.id}');
   }
 
-
   Future<void> deleteLeave(String id) async {
-    try {
-      await leaves.doc(id).delete();
-    } catch (e) {
-      throw Exception('Failed to delete leave: $e');
-    }
+    await leaves.doc(id).delete();
+    print('Leave deleted successfully: $id');
   }
 
   Future<LeaveModal?> getLeaveById(String id) async {
-    try {
-      final doc = await leaves.doc(id).get();
-      if (doc.exists) {
-        final data = doc.data()! as Map<String, dynamic>;
-        return LeaveModal.fromMap({
-          ...data,
-          'id': doc.id,
-        });
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get leave by ID: $e');
+    if (id.isEmpty) {
+      throw Exception('Leave ID is required');
     }
-  }
 
-  Future<List<LeaveModal>> getLeavesByDateRange({
-    required DateTime startDate,
-    required DateTime endDate,
-    String? employeeId,
-  }) async {
-    try {
-      Query query = leaves
-          .where('startDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('startDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-          .orderBy('startDate', descending: true);
-
-      if (employeeId != null && employeeId.isNotEmpty) {
-        query = query.where('employeeId', isEqualTo: employeeId);
-      }
-
-      final snapshot = await query.get();
-
-      return snapshot.docs.map((doc) {
-        final data = doc.data()! as Map<String, dynamic>;
-        return LeaveModal.fromMap({
-          ...data,
-          'id': doc.id,
-        });
-      }).toList();
-    } catch (e) {
-      throw Exception('Failed to get leaves by date range: $e');
+    final doc = await leaves.doc(id).get();
+    if (doc.exists) {
+      final data = doc.data()! as Map<String, dynamic>;
+      return LeaveModal.fromMap({...data, 'id': doc.id});
     }
-  }
-
-  Future<Map<String, int>> getLeaveStatistics({String? employeeId}) async {
-    try {
-      Query query = leaves;
-
-      if (employeeId != null && employeeId.isNotEmpty) {
-        query = query.where('employeeId', isEqualTo: employeeId);
-      }
-
-      final snapshot = await query.get();
-
-      final stats = <String, int>{
-        'total': 0,
-        'pending': 0,
-        'approved': 0,
-        'rejected': 0,
-        'annual': 0,
-        'sick': 0,
-        'emergency': 0,
-        'excuse': 0,
-      };
-
-      for (final doc in snapshot.docs) {
-        final data = doc.data()! as Map<String, dynamic>;
-        final status = data['status']?.toString().toLowerCase() ?? '';
-        final leaveType = data['leaveType']?.toString().toLowerCase() ?? '';
-
-        stats['total'] = stats['total']! + 1;
-
-        // Count by status
-        if (stats.containsKey(status)) {
-          stats[status] = stats[status]! + 1;
-        }
-
-        // Count by leave type
-        if (leaveType.contains('annual')) {
-          stats['annual'] = stats['annual']! + 1;
-        } else if (leaveType.contains('sick')) {
-          stats['sick'] = stats['sick']! + 1;
-        } else if (leaveType.contains('emergency')) {
-          stats['emergency'] = stats['emergency']! + 1;
-        } else if (leaveType.contains('excuse')) {
-          stats['excuse'] = stats['excuse']! + 1;
-        }
-      }
-
-      return stats;
-    } catch (e) {
-      throw Exception('Failed to get leave statistics: $e');
-    }
+    return null;
   }
 }

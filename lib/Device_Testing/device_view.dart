@@ -17,7 +17,6 @@ class DeviceView extends StatefulWidget {
   const DeviceView({super.key});
 
   static Widget builder(BuildContext context) {
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => DeviceBloc()..add(FetchDevice())),
@@ -48,7 +47,7 @@ class _DeviceViewState extends State<DeviceView> {
   @override
   Widget build(BuildContext context) {
     SelectRole? user =
-    ModalRoute.of(context)!.settings.arguments as SelectRole?;
+        ModalRoute.of(context)!.settings.arguments as SelectRole?;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.purple.withOpacity(0.2),
@@ -277,22 +276,27 @@ class _DeviceViewState extends State<DeviceView> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                             (user?.employeeModal==null)?
-                               IconButton(
-                                 icon: const Icon(Icons.edit),
-                                 onPressed: () {
-                                   showDeviceDialog(
-                                     context,
-                                     device: device,
-                                     employeeBloc:
-                                     context.read<EmployeeBloc>()
-                                       ..add(FetchEmployees()),
-                                     deviceBloc: context.read<DeviceBloc>(),
-                                   );
-                                 },
-                               ):ElevatedButton(onPressed: () {
-
-                             }, child: Text("Apply",style: TextStyle(color: Colors.green),),),
+                              (user?.employeeModal == null)
+                                  ? IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      showDeviceDialog(
+                                        context,
+                                        device: device,
+                                        employeeBloc:
+                                            context.read<EmployeeBloc>()
+                                              ..add(FetchEmployees()),
+                                        deviceBloc: context.read<DeviceBloc>(),
+                                      );
+                                    },
+                                  )
+                                  : ElevatedButton(
+                                    onPressed: () {},
+                                    child: Text(
+                                      "Apply",
+                                      style: TextStyle(color: Colors.green),
+                                    ),
+                                  ),
                             ],
                           ),
                         ),

@@ -25,7 +25,6 @@ class EmployeeModal {
     this.departmentName,
   });
 
-
   factory EmployeeModal.fromJson(Map<String, dynamic> json) {
     return EmployeeModal(
       id: json['id'],
@@ -58,6 +57,4 @@ class EmployeeModal {
       'departmentName': departmentName,
     };
   }
-
-
 }

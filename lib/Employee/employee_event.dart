@@ -11,7 +11,7 @@ class FetchEmployees extends EmployeeEvent {
   final String? role;
   final String? departmentId;
 
-  const FetchEmployees({this.role, this.departmentId,});
+  const FetchEmployees({this.role, this.departmentId});
 
   @override
   List<Object?> get props => [role, departmentId];
@@ -151,14 +151,12 @@ class FilterEmployeesByManager extends EmployeeEvent {
 class ResetEmployeeFilters extends EmployeeEvent {
   const ResetEmployeeFilters();
 }
+
 class EmployeeLogin extends EmployeeEvent {
   final String email;
   final String password;
 
-  const EmployeeLogin({
-    required this.email,
-    required this.password,
-  });
+  const EmployeeLogin({required this.email, required this.password});
 
   @override
   List<Object?> get props => [email, password];

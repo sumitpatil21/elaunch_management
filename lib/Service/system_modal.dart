@@ -8,7 +8,6 @@ class SystemModal {
   String? adminId;
   String? employeeId;
   bool? isRequested;
-  String? requestedBy;
   String? requestedByName;
   DateTime? requestedAt;
   String? requestStatus;
@@ -24,7 +23,6 @@ class SystemModal {
     this.adminId,
     this.employeeId,
     this.isRequested,
-    this.requestedBy,
     this.requestedByName,
     this.requestedAt,
     this.requestStatus,
@@ -42,7 +40,7 @@ class SystemModal {
       adminId: json['id_admin'],
       employeeId: json['id_employee'],
       isRequested: json['is_requested'],
-      requestedBy: json['requested_by'],
+
       requestedByName: json['requested_by_name'],
       requestedAt: json['requested_at'] != null
           ? DateTime.parse(json['requested_at'])
@@ -63,7 +61,6 @@ class SystemModal {
       'id_admin': adminId,
       'id_employee': employeeId,
       'is_requested': isRequested,
-      'requested_by': requestedBy,
       'requested_by_name': requestedByName,
       'requested_at': requestedAt?.toIso8601String(),
       'request_status': requestStatus,

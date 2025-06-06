@@ -65,11 +65,7 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 600;
-    SelectRole user =
-          ModalRoute.of(context)!.settings.arguments as SelectRole;
-    log("${user.employeeModal?.name} ${user.employeeModal?.departmentName!}");
-    log("${user.adminModal?.name} ${user.adminModal?.email}");
-
+    SelectRole user = ModalRoute.of(context)!.settings.arguments as SelectRole;
     return BlocBuilder<AdminBloc, AdminState>(
       builder: (context, adminState) {
         return Scaffold(
@@ -183,13 +179,11 @@ class _DashboardViewState extends State<DashboardView> {
                             // Department Card
                             GestureDetector(
                               onTap: () {
-
-                                  Navigator.pushNamed(
-                                    context,
-                                    DepartmentScreen.routeName,
-                                    arguments: user,
-                                  );
-
+                                Navigator.pushNamed(
+                                  context,
+                                  DepartmentScreen.routeName,
+                                  arguments: user,
+                                );
                               },
                               child: Card(
                                 elevation: 2,
@@ -238,14 +232,11 @@ class _DashboardViewState extends State<DashboardView> {
                             // Employee Card
                             GestureDetector(
                               onTap: () {
-
-
-                                  Navigator.pushNamed(
-                                    context,
-                                    EmployeeScreen.routeName,
-                                    arguments: user,
-                                  );
-
+                                Navigator.pushNamed(
+                                  context,
+                                  EmployeeScreen.routeName,
+                                  arguments: user,
+                                );
                               },
                               child: Card(
                                 elevation: 4,
@@ -293,7 +284,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 Navigator.pushNamed(
                                   context,
                                   SystemView.routeName,
-                                  arguments: user
+                                  arguments: user,
                                 );
                               },
                               child: Card(
@@ -342,7 +333,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 Navigator.pushNamed(
                                   context,
                                   DeviceView.routeName,
-                                  arguments: user
+                                  arguments: user,
                                 );
                               },
                               child: Card(
@@ -390,7 +381,7 @@ class _DashboardViewState extends State<DashboardView> {
                                 Navigator.pushNamed(
                                   context,
                                   LeaveView.routeName,
-                                  arguments: user
+                                  arguments: user,
                                 );
                               },
                               child: Card(
@@ -537,7 +528,10 @@ class _DashboardViewState extends State<DashboardView> {
                                         );
                                       },
                                     ),
-                                    BlocBuilder<DepartmentBloc, DepartmentState>(
+                                    BlocBuilder<
+                                      DepartmentBloc,
+                                      DepartmentState
+                                    >(
                                       builder: (context, state) {
                                         if (state.departments.length > 3) {
                                           return Padding(
@@ -598,14 +592,12 @@ class _DashboardViewState extends State<DashboardView> {
                                                     (emp) => ListTile(
                                                       trailing: GestureDetector(
                                                         onTap: () {
-
-                                                            Navigator.pushNamed(
-                                                              context,
-                                                              EmployeeScreen
-                                                                  .routeName,
-                                                              arguments: user,
-                                                            );
-
+                                                          Navigator.pushNamed(
+                                                            context,
+                                                            EmployeeScreen
+                                                                .routeName,
+                                                            arguments: user,
+                                                          );
                                                         },
                                                         child: Icon(
                                                           Icons
@@ -676,15 +668,22 @@ class _DashboardViewState extends State<DashboardView> {
                                       ),
                                     ),
                                     onTap: () {
-                                      // TODO: Implement calendar logic for blank UI
-                                      Navigator.pushNamed(context, LeaveView.routeName);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Calendar feature coming soon!')),
+                                      Navigator.pushNamed(
+                                        context,
+                                        LeaveView.routeName,
+                                      );
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Calendar feature coming soon!',
+                                          ),
+                                        ),
                                       );
                                     },
                                   ),
                                 ),
-
                             ],
                           )
                         else
@@ -738,7 +737,7 @@ class _DashboardViewState extends State<DashboardView> {
                                                       context,
                                                       DepartmentScreen
                                                           .routeName,
-                                                      arguments: user
+                                                      arguments: user,
                                                     );
                                                   },
                                                   child: Icon(
@@ -810,15 +809,11 @@ class _DashboardViewState extends State<DashboardView> {
                                               return ListTile(
                                                 trailing: GestureDetector(
                                                   onTap: () {
-
-
-                                                      Navigator.pushNamed(
-                                                        context,
-                                                        EmployeeScreen
-                                                            .routeName,
-                                                        arguments: user,
-                                                      );
-
+                                                    Navigator.pushNamed(
+                                                      context,
+                                                      EmployeeScreen.routeName,
+                                                      arguments: user,
+                                                    );
                                                   },
                                                   child: Icon(
                                                     Icons
@@ -895,7 +890,7 @@ class _DashboardViewState extends State<DashboardView> {
                                                     Navigator.pushNamed(
                                                       context,
                                                       SystemView.routeName,
-                                                      arguments: user
+                                                      arguments: user,
                                                     );
                                                   },
                                                   child: Icon(
@@ -972,7 +967,7 @@ class _DashboardViewState extends State<DashboardView> {
                                                     Navigator.pushNamed(
                                                       context,
                                                       DeviceView.routeName,
-                                                      arguments: user
+                                                      arguments: user,
                                                     );
                                                   },
                                                   child: Icon(
@@ -1007,9 +1002,8 @@ class _DashboardViewState extends State<DashboardView> {
                                   ],
                                 ),
                               ),
+
                               // Leave Apply Button
-
-
                             ],
                           ),
                       ],
@@ -1065,7 +1059,11 @@ class _DashboardViewState extends State<DashboardView> {
           buildListTile(
             context,
             "Department",
-            () => Navigator.pushNamed(context, DepartmentScreen.routeName,arguments: user),
+            () => Navigator.pushNamed(
+              context,
+              DepartmentScreen.routeName,
+              arguments: user,
+            ),
             Icon(Icons.business),
           ),
           buildListTile(context, "Employee", () {
@@ -1076,14 +1074,14 @@ class _DashboardViewState extends State<DashboardView> {
             );
           }, Icon(Icons.group)),
           buildListTile(context, "System", () {
-            Navigator.pushNamed(context, SystemView.routeName,arguments: user);
+            Navigator.pushNamed(context, SystemView.routeName, arguments: user);
           }, Icon(Icons.computer_outlined)),
           buildListTile(context, "Device", () {
-            Navigator.pushNamed(context, DeviceView.routeName,arguments: user);
+            Navigator.pushNamed(context, DeviceView.routeName, arguments: user);
           }, Icon(Icons.phone_android_outlined)),
           buildListTile(context, "Leave", () {
-            Navigator.pushNamed(context, LeaveView.routeName,arguments: user);
-          }, Icon(  Icons.leave_bags_at_home_outlined,)),
+            Navigator.pushNamed(context, LeaveView.routeName, arguments: user);
+          }, Icon(Icons.leave_bags_at_home_outlined)),
           Divider(),
 
           ListTile(
@@ -1112,11 +1110,6 @@ class _DashboardViewState extends State<DashboardView> {
     GestureTapCallback fun,
     Icon icon,
   ) {
-    return ListTile(
-      leading: icon,
-      title: Text(text),
-
-      onTap: fun,
-    );
+    return ListTile(leading: icon, title: Text(text), onTap: fun);
   }
 }

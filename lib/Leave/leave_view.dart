@@ -1,5 +1,7 @@
+import 'package:elaunch_management/Employee/employee_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:textfield_search/textfield_search.dart';
 
 import '../Service/employee_modal.dart';
 import '../Service/leave_modal.dart';
@@ -14,81 +16,63 @@ class LeaveView extends StatelessWidget {
   const LeaveView({super.key});
 
   static Widget builder(BuildContext context) {
-    return BlocProvider(
-      create: (context) => LeaveBloc()..add(FetchLeaves()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => LeaveBloc()..add(FetchLeaves())),
+        BlocProvider(
+          create: (context) => EmployeeBloc()..add(FetchEmployees()),
+        ),
+      ],
       child: const LeaveView(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    SelectRole? user = ModalRoute.of(context)?.settings.arguments as SelectRole;
+    SelectRole? user =
+        ModalRoute.of(context)?.settings.arguments as SelectRole?;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        backgroundColor: Colors.green.withOpacity(0.2),
         title: const Text('Leave Management'),
-        backgroundColor: Colors.green[800],
-        foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => _showEmployeeSearch(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () => _showNotifications(context),
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.green[700],
+        backgroundColor: Colors.green.withOpacity(0.2),
         child: const Icon(Icons.add, color: Colors.white),
         onPressed:
-            () => _showAddLeaveDialog(
+            () => showAddLeaveDialog(
               context,
-              user.employeeModal,
+              user?.employeeModal,
               context.read<LeaveBloc>(),
+              context.read<EmployeeBloc>(),
             ),
       ),
       body: Column(
         children: [
-          _buildStatsCard(context),
+          Card(
+            margin: const EdgeInsets.all(16),
+            color: Colors.green.withOpacity(0.2),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  staticItem('Annual', '22', Colors.green),
+                  staticItem('Sick', '18', Colors.orange),
+                  staticItem('Emergency', '6', Colors.red),
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: BlocBuilder<LeaveBloc, LeaveState>(
               builder: (context, state) {
-                if (state.leaves.isEmpty) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                    ),
-                  );
-                }
-
-                if (state.leaves.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.event_busy,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No leave requests found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
                 return RefreshIndicator(
                   onRefresh: () async {
                     context.read<LeaveBloc>().add(FetchLeaves());
@@ -98,7 +82,7 @@ class LeaveView extends StatelessWidget {
                     itemCount: state.leaves.length,
                     itemBuilder:
                         (context, index) =>
-                            _buildLeaveCard(context, state.leaves[index]),
+                            buildLeaveCard(context, state.leaves[index], user),
                   ),
                 );
               },
@@ -109,27 +93,7 @@ class LeaveView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsCard(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      color: Colors.green[50],
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem('Annual', '22', Colors.green),
-            _buildStatItem('Sick', '18', Colors.orange),
-            _buildStatItem('Emergency', '6', Colors.red),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String title, String value, Color color) {
+  Widget staticItem(String title, String value, Color color) {
     return Column(
       children: [
         Text(
@@ -153,7 +117,11 @@ class LeaveView extends StatelessWidget {
     );
   }
 
-  Widget _buildLeaveCard(BuildContext context, LeaveModal leave) {
+  Widget buildLeaveCard(
+    BuildContext context,
+    LeaveModal leave,
+    SelectRole? user,
+  ) {
     final statusColor = _getStatusColor(leave.status);
 
     return Card(
@@ -187,7 +155,7 @@ class LeaveView extends StatelessWidget {
                     ],
                   ),
                 ),
-                Chip(
+                FilterChip(
                   backgroundColor: statusColor.withOpacity(0.2),
                   label: Text(
                     leave.status.toUpperCase(),
@@ -196,17 +164,14 @@ class LeaveView extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  onSelected: (bool value) {},
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
               child: Row(
                 children: [
                   Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
@@ -241,7 +206,7 @@ class LeaveView extends StatelessWidget {
                 style: const TextStyle(fontStyle: FontStyle.italic),
               ),
             ],
-            if (leave.notify!.isNotEmpty) ...[
+            if (leave.notify != null && leave.notify!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -255,7 +220,7 @@ class LeaveView extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            if (leave.status == 'pending')
+            if (leave.status == 'pending' && user?.adminModal != null)
               Row(
                 children: [
                   Expanded(
@@ -265,7 +230,7 @@ class LeaveView extends StatelessWidget {
                         foregroundColor: Colors.red,
                       ),
                       onPressed:
-                          () => _updateLeaveStatus(context, leave, 'rejected'),
+                          () => updateLeaveStatus(context, leave, 'rejected'),
                       icon: const Icon(Icons.close, size: 18),
                       label: const Text('Reject'),
                     ),
@@ -278,7 +243,7 @@ class LeaveView extends StatelessWidget {
                         foregroundColor: Colors.white,
                       ),
                       onPressed:
-                          () => _updateLeaveStatus(context, leave, 'approved'),
+                          () => updateLeaveStatus(context, leave, 'approved'),
                       icon: const Icon(Icons.check, size: 18),
                       label: const Text('Approve'),
                     ),
@@ -291,7 +256,9 @@ class LeaveView extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () => _showDeleteConfirmation(context, leave),
+                    onPressed: () {
+                      context.read<LeaveBloc>().add(DeleteLeave(leave.id));
+                    },
                   ),
                 ],
               ),
@@ -301,7 +268,7 @@ class LeaveView extends StatelessWidget {
     );
   }
 
-  void _updateLeaveStatus(
+  void updateLeaveStatus(
     BuildContext context,
     LeaveModal leave,
     String status,
@@ -318,6 +285,8 @@ class LeaveView extends StatelessWidget {
       approverName: leave.approverName,
       employeeId: leave.employeeId,
       notify: leave.notify,
+      createdAt: leave.createdAt,
+      updatedAt: DateTime.now(),
     );
 
     context.read<LeaveBloc>().add(UpdateLeaveStatus(updatedLeave));
@@ -332,192 +301,11 @@ class LeaveView extends StatelessWidget {
     );
   }
 
-  void _showEmployeeSearch(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          maxChildSize: 0.9,
-          minChildSize: 0.5,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Search Employee',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Search Employee',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      itemCount: 5, // Replace with actual employee list
-                      itemBuilder:
-                          (context, index) => Card(
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.green[100],
-                                child: Text('E${index + 1}'),
-                              ),
-                              title: Text('Employee ${index + 1}'),
-                              subtitle: Text('ID: EMP00${index + 1}'),
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                            ),
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showNotifications(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          maxChildSize: 0.9,
-          minChildSize: 0.4,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    margin: const EdgeInsets.only(left: 150),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Notifications',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const Divider(),
-                  Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      itemCount: 3, // Replace with actual notifications
-                      itemBuilder:
-                          (context, index) => Card(
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.orange[100],
-                                child: const Icon(
-                                  Icons.notifications,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                              title: Text('Notification ${index + 1}'),
-                              subtitle: const Text(
-                                'Details about the notification',
-                              ),
-                              trailing: const Text('2h ago'),
-                            ),
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context, LeaveModal leave) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Delete Leave Request',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            'Are you sure you want to delete ${leave.employeeName}\'s leave request?',
-            style: const TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                context.read<LeaveBloc>().add(DeleteLeave(leave.id));
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Leave request deleted successfully'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showAddLeaveDialog(
+  void showAddLeaveDialog(
     BuildContext context,
     EmployeeModal? employee,
     LeaveBloc leaveBloc,
+    EmployeeBloc employeeBloc,
   ) {
     final formKey = GlobalKey<FormState>();
     final reasonController = TextEditingController();
@@ -525,8 +313,6 @@ class LeaveView extends StatelessWidget {
     DateTime? startDate;
     DateTime? endDate;
     String? selectedNotifyEmployee;
-    List<EmployeeModal> availableEmployees =
-        []; // This should come from your employee service
 
     showDialog(
       context: context,
@@ -548,6 +334,7 @@ class LeaveView extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Employee Info
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -575,6 +362,8 @@ class LeaveView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
+
+                      // Leave Type Dropdown
                       DropdownButtonFormField<String>(
                         value: selectedLeaveType,
                         decoration: InputDecoration(
@@ -608,6 +397,8 @@ class LeaveView extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 20),
+
+                      // Date Selection
                       Row(
                         children: [
                           Expanded(
@@ -621,6 +412,7 @@ class LeaveView extends StatelessWidget {
                                     const Duration(days: 365),
                                   ),
                                 );
+
                                 if (date != null) {
                                   setState(() {
                                     startDate = date;
@@ -702,6 +494,7 @@ class LeaveView extends StatelessWidget {
                                       'End Date',
                                       style: TextStyle(
                                         fontSize: 12,
+                                        color: Colors.grey.shade600,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -726,6 +519,7 @@ class LeaveView extends StatelessWidget {
                           ),
                         ],
                       ),
+
                       if (startDate != null && endDate != null) ...[
                         const SizedBox(height: 12),
                         Container(
@@ -754,50 +548,72 @@ class LeaveView extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 20),
-                      // Notify Employee Dropdown
-                      DropdownButtonFormField<String>(
-                        value: selectedNotifyEmployee,
-                        decoration: InputDecoration(
-                          labelText: 'Notify Employee (Optional)',
-                          hintText: 'Select employee to notify',
-                          border: OutlineInputBorder(
+
+                      // Employee Notification Selection
+                      InkWell(
+                        onTap: () async {
+                          final result = await showEmployeeSelectionDialog(
+                            context,
+                            employeeBloc.state.employees,
+                          );
+                          if (result != null) {
+                            setState(() {
+                              selectedNotifyEmployee = result;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          prefixIcon: const Icon(Icons.person_outline),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.person_search,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Notify Employee',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      selectedNotifyEmployee ??
+                                          'Select Employee',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color:
+                                            selectedNotifyEmployee != null
+                                                ? Colors.black
+                                                : Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.grey[600],
+                              ),
+                            ],
+                          ),
                         ),
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: null,
-                            child: Text('None'),
-                          ),
-                          ...availableEmployees.map((employee) {
-                            return DropdownMenuItem<String>(
-                              value: employee.name,
-                              child: Text(employee.name),
-                            );
-                          }),
-                          // Sample employees for demonstration
-                          const DropdownMenuItem<String>(
-                            value: 'John Doe',
-                            child: Text('John Doe'),
-                          ),
-
-                          const DropdownMenuItem<String>(
-                            value: 'Jane Smith',
-                            child: Text('Jane Smith'),
-                          ),
-                          const DropdownMenuItem<String>(
-                            value: 'Mike Johnson',
-                            child: Text('Mike Johnson'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            selectedNotifyEmployee = value;
-                          });
-                        },
                       ),
                       const SizedBox(height: 20),
+
+                      // Reason Field
                       TextFormField(
                         controller: reasonController,
                         maxLines: 4,
@@ -807,7 +623,6 @@ class LeaveView extends StatelessWidget {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-
                           alignLabelWithHint: true,
                         ),
                         validator: (value) {
@@ -841,10 +656,13 @@ class LeaveView extends StatelessWidget {
                         endDate: endDate!,
                         reason: reasonController.text,
                         status: "pending",
+
                         duration: duration,
                         approverName: 'Manager',
                         employeeId: employee?.id ?? '',
                         notify: selectedNotifyEmployee ?? '',
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
                       );
 
                       leaveBloc.add(AddLeave(newLeave));
@@ -890,9 +708,141 @@ class LeaveView extends StatelessWidget {
       },
     );
   }
+
+  Future<String?> showEmployeeSelectionDialog(
+    BuildContext context,
+    List<EmployeeModal> employees,
+  ) async {
+    String searchQuery = '';
+
+    return await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final filteredEmployees =
+                employees
+                    .where(
+                      (emp) => emp.name.toLowerCase().contains(
+                        searchQuery.toLowerCase(),
+                      ),
+                    )
+                    .toList();
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                'Select Employee to Notify',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    // Search Field
+                    TextField(
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Search employee...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Employee List
+                    Expanded(
+                      child:
+                          filteredEmployees.isEmpty
+                              ? const Center(
+                                child: Text(
+                                  'No employees found',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              )
+                              : ListView.builder(
+                                itemCount: filteredEmployees.length,
+                                itemBuilder: (context, index) {
+                                  final emp = filteredEmployees[index];
+                                  return Card(
+                                    elevation: 2,
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: Colors.green[100],
+                                        child: Text(
+                                          emp.name.isNotEmpty
+                                              ? emp.name[0].toUpperCase()
+                                              : 'E',
+                                          style: TextStyle(
+                                            color: Colors.green[800],
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        emp.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        emp.email,
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      trailing: Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 16,
+                                        color: Colors.grey[400],
+                                      ),
+                                      onTap: () {
+                                        Navigator.pop(context, emp.name);
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
-// Helper functions
+
 Color _getStatusColor(String status) {
   switch (status.toLowerCase()) {
     case 'approved':
@@ -903,19 +853,6 @@ Color _getStatusColor(String status) {
       return Colors.orange;
     default:
       return Colors.grey;
-  }
-}
-
-String _getStatusText(String status) {
-  switch (status.toLowerCase()) {
-    case 'approved':
-      return 'Approved';
-    case 'rejected':
-      return 'Rejected';
-    case 'pending':
-      return 'Pending';
-    default:
-      return 'Unknown';
   }
 }
 

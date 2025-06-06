@@ -81,9 +81,7 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     ApproveRequest event,
     Emitter<SystemState> emit,
   ) async {
-    await FirebaseDbHelper.firebase.approveSystemRequest(
-      event.system,
-    );
+    await FirebaseDbHelper.firebase.approveSystemRequest(event.system);
     add(const FetchRequests());
     add(const FetchSystem());
   }
@@ -101,7 +99,10 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     CancelRequest event,
     Emitter<SystemState> emit,
   ) async {
-    await FirebaseDbHelper.firebase.cancelSystemRequest(event.systemId,event.requestId);
+    await FirebaseDbHelper.firebase.cancelSystemRequest(
+      event.systemId,
+      event.requestId,
+    );
     add(const FetchRequests());
     add(const FetchSystem());
   }

@@ -1,128 +1,112 @@
+import 'package:equatable/equatable.dart';
 
+import '../Service/system_modal.dart';
 
-  import 'package:equatable/equatable.dart';
+class SystemEvent extends Equatable {
+  const SystemEvent();
 
-  import '../Service/system_modal.dart';
+  @override
+  List<Object?> get props => [];
+}
 
-  class SystemEvent extends Equatable {
-    const SystemEvent();
+class FetchSystem extends SystemEvent {
+  const FetchSystem();
 
-    @override
-    List<Object?> get props => [];
-  }
+  @override
+  List<Object> get props => [];
+}
 
-  class FetchSystem extends SystemEvent {
-    const FetchSystem();
+class AddSystem extends SystemEvent {
+  final String systemName;
+  final String? version;
+  final String? operatingSystem;
+  final String? status;
+  final String? employeeName;
+  final String? adminId;
+  final String? employeeId;
 
-    @override
-    List<Object> get props => [];
-  }
+  const AddSystem({
+    required this.systemName,
+    this.version,
+    this.operatingSystem,
+    this.status,
+    this.employeeName,
+    this.adminId,
+    this.employeeId,
+  });
 
-  class AddSystem extends SystemEvent {
-    final String systemName;
-    final String? version;
-    final String? operatingSystem;
-    final String? status;
-    final String? employeeName;
-    final String? adminId;
-    final String? employeeId;
+  @override
+  List<Object?> get props => [
+    systemName,
+    version,
+    operatingSystem,
+    status,
+    employeeName,
+    adminId,
+    employeeId,
+  ];
+}
 
-    const AddSystem({
-      required this.systemName,
-      this.version,
-      this.operatingSystem,
-      this.status,
-      this.employeeName,
-      this.adminId,
-      this.employeeId,
-    });
+class UpdateSystem extends SystemEvent {
+  final SystemModal system;
 
-    @override
-    List<Object?> get props => [
-      systemName,
-      version,
-      operatingSystem,
-      status,
-      employeeName,
-      adminId,
-      employeeId,
-    ];
-  }
+  const UpdateSystem({required this.system});
 
-  class UpdateSystem extends SystemEvent {
-    final SystemModal system;
+  @override
+  List<Object> get props => [system];
+}
 
-    const UpdateSystem({required this.system});
+class DeleteSystem extends SystemEvent {
+  final String id;
+  final String? adminId;
+  final String? employeeId;
 
-    @override
-    List<Object> get props => [system];
-  }
+  const DeleteSystem({required this.id, this.adminId, this.employeeId});
 
-  class DeleteSystem extends SystemEvent {
-    final String id;
-    final String? adminId;
-    final String? employeeId;
+  @override
+  List<Object?> get props => [id, adminId, employeeId];
+}
 
-    const DeleteSystem({required this.id, this.adminId, this.employeeId});
+class RequestSystem extends SystemEvent {
+  final SystemModal system;
 
-    @override
-    List<Object?> get props => [id, adminId, employeeId];
-  }
+  const RequestSystem({required this.system});
 
-  class RequestSystem extends SystemEvent {
-    final SystemModal system;
+  @override
+  List<Object> get props => [system];
+}
 
-    const RequestSystem({
-      required this.system,
-    });
+class FetchRequests extends SystemEvent {
+  const FetchRequests();
 
-    @override
-    List<Object> get props => [system];
-  }
+  @override
+  List<Object> get props => [];
+}
 
-  class FetchRequests extends SystemEvent {
-    const FetchRequests();
+class ApproveRequest extends SystemEvent {
+  final SystemModal system;
 
-    @override
-    List<Object> get props => [];
-  }
+  const ApproveRequest({required this.system});
 
-  class ApproveRequest extends SystemEvent {
+  @override
+  List<Object> get props => [system];
+}
 
-    final SystemModal system;
+class RejectRequest extends SystemEvent {
+  final SystemModal system;
 
-    const ApproveRequest({
+  const RejectRequest({required this.system});
 
-      required this.system,
+  @override
+  List<Object> get props => [system];
+}
 
-    });
+class CancelRequest extends SystemEvent {
+  final String requestId;
+  final String systemId;
 
-    @override
-    List<Object> get props => [system];
-  }
+  const CancelRequest({required this.requestId, required this.systemId});
 
-  class RejectRequest extends SystemEvent {
-
-    final SystemModal system;
-
-    const RejectRequest({
-
-      required this.system,
-    });
-
-    @override
-    List<Object> get props => [ system];
-  }
-
-  class CancelRequest extends SystemEvent {
-    final String requestId;
-    final String systemId;
-
-    const CancelRequest({
-      required this.requestId,
-      required this.systemId,
-    });
-
-    @override
-    List<Object> get props => [requestId, systemId];
-  }
+  @override
+  List<Object> get props => [requestId, systemId];
+}

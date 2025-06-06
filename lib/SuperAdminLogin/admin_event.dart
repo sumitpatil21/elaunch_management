@@ -57,22 +57,20 @@ class AdminLogout extends AdminEvent {
   @override
   List<Object?> get props => [email];
 }
+
 class AdminLoginCheck extends AdminEvent {
   final bool isLogin;
   const AdminLoginCheck({required this.isLogin});
   @override
   List<Object?> get props => [isLogin];
-
 }
-
 
 class SelectRole extends AdminEvent {
   final String? selectedRole;
   final AdminModal? adminModal;
   final EmployeeModal? employeeModal;
 
-  const SelectRole({ this.selectedRole, this.adminModal, this.employeeModal});
+  const SelectRole({this.selectedRole, this.adminModal, this.employeeModal});
   @override
   List<Object?> get props => [selectedRole, adminModal, employeeModal];
-
 }

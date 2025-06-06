@@ -13,9 +13,7 @@ class DepartmentScreen extends StatefulWidget {
   static Widget builder(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => DepartmentBloc()..add(FetchDepartments()),
-        ),
+        BlocProvider(create: (_) => DepartmentBloc()..add(FetchDepartments())),
       ],
       child: const DepartmentScreen(),
     );
@@ -35,7 +33,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   @override
   Widget build(BuildContext context) {
     SelectRole? user =
-    ModalRoute.of(context)!.settings.arguments as SelectRole?;
+        ModalRoute.of(context)!.settings.arguments as SelectRole?;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.withOpacity(0.2),
@@ -97,43 +95,42 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   },
                   child: Card(
                     shape: RoundedRectangleBorder(
-
-
-                        borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue.withOpacity(0.2),
-                      child: const Icon(Icons.business, size: 16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    title: Text(
-                      state.departments[index].name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (user?.employeeModal == null)
+                    elevation: 4,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue.withOpacity(0.2),
+                        child: const Icon(Icons.business, size: 16),
+                      ),
+                      title: Text(
+                        state.departments[index].name,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (user?.employeeModal == null)
+                            IconButton(
+                              onPressed:
+                                  () => _showDepartmentDialog(dept: dept),
+                              icon: const Icon(Icons.edit),
+                            ),
                           IconButton(
-                            onPressed: () => _showDepartmentDialog(dept: dept),
-                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                EmployeeScreen.routeName,
+                                arguments: user,
+                              );
+                            },
+                            icon: const Icon(Icons.arrow_forward_ios_rounded),
                           ),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              EmployeeScreen.routeName,
-                              arguments: user,
-                            );
-                          },
-                          icon: const Icon(Icons.arrow_forward_ios_rounded),
-                        ),
-                      ],
+                        ],
+                      ),
+                      subtitle: const Text('Department'),
                     ),
-                    subtitle: const Text('Department'),
                   ),
-                ),
                 );
               },
             );
@@ -157,7 +154,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     } else if (args is AdminModal) {
       admin = args;
     }
-
 
     if (admin == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,8 +196,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                       }
                       if (int.tryParse(value) == null) {
                         return 'Please enter a valid number';
-
-                    }
+                      }
                       return null;
                     },
                     decoration: const InputDecoration(
@@ -212,10 +207,11 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                 if (dept == null) const SizedBox(height: 12),
                 TextFormField(
                   controller: nameController,
-                  validator: (value) =>
-                  value == null || value.isEmpty
-                      ? 'Please enter a department name'
-                      : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Please enter a department name'
+                              : null,
                   decoration: const InputDecoration(
                     labelText: "Department Name",
                     border: OutlineInputBorder(),
@@ -243,7 +239,6 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                 if (formKey.currentState!.validate()) {
                   try {
                     if (dept != null) {
-
                       context.read<DepartmentBloc>().add(
                         UpdateDepartment(
                           departmentModal: DepartmentModal(
@@ -255,11 +250,12 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         ),
                       );
                     } else {
-                      // Add new department
                       final departmentId = int.tryParse(idController.text);
                       if (departmentId == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Invalid department ID")),
+                          const SnackBar(
+                            content: Text("Invalid department ID"),
+                          ),
                         );
                         return;
                       }
@@ -281,9 +277,9 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                            dept != null
-                                ? "Department updated successfully"
-                                : "Department added successfully"
+                          dept != null
+                              ? "Department updated successfully"
+                              : "Department added successfully",
                         ),
                       ),
                     );

@@ -19,18 +19,12 @@ class EmployeeScreen extends StatefulWidget {
   const EmployeeScreen({super.key});
 
   static Widget builder(BuildContext context) {
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
-        BlocProvider(
-          create:
-              (_) =>
-                  DepartmentBloc()
-                    ..add(FetchDepartments()),
-        ),
+        BlocProvider(create: (_) => DepartmentBloc()..add(FetchDepartments())),
       ],
       child: const EmployeeScreen(),
     );
@@ -215,7 +209,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           if (tempDepartmentFilter != null) {
                             context.read<EmployeeBloc>().add(
                               FilterEmployeesByDepartment(
-                                department: tempDepartmentFilter??"",
+                                department: tempDepartmentFilter ?? "",
                               ),
                             );
                           } else {
@@ -227,7 +221,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           if (tempManagerFilter != null) {
                             context.read<EmployeeBloc>().add(
                               FilterEmployeesByManager(
-                                manager: tempManagerFilter??"",
+                                manager: tempManagerFilter ?? "",
                               ),
                             );
                           } else {
@@ -279,8 +273,6 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
           (employee.managerName?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -336,11 +328,9 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             ),
           ),
 
-
           Expanded(
             child: BlocBuilder<EmployeeBloc, EmployeeState>(
               builder: (context, state) {
-
                 final searchFilteredEmployees = searchFilteredEmployee(
                   state.filteredEmployees,
                 );
@@ -361,9 +351,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           child: CircularProgressIndicator(),
-                          onPressed: () {
-
-                          },
+                          onPressed: () {},
                         ),
                       ],
                     ),
@@ -451,7 +439,6 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                         context.read<EmployeeBloc>().add(
                           DeleteEmployee(id: "${employee.id}"),
                         );
-
                       },
                       child: Card(
                         shape: RoundedRectangleBorder(
@@ -551,7 +538,9 @@ void showEmployeeDialog({
   final formKey = GlobalKey<FormState>();
   final nameController = TextEditingController(text: employee?.name ?? '');
   final emailController = TextEditingController(text: employee?.email ?? '');
-  final passwordController = TextEditingController(text: employee?.password ?? '');
+  final passwordController = TextEditingController(
+    text: employee?.password ?? '',
+  );
   final addressController = TextEditingController(
     text: employee?.address ?? '',
   );
@@ -568,8 +557,7 @@ void showEmployeeDialog({
           .where((emp) => emp.role == 'Manager')
           .toList();
 
-  SelectRole? args =
-      ModalRoute.of(context)!.settings.arguments as SelectRole?;
+  SelectRole? args = ModalRoute.of(context)!.settings.arguments as SelectRole?;
   String selectedRole = employee?.role ?? 'Employee';
   DepartmentModal? selectedDepartment;
   EmployeeModal? selectedManager;
@@ -629,7 +617,7 @@ void showEmployeeDialog({
                                       ? 'Enter email'
                                       : null,
                         ),
-                        SizedBox(height: 16,),
+                        SizedBox(height: 16),
                         TextFormField(
                           controller: passwordController,
                           decoration: const InputDecoration(
@@ -792,7 +780,6 @@ void showEmployeeDialog({
   );
 }
 
-
 Drawer buildDrawer(BuildContext context, AdminModal? admin) {
   return Drawer(
     width: 240,
@@ -806,11 +793,11 @@ Drawer buildDrawer(BuildContext context, AdminModal? admin) {
               context.read<EmployeeBloc>().state.loggedInEmployee == null
                   ? admin?.name[0].toUpperCase() ?? 'A'
                   : context
-                  .read<EmployeeBloc>()
-                  .state
-                  .loggedInEmployee!
-                  .name[0]
-                  .toUpperCase(),
+                      .read<EmployeeBloc>()
+                      .state
+                      .loggedInEmployee!
+                      .name[0]
+                      .toUpperCase(),
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -833,13 +820,13 @@ Drawer buildDrawer(BuildContext context, AdminModal? admin) {
         buildListTile(
           context,
           "Dashboard",
-              () => Navigator.pop(context),
+          () => Navigator.pop(context),
           Icon(Icons.dashboard),
         ),
         buildListTile(
           context,
           "Department",
-              () => Navigator.pushNamed(context, DepartmentScreen.routeName),
+          () => Navigator.pushNamed(context, DepartmentScreen.routeName),
           Icon(Icons.business),
         ),
         buildListTile(context, "Employee", () {
@@ -865,8 +852,7 @@ Drawer buildDrawer(BuildContext context, AdminModal? admin) {
             context.read<AdminBloc>().add(
               AdminLogin(
                 email: context.read<AdminBloc>().state.adminList!.first.email,
-                password:
-                context.read<AdminBloc>().state.adminList!.first.pass,
+                password: context.read<AdminBloc>().state.adminList!.first.pass,
               ),
             );
             context.read<AdminBloc>().add(AdminLogout());
@@ -879,15 +865,10 @@ Drawer buildDrawer(BuildContext context, AdminModal? admin) {
 }
 
 ListTile buildListTile(
-    BuildContext context,
-    String text,
-    GestureTapCallback fun,
-    Icon icon,
-    ) {
-  return ListTile(
-    leading: icon,
-    title: Text(text),
-    selected: true,
-    onTap: fun,
-  );
+  BuildContext context,
+  String text,
+  GestureTapCallback fun,
+  Icon icon,
+) {
+  return ListTile(leading: icon, title: Text(text), selected: true, onTap: fun);
 }

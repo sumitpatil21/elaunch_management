@@ -8,8 +8,6 @@ class DepartmentEvent extends Equatable {
 }
 
 class FetchDepartments extends DepartmentEvent {
-
-
   const FetchDepartments();
 
   @override

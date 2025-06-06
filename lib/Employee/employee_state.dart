@@ -8,7 +8,6 @@ class EmployeeState extends Equatable {
   final String? managerFilter;
   final EmployeeModal? loggedInEmployee;
 
-
   const EmployeeState({
     this.employees = const [],
     this.filteredEmployees = const [],
@@ -16,9 +15,7 @@ class EmployeeState extends Equatable {
     this.departmentFilter,
     this.managerFilter,
     this.loggedInEmployee, // Add this
-
   });
-
 
   EmployeeState copyWith({
     List<EmployeeModal>? employees,
@@ -27,7 +24,6 @@ class EmployeeState extends Equatable {
     String? departmentFilter,
     String? managerFilter,
     EmployeeModal? loggedInEmployee,
-
   }) {
     return EmployeeState(
       employees: employees ?? this.employees,
@@ -36,7 +32,6 @@ class EmployeeState extends Equatable {
       departmentFilter: departmentFilter ?? this.departmentFilter,
       managerFilter: managerFilter ?? this.managerFilter,
       loggedInEmployee: loggedInEmployee ?? this.loggedInEmployee,
-
     );
   }
 
@@ -48,6 +43,5 @@ class EmployeeState extends Equatable {
     departmentFilter,
     managerFilter,
     loggedInEmployee,
-
   ];
 }

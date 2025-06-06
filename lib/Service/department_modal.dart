@@ -1,6 +1,6 @@
 class DepartmentModal {
-  late String id ;
-  late String name, date,id_admin;
+  late String id;
+  late String name, date, id_admin;
 
   DepartmentModal({
     required this.name,
@@ -24,7 +24,6 @@ class DepartmentModal {
       'departmentName': name,
       'date': date,
       'id_admin': id_admin,
-
     };
   }
 }
