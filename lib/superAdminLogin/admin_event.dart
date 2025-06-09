@@ -1,6 +1,10 @@
-part of 'admin_bloc.dart';
 
-abstract class AdminEvent extends Equatable {
+import 'package:equatable/equatable.dart';
+
+import '../Service/admin_modal.dart';
+import '../Service/employee_modal.dart';
+
+ class AdminEvent extends Equatable {
   const AdminEvent();
 
   @override
@@ -11,8 +15,7 @@ class AdminInsert extends AdminEvent {
   final String id;
   final String name;
   final String email;
-  final String pass;
-  final String check;
+  final String password;
   final String companyName;
   final String field;
 
@@ -20,33 +23,28 @@ class AdminInsert extends AdminEvent {
     required this.id,
     required this.name,
     required this.email,
-    required this.pass,
-    required this.check,
+    required this.password,
     required this.companyName,
     required this.field,
   });
 
   @override
-  List<Object?> get props => [id, name, email, pass, check, companyName, field];
+  List<Object> get props => [id, name, email, password, companyName, field];
 }
 
-class AdminFetch extends AdminEvent {
-  const AdminFetch();
-}
+class AdminFetch extends AdminEvent {}
 
 class AdminLogin extends AdminEvent {
   final String email;
   final String password;
-  final String check;
 
   const AdminLogin({
     required this.email,
-    this.check = "isLogin",
     required this.password,
   });
 
   @override
-  List<Object?> get props => [email, check, password];
+  List<Object> get props => [email, password];
 }
 
 class AdminLogout extends AdminEvent {
@@ -60,17 +58,35 @@ class AdminLogout extends AdminEvent {
 
 class AdminLoginCheck extends AdminEvent {
   final bool isLogin;
+
   const AdminLoginCheck({required this.isLogin});
+
   @override
-  List<Object?> get props => [isLogin];
+  List<Object> get props => [isLogin];
 }
 
 class SelectRole extends AdminEvent {
-  final String? selectedRole;
+  final String selectedRole;
   final AdminModal? adminModal;
   final EmployeeModal? employeeModal;
 
-  const SelectRole({this.selectedRole, this.adminModal, this.employeeModal});
+  const SelectRole({
+    required this.selectedRole,
+    this.adminModal,
+    this.employeeModal,
+  });
+
   @override
   List<Object?> get props => [selectedRole, adminModal, employeeModal];
 }
+
+class AdminPasswordReset extends AdminEvent {
+  final String email;
+
+  const AdminPasswordReset({required this.email});
+
+  @override
+  List<Object> get props => [email];
+}
+
+class AdminClearError extends AdminEvent {}

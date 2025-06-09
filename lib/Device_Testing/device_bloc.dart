@@ -2,7 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:elaunch_management/Service/device_modal.dart';
 import 'package:equatable/equatable.dart';
 
-import '../Service/firebaseDatabase.dart';
+import '../service/firebase_database.dart';
 import 'device_event.dart';
 
 part 'device_state.dart';

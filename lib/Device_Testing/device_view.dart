@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Employee/employee_bloc.dart';
+
+import '../SuperAdminLogin/admin_event.dart';
 import 'device_bloc.dart';
 import 'device_event.dart';
 
@@ -342,9 +344,9 @@ class _DeviceViewState extends State<DeviceView> {
       email: '',
       password: '',
       address: '',
-      dob: '',
-      departmentName: "",
-      managerName: "",
+      // dob: '',
+      // departmentName: "",
+      // managerName: "",
       role: "",
       departmentId: "1",
       adminId: "1",

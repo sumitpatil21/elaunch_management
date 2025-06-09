@@ -10,9 +10,12 @@ import 'package:elaunch_management/Service/system_modal.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
 import '../Employee/employee_bloc.dart';
+import '../SuperAdminLogin/admin_event.dart';
+
 
 class SystemView extends StatefulWidget {
   static String routeName = "/system";
+
   const SystemView({super.key});
 
   static Widget builder(BuildContext context) {
@@ -28,7 +31,7 @@ class SystemView extends StatefulWidget {
         BlocProvider(
           create: (context) => EmployeeBloc()..add(const FetchEmployees()),
         ),
-        BlocProvider(create: (context) => AdminBloc()..add(const AdminFetch())),
+        BlocProvider(create: (context) => AdminBloc()..add( AdminFetch())),
       ],
       child: const SystemView(),
     );
@@ -268,7 +271,6 @@ class _SystemViewState extends State<SystemView> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-
                             if (loginEmployee?.employeeModal != null &&
                                 (system.status == 'available' ||
                                     isAlreadyRequested))
@@ -441,12 +443,10 @@ class _SystemViewState extends State<SystemView> {
                                           systemName: request.systemName,
                                           version: request.version,
                                           status: "assigned",
-                                          employeeName:
-                                              request
-                                                  .requestedByName, // Use the requester's name
-                                          employeeId:
-                                              request
-                                                  .requestId, // Use the requester's ID
+                                          employeeName: request.requestedByName,
+                                          // Use the requester's name
+                                          employeeId: request.requestId,
+                                          // Use the requester's ID
                                           adminId: request.adminId,
                                           isRequested: false,
                                           requestedByName:
@@ -476,8 +476,8 @@ class _SystemViewState extends State<SystemView> {
                                           id: request.id,
                                           systemName: request.systemName,
                                           version: request.version,
-                                          status:
-                                              "available", // Fixed: Set back to available, not "Unassigned"
+                                          status: "available",
+                                          // Fixed: Set back to available, not "Unassigned"
                                           employeeName: null,
                                           employeeId: null,
                                           adminId: request.adminId,
@@ -529,10 +529,8 @@ class _SystemViewState extends State<SystemView> {
       email: '',
       password: '',
       address: '',
-      dob: '',
       role: "",
-      departmentName: "",
-      managerName: "",
+
       departmentId: "1",
       adminId: "",
     );

@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:elaunch_management/Service/firebaseDatabase.dart';
+import 'package:elaunch_management/service/firebase_database.dart';
 import 'package:elaunch_management/Service/employee_modal.dart';
 import 'package:equatable/equatable.dart';
 
@@ -29,9 +29,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
           password: event.password,
         );
 
-    if (employee != null) {
-      emit(state.copyWith(loggedInEmployee: employee));
-    }
+    // if (employee != null) {
+    //   emit(state.copyWith(loggedInEmployee: employee));
+    // }
   }
 
   Future<void> fetchEmployeesData(
@@ -43,7 +43,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       departmentId: event.departmentId,
     );
 
-    emit(state.copyWith(employees: employees, filteredEmployees: employees));
+    // emit(state.copyWith(employees: employees, filteredEmployees: employees));
   }
 
   Future<void> insertEmployeeData(
@@ -56,15 +56,14 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       email: event.email,
       password: event.password,
       address: event.address,
-      dob: event.dob,
+
       role: event.role,
-      managerName: event.managerName,
-      departmentName: event.department,
+
       adminId: event.adminId ?? "",
       departmentId: event.departmentId ?? "",
     );
 
-    await FirebaseDbHelper.firebase.createEmployee(employee);
+    // await FirebaseDbHelper.firebase.createEmployee(employee);
     add(FetchEmployees(role: event.role));
   }
 
@@ -78,15 +77,13 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       email: event.email,
       password: event.password,
       address: event.address,
-      dob: event.dob,
+
       role: event.role,
-      managerName: event.managerName,
-      departmentName: event.department,
       adminId: event.adminId ?? "",
       departmentId: event.departmentId ?? "",
     );
 
-    await FirebaseDbHelper.firebase.updateEmployee(updated);
+    // await FirebaseDbHelper.firebase.updateEmployee(updated);
     add(FetchEmployees(role: event.role));
   }
 
@@ -151,14 +148,129 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     if (state.departmentFilter != null) {
       filtered =
           filtered
-              .where((e) => e.departmentName == state.departmentFilter)
+              .where((e) => e.departmentId == state.departmentFilter)
               .toList();
     }
     if (state.managerFilter != null) {
       filtered =
-          filtered.where((e) => e.managerName == state.managerFilter).toList();
+          filtered.where((e) => e.status == state.managerFilter).toList();
     }
 
     emit(state.copyWith(filteredEmployees: filtered));
   }
 }
+// part 'employee_event.dart';
+// part 'employee_state.dart';
+//
+// class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
+//   final FirebaseAuthHelper _firebaseAuthHelper = FirebaseAuthHelper.auth;
+//
+//   EmployeeBloc() : super(const EmployeeState()) {
+//     on<EmployeeLogin>(_onEmployeeLogin);
+//     on<EmployeeLogout>(_onEmployeeLogout);
+//     on<EmployeeFetch>(_onEmployeeFetch);
+//     on<EmployeeCreate>(_onEmployeeCreate);
+//     on<EmployeeClearError>(_onEmployeeClearError);
+//   }
+//
+//   Future<void> _onEmployeeLogin(
+//       EmployeeLogin event,
+//       Emitter<EmployeeState> emit,
+//       ) async {
+//     try {
+//       emit(state.copyWith(isLoading: true, errorMessage: null));
+//
+//       EmployeeModal? employee = await _firebaseAuthHelper.loginEmployee(
+//         email: event.email,
+//         password: event.password,
+//       );
+//
+//       if (employee != null) {
+//         emit(state.copyWith(
+//           loggedInEmployee: employee,
+//           isLoading: false,
+//           successMessage: 'Employee login successful',
+//         ));
+//       } else {
+//         emit(state.copyWith(
+//           isLoading: false,
+//           errorMessage: 'Invalid employee credentials',
+//         ));
+//       }
+//     } catch (e) {
+//       log('Employee login error: $e');
+//       emit(state.copyWith(
+//         isLoading: false,
+//         errorMessage: e.toString().replaceAll('Exception: ', ''),
+//       ));
+//     }
+//   }
+//
+//   Future<void> _onEmployeeLogout(
+//       EmployeeLogout event,
+//       Emitter<EmployeeState> emit,
+//       ) async {
+//     emit(const EmployeeState()); // Reset to initial state
+//   }
+//
+//   Future<void> _onEmployeeFetch(
+//       EmployeeFetch event,
+//       Emitter<EmployeeState> emit,
+//       ) async {
+//     try {
+//       emit(state.copyWith(isLoading: true, errorMessage: null));
+//
+//       List<EmployeeModal> employees = await _firebaseAuthHelper.getEmployees(
+//         departmentId: event.departmentId,
+//         role: event.role,
+//       );
+//
+//       emit(state.copyWith(
+//         employees: employees,
+//         isLoading: false,
+//       ));
+//     } catch (e) {
+//       log('Employee fetch error: $e');
+//       emit(state.copyWith(
+//         isLoading: false,
+//         errorMessage: e.toString(),
+//       ));
+//     }
+//   }
+//
+//   Future<void> _onEmployeeCreate(
+//       EmployeeCreate event,
+//       Emitter<EmployeeState> emit,
+//       ) async {
+//     try {
+//       emit(state.copyWith(isLoading: true, errorMessage: null));
+//
+//       EmployeeModal employee = await _firebaseAuthHelper.createEmployee(
+//         name: event.name,
+//         email: event.email,
+//         password: event.password,
+//         role: event.role,
+//         departmentId: event.departmentId,
+//         adminId: event.adminId,
+//         phone: event.phone,
+//         address: event.address,
+//       );
+//
+//       emit(state.copyWith(
+//         isLoading: false,
+//         successMessage: 'Employee created successfully',
+//       ));
+//     } catch (e) {
+//       log('Employee create error: $e');
+//       emit(state.copyWith(
+//         isLoading: false,
+//         errorMessage: e.toString(),
+//       ));
+//     }
+//   }
+//
+//   void _onEmployeeClearError(EmployeeClearError event, Emitter<EmployeeState> emit) {
+//     emit(state.copyWith(errorMessage: null, successMessage: null));
+//   }
+// }
+

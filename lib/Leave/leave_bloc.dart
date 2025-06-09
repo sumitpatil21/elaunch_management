@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:bloc/bloc.dart';
-import '../Service/firebaseDatabase.dart';
+import '../service/firebase_database.dart';
 import '../Service/leave_modal.dart';
 import 'leave_event.dart';
 import 'leave_state.dart';
@@ -28,14 +28,14 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
 
     log('Fetched ${leaves.length} leaves from Firebase');
 
-    emit(
-      state.copyWith(
-        leaves: leaves,
-        filteredLeaves: leaves,
-        isLoading: false,
-        error: null,
-      ),
-    );
+    // emit(
+    //   state.copyWith(
+    //     leaves: leaves,
+    //     filteredLeaves: leaves,
+    //     isLoading: false,
+    //     error: null,
+    //   ),
+    // );
   }
 
   Future<void> addLeave(AddLeave event, Emitter<LeaveState> emit) async {
@@ -49,8 +49,8 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
             )
             : event.leave;
 
-    await FirebaseDbHelper.firebase.createLeaves(leaveWithId);
-    log('Leave added successfully');
+    // await FirebaseDbHelper.firebase.createLeaves(leaveWithId);
+    log('leave added successfully');
   }
 
   Future<void> updateLeaveStatus(
@@ -62,7 +62,7 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
       'Updating leave status: ${event.leaveModal.id} to ${event.leaveModal.status}',
     );
 
-    await FirebaseDbHelper.firebase.updateLeaves(event.leaveModal);
+    // await FirebaseDbHelper.firebase.updateLeaves(event.leaveModal);
 
     final updatedLeaves =
         state.leaves.map((leave) {
@@ -81,7 +81,7 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
       ),
     );
 
-    log('Leave status updated successfully');
+    log('leave status updated successfully');
   }
 
   Future<void> deleteLeave(DeleteLeave event, Emitter<LeaveState> emit) async {
@@ -99,7 +99,7 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
       ),
     );
 
-    log('Leave deleted successfully');
+    log('leave deleted successfully');
   }
 
   void filterLeavesByStatus(

@@ -6,12 +6,13 @@ import 'package:textfield_search/textfield_search.dart';
 import '../Service/employee_modal.dart';
 import '../Service/leave_modal.dart';
 import '../SuperAdminLogin/admin_bloc.dart';
+import '../superAdminLogin/admin_event.dart';
 import 'leave_bloc.dart';
 import 'leave_event.dart';
 import 'leave_state.dart';
 
 class LeaveView extends StatelessWidget {
-  static String routeName = "/leave";
+  static String routeName = "/Leave";
 
   const LeaveView({super.key});
 
@@ -618,7 +619,7 @@ class LeaveView extends StatelessWidget {
                         controller: reasonController,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: 'Reason for leave',
+                          labelText: 'Reason for Leave',
                           hintText: 'Enter your reason here...',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -627,7 +628,7 @@ class LeaveView extends StatelessWidget {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter reason for leave';
+                            return 'Please enter reason for Leave';
                           }
                           return null;
                         },

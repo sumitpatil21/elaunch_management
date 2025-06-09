@@ -1,5 +1,7 @@
-import 'package:elaunch_management/Service/firebaseDatabase.dart';
+import 'package:elaunch_management/Service/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'Device_Testing/device_view.dart';
 import 'Leave/leave_view.dart';
 import 'System/system_view.dart';
@@ -13,16 +15,28 @@ import 'Dashboard/dashboard_view.dart';
 import 'Employee/employee_view.dart';
 import 'Service/db_helper.dart';
 
-void main()  {
-
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-   Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  // DbHelper.dbHelper.createDatabase();
-  runApp(MyApp());
-}
 
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Only use emulator in debug mode
+    if (kDebugMode) {
+      await FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
+    }
+
+    // Initialize database
+    // await DbHelper.dbHelper.createDatabase();
+
+    runApp(const MyApp());
+  } catch (e) {
+    print('Firebase initialization error: $e');
+    // Handle error appropriately
+  }
+}
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

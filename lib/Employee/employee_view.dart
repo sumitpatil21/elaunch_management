@@ -10,8 +10,10 @@ import '../Service/department_modal.dart';
 
 import '../Service/employee_modal.dart';
 import '../SuperAdminLogin/admin_bloc.dart';
+import '../SuperAdminLogin/admin_event.dart';
 import '../SuperAdminLogin/admin_view.dart';
 import '../System/system_view.dart';
+
 
 class EmployeeScreen extends StatefulWidget {
   static String routeName = "/emp";
@@ -268,9 +270,9 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
 
     return employees.where((employee) {
       return employee.name.toLowerCase().contains(query) ||
-          employee.email.toLowerCase().contains(query) ||
-          (employee.departmentName?.toLowerCase().contains(query) ?? false) ||
-          (employee.managerName?.toLowerCase().contains(query) ?? false);
+          employee.email.toLowerCase().contains(query);
+          // (employee.departmentName?.toLowerCase().contains(query) ?? false) ||
+          // (employee.managerName?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
@@ -459,26 +461,26 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
 
-                            children: [
-                              Text(employee.email),
-                              if (employee.departmentName != null)
-                                Text(
-                                  'Dept: ${employee.departmentName}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              if (employee.managerName != null &&
-                                  employee.managerName!.isNotEmpty)
-                                Text(
-                                  'Manager: ${employee.managerName}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                            ],
+                            // children: [
+                            //   Text(employee.email),
+                            //   if (employee.departmentName != null)
+                            //     Text(
+                            //       'Dept: ${employee.departmentName}',
+                            //       style: TextStyle(
+                            //         color: Colors.grey[600],
+                            //         fontSize: 12,
+                            //       ),
+                            //     ),
+                            //   if (employee.managerName != null &&
+                            //       employee.managerName!.isNotEmpty)
+                            //     Text(
+                            //       'Manager: ${employee.managerName}',
+                            //       style: TextStyle(
+                            //         color: Colors.grey[600],
+                            //         fontSize: 12,
+                            //       ),
+                            //     ),
+                            // ],
                           ),
                           trailing: Container(
                             padding: const EdgeInsets.symmetric(
@@ -544,7 +546,7 @@ void showEmployeeDialog({
   final addressController = TextEditingController(
     text: employee?.address ?? '',
   );
-  final dobController = TextEditingController(text: employee?.dob ?? '');
+  // final dobController = TextEditingController(text: employee?. ?? '');
   final idController = TextEditingController(text: employee?.id ?? '')
     ..text = employee?.id?.toString() ?? '';
 
@@ -562,18 +564,7 @@ void showEmployeeDialog({
   DepartmentModal? selectedDepartment;
   EmployeeModal? selectedManager;
 
-  Future<void> pickDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
 
-    if (picked != null) {
-      dobController.text = "${picked.day}/${picked.month}/${picked.year}";
-    }
-  }
 
   showDialog(
     context: context,
@@ -642,21 +633,7 @@ void showEmployeeDialog({
                           ),
                         ),
                         const SizedBox(height: 16),
-                        TextFormField(
-                          controller: dobController,
-                          decoration: InputDecoration(
-                            labelText: 'Date of Birth',
-                            prefixIcon: const Icon(Icons.calendar_today),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_month),
-                              onPressed: () => pickDate(context),
-                            ),
-                            border: const OutlineInputBorder(),
-                          ),
-                          readOnly: true,
-                          onTap: () => pickDate(context),
-                        ),
-                        const SizedBox(height: 16),
+
                         DropdownButtonFormField<String>(
                           value: selectedRole,
                           decoration: const InputDecoration(
@@ -740,6 +717,7 @@ void showEmployeeDialog({
                         if (employee != null) {
                           bloc?.add(
                             UpdateEmployee(
+                              dob: "",
                               adminId: args!.adminModal?.id,
                               id: employee.id!,
                               role: selectedRole,
@@ -747,7 +725,6 @@ void showEmployeeDialog({
                               email: emailController.text,
                               password: passwordController.text,
                               address: addressController.text,
-                              dob: dobController.text,
                               managerName: selectedManager?.name ?? "",
                               department: selectedDepartment?.name ?? "",
                               departmentId: selectedDepartment?.id ?? "",
@@ -756,6 +733,7 @@ void showEmployeeDialog({
                         } else {
                           bloc?.add(
                             AddEmployee(
+                              dob: "",
                               adminId: args!.adminModal?.id,
                               id: idController.text,
                               role: selectedRole,
@@ -763,7 +741,7 @@ void showEmployeeDialog({
                               email: emailController.text,
                               password: passwordController.text,
                               address: addressController.text,
-                              dob: dobController.text,
+
                               managerName: selectedManager?.name ?? "",
                               department: selectedDepartment?.name ?? "",
                               departmentId: selectedDepartment?.id ?? "",
@@ -849,12 +827,12 @@ Drawer buildDrawer(BuildContext context, AdminModal? admin) {
           leading: Icon(Icons.logout, color: Colors.red),
           title: Text("Logout", style: TextStyle(color: Colors.red)),
           onTap: () {
-            context.read<AdminBloc>().add(
-              AdminLogin(
-                email: context.read<AdminBloc>().state.adminList!.first.email,
-                password: context.read<AdminBloc>().state.adminList!.first.pass,
-              ),
-            );
+            // context.read<AdminBloc>().add(
+            //   // AdminLogin(
+            //   //   email: context.read<AdminBloc>().state.adminList!.first.email,
+            //   //   // password: context.read<AdminBloc>().state.adminList!.first.pass,
+            //   // ),
+            // );
             context.read<AdminBloc>().add(AdminLogout());
             Navigator.of(context).pushNamed(AdminView.routeName);
           },

@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:elaunch_management/Service/device_modal.dart';
@@ -12,6 +13,7 @@ class FirebaseDbHelper {
   static final firebase = FirebaseDbHelper._();
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
+  // Collection references
   CollectionReference get admins => firestore.collection('admins');
   CollectionReference get departments => firestore.collection('departments');
   CollectionReference get employees => firestore.collection('employees');
@@ -19,42 +21,10 @@ class FirebaseDbHelper {
   CollectionReference get devices => firestore.collection('devices');
   CollectionReference get leaves => firestore.collection('leaves');
 
-  Future<void> createAdmin(AdminModal admin) async {
-    final doc = await admins.add(admin.toJson());
-    log("Admin created with ID: ${doc.id}");
 
-  }
 
-  Future<void> updateAdminStatus(String email, String status) async {
-    final query = await admins.where('email', isEqualTo: email).get();
-    for (final doc in query.docs) {
-      await doc.reference.update({'status': status});
-    }
-  }
 
-  Future<List<AdminModal>> getAdminByEmail(String email) async {
-    final query = await admins.where('email', isEqualTo: email).get();
-    return query.docs
-        .map(
-          (doc) => AdminModal.fromJson({
-            ...doc.data() as Map<String, dynamic>,
-            'id': doc.id,
-          }),
-        )
-        .toList();
-  }
 
-  Future<List<AdminModal>> getAllAdmins() async {
-    final snapshot = await admins.get();
-    return snapshot.docs
-        .map(
-          (doc) => AdminModal.fromJson({
-            ...doc.data() as Map<String, dynamic>,
-            'id': doc.id,
-          }),
-        )
-        .toList();
-  }
 
   Future<void> createDepartment(DepartmentModal department) async {
     if (!(await admins.doc(department.id_admin.toString()).get()).exists) {
@@ -102,12 +72,11 @@ class FirebaseDbHelper {
   }
 
   Future<void> deleteDepartment(String id) async {
-    final hasEmployees =
-        (await employees
-                .where('departmentRef', isEqualTo: departments.doc(id))
-                .get())
-            .docs
-            .isNotEmpty;
+    final hasEmployees = (await employees
+        .where('departmentRef', isEqualTo: departments.doc(id))
+        .get())
+        .docs
+        .isNotEmpty;
 
     if (hasEmployees) {
       throw Exception('Department has employees and cannot be deleted');
@@ -120,13 +89,14 @@ class FirebaseDbHelper {
       throw Exception('Department does not exist');
     }
 
+
     final docRef = employees.doc();
     await docRef.set({
-      ...employee.toJson(),
-      'id': docRef.id,
-      'departmentRef': departments.doc(employee.departmentId),
-      'adminRef': admins.doc(employee.adminId),
-      'createdAt': FieldValue.serverTimestamp(),
+    ...employee.toJson(),
+    'id': docRef.id,
+    'departmentRef': departments.doc(employee.departmentId),
+    'adminRef': admins.doc(employee.adminId),
+    'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -134,13 +104,12 @@ class FirebaseDbHelper {
     required String email,
     required String password,
   }) async {
-    final snapshot =
-        await firestore
-            .collection('employees')
-            .where('email', isEqualTo: email)
-            .where('password', isEqualTo: password)
-            .limit(1)
-            .get();
+    final snapshot = await firestore
+        .collection('employees')
+        .where('email', isEqualTo: email)
+        .where('password', isEqualTo: password)
+        .limit(1)
+        .get();
 
     if (snapshot.docs.isNotEmpty) {
       final doc = snapshot.docs.first;
@@ -206,6 +175,8 @@ class FirebaseDbHelper {
     await employees.doc(id).delete();
   }
 
+  // ==================== SYSTEM METHODS ====================
+
   Future<void> createSystem(SystemModal system) async {
     final docRef = systems.doc();
 
@@ -257,9 +228,81 @@ class FirebaseDbHelper {
     });
   }
 
+
   Future<void> deleteSystem(String id) async {
     await systems.doc(id).delete();
   }
+
+
+
+  Future<void> createSystemRequests(SystemModal system) async {
+    await systems.doc(system.id).update({
+      'isRequested': system.isRequested ?? true,
+      'requestId': system.requestId,
+      'requestedByName': system.requestedByName,
+      'requestedAt': system.requestedAt != null ? FieldValue.serverTimestamp() : null,
+      'requestStatus': system.requestStatus ?? 'pending',
+    });
+  }
+
+  Future<List<SystemModal>> fetchRequests() async {
+    final snapshot = await systems
+        .where('isRequested', isEqualTo: true)
+        .where('requestStatus', isEqualTo: 'pending')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return SystemModal.fromJson({...data, 'id': doc.id});
+    }).toList();
+  }
+
+  Future<void> approveSystemRequest(SystemModal system) async {
+    await systems.doc(system.id).update({
+      'systemName': system.systemName,
+      'version': system.version,
+      'operatingSystem': system.operatingSystem,
+      'status': system.status,
+      'employee_name': system.employeeName,
+      'id_employee': system.employeeId,
+      'id_admin': system.adminId,
+      'isRequested': false,
+      'requested_by_name': null,
+      'requestId': null,
+      'request_status': 'approved',
+      'approvedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> rejectSystemRequest(SystemModal system) async {
+    await systems.doc(system.id).update({
+      'systemName': system.systemName,
+      'version': system.version,
+      'operatingSystem': system.operatingSystem,
+      'status': 'available',
+      'employee_name': null,
+      'id_employee': null,
+      'id_admin': system.adminId,
+      'isRequested': false,
+      'requested_by_name': null,
+      'requestId': null,
+      'request_status': 'rejected',
+      'rejectedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> cancelSystemRequest(String systemId, String requestId) async {
+    await systems.doc(systemId).update({
+      'isRequested': false,
+      'request_status': 'cancelled',
+      'requestId': null,
+      'requested_by_name': null,
+      'requestedAt': null,
+      'cancelledAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+
 
   Future<void> createDevice(TestingDeviceModal device) async {
     final docRef = devices.doc();
@@ -309,74 +352,6 @@ class FirebaseDbHelper {
     await devices.doc(id).delete();
   }
 
-  Future<void> createSystemRequests(SystemModal system) async {
-    await systems.doc(system.id).update({
-      'isRequested': system.isRequested ?? true,
-      'requestId': system.requestId,
-      'requestedByName': system.requestedByName,
-      'requestedAt':
-          system.requestedAt != null ? FieldValue.serverTimestamp() : null,
-      'requestStatus': system.requestStatus ?? 'pending',
-    });
-  }
-
-  Future<List<SystemModal>> fetchRequests() async {
-    final snapshot =
-        await systems
-            .where('isRequested', isEqualTo: true)
-            .where('requestStatus', isEqualTo: 'pending')
-            .get();
-
-    return snapshot.docs.map((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      return SystemModal.fromJson({...data, 'id': doc.id});
-    }).toList();
-  }
-
-  Future<void> approveSystemRequest(SystemModal system) async {
-    await systems.doc(system.id).update({
-      'systemName': system.systemName,
-      'version': system.version,
-      'operatingSystem': system.operatingSystem,
-      'status': system.status,
-      'employee_name': system.employeeName,
-      'id_employee': system.employeeId,
-      'id_admin': system.adminId,
-      'isRequested': false,
-      'requested_by_name': null,
-      'requestId': null,
-      'request_status': 'approved',
-      'approvedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> rejectSystemRequest(SystemModal system) async {
-    await systems.doc(system.id).update({
-      'systemName': system.systemName,
-      'version': system.version,
-      'operatingSystem': system.operatingSystem,
-      'status': 'available',
-      'employee_name': null,
-      'id_employee': null,
-      'id_admin': system.adminId,
-      'isRequested': false,
-      'requested_by_name': null,
-      'requestId': null,
-      'request_status': 'rejected',
-      'rejectedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> cancelSystemRequest(String systemId, String requestId) async {
-    await systems.doc(systemId).update({
-      'isRequested': false,
-      'request_status': 'cancelled',
-      'requestId': null,
-      'requested_by_name': null,
-      'requestedAt': null, // Clear the request timestamp
-      'cancelledAt': FieldValue.serverTimestamp(),
-    });
-  }
 
   Future<String> createLeaves(LeaveModal leave) async {
     final docRef = leaves.doc();

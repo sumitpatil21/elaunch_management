@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Service/admin_modal.dart';
 import '../Service/department_modal.dart';
 import '../SuperAdminLogin/admin_bloc.dart';
+import '../superAdminLogin/admin_event.dart';
 import 'department_bloc.dart';
 
 class DepartmentScreen extends StatefulWidget {

@@ -15,10 +15,13 @@ import '../Device_Testing/device_event.dart';
 import '../Employee/employee_bloc.dart';
 import '../Leave/leave_view.dart';
 import '../Service/admin_modal.dart';
+import '../SuperAdminLogin/admin_event.dart';
+import '../SuperAdminLogin/admin_state.dart';
 import '../SuperAdminLogin/admin_view.dart';
 import '../System/system_event.dart';
 import '../System/system_state.dart';
 import '../System/system_view.dart';
+
 
 class DashboardView extends StatefulWidget {
   static String routeName = "/dash";
@@ -54,7 +57,7 @@ class _DashboardViewState extends State<DashboardView> {
     context.read<DepartmentBloc>().add(FetchDepartments());
     context.read<SystemBloc>().add(FetchSystem());
     context.read<DeviceBloc>().add(FetchDevice());
-    context.read<AdminBloc>().add(SelectRole());
+    context.read<AdminBloc>().add(SelectRole(selectedRole: ''));
     log(context.read<AdminBloc>().state.adminModal?.email ?? "Data Not Found");
     log(
       context.read<AdminBloc>().state.employeeModal?.email ?? "Data Not Found",
@@ -1088,13 +1091,13 @@ class _DashboardViewState extends State<DashboardView> {
             leading: Icon(Icons.logout, color: Colors.red),
             title: Text("Logout", style: TextStyle(color: Colors.red)),
             onTap: () {
-              context.read<AdminBloc>().add(
-                AdminLogin(
-                  email: context.read<AdminBloc>().state.adminList!.first.email,
-                  password:
-                      context.read<AdminBloc>().state.adminList!.first.pass,
-                ),
-              );
+              // context.read<AdminBloc>().add(
+              //   // AdminLogin(
+              //   //   email: context.read<AdminBloc>().state.adminList!.first.email,
+              //   //   password:
+              //   //       context.read<AdminBloc>().state.adminList!.first.pass,
+              //   // ),
+              // );
               context.read<AdminBloc>().add(AdminLogout());
               Navigator.of(context).pushReplacementNamed(AdminView.routeName);
             },
