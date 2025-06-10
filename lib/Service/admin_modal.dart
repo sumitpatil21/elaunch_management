@@ -1,73 +1,67 @@
+
+
 class AdminModal {
-  final String? id;
-  final String name;
+  final String id;
   final String email;
+  final String name;
   final String companyName;
   final String field;
-  final String status;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final String phone;
 
   AdminModal({
-    this.id,
-    required this.name,
+    required this.id,
     required this.email,
+    required this.name,
     required this.companyName,
     required this.field,
-    this.status = 'active',
-    this.createdAt,
-    this.updatedAt,
+    this.phone = '',
   });
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
-      'name': name,
+      'id': id,
       'email': email,
+      'name': name,
       'companyName': companyName,
       'field': field,
-      'status': status,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'phone': phone,
+      'createdAt': DateTime.now().millisecondsSinceEpoch,
     };
   }
 
-
-  factory AdminModal.fromJson(Map<String, dynamic> json) {
+  // Create from Map (Firestore document)
+  factory AdminModal.fromJson(Map<String, dynamic> map) {
     return AdminModal(
-      id: json['id'],
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      companyName: json['companyName'] ?? '',
-      field: json['field'] ?? '',
-      status: json['status'] ?? 'active',
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : null,
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
-          : null,
+      id: map['id'] ?? '',
+      email: map['email'] ?? '',
+      name: map['name'] ?? '',
+      companyName: map['companyName'] ?? '',
+      field: map['field'] ?? '',
+      phone: map['phone'] ?? '',
     );
   }
 
+  // Copy with method for updates
   AdminModal copyWith({
     String? id,
-    String? name,
     String? email,
+    String? name,
     String? companyName,
     String? field,
-    String? status,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    String? phone,
   }) {
     return AdminModal(
       id: id ?? this.id,
-      name: name ?? this.name,
       email: email ?? this.email,
+      name: name ?? this.name,
       companyName: companyName ?? this.companyName,
       field: field ?? this.field,
-      status: status ?? this.status,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      phone: phone ?? this.phone,
     );
+  }
+
+  @override
+  String toString() {
+    return 'AdminModal(id: $id, email: $email, name: $name, companyName: $companyName, field: $field, phone: $phone)';
   }
 }

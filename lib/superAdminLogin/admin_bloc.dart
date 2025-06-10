@@ -1,3 +1,4 @@
+import 'package:elaunch_management/Service/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:developer';
 import '../Service/admin_modal.dart';
@@ -6,92 +7,90 @@ import 'admin_event.dart';
 import 'admin_state.dart';
 
 class AdminBloc extends Bloc<AdminEvent, AdminState> {
-  final FirebaseAuthHelper _authHelper = FirebaseAuthHelper();
-
   AdminBloc() : super(const AdminState()) {
-    on<AdminFetch>(_onAdminFetch);
-    on<AdminLogin>(_onAdminLogin);
-    on<AdminLogout>(_onAdminLogout);
-    on<AdminLoginCheck>(_onAdminLoginCheck);
-    on<SelectRole>(_onSelectRole);
+    on<AdminFetch>(adminFetch);
+    on<AdminLogin>(adminLogin);
+    on<AdminRegister>(adminRegister);
+    on<AdminForgotPassword>(adminForgotPassword);
+    on<AdminLogout>(adminLogout);
+    on<AdminLoginCheck>(adminLoginCheck);
+    on<SelectRole>(selectRole);
   }
 
-  Future<void> _onAdminFetch(AdminFetch event, Emitter<AdminState> emit) async {
-    try {
-      final currentUser = _authHelper.getCurrentUser();
-      if (currentUser != null) {
-        // Create AdminModal from current user
-        final admin = AdminModal(
-          id: currentUser.uid,
-          email: currentUser.email ?? '',
-          name: currentUser.displayName ?? 'Admin', companyName: '', field: '',
-          // Add other required fields
-        );
-        emit(state.copyWith(adminModal: admin, isLogin: true));
-      }
-    } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
-    }
-  }
-
-  Future<void> _onAdminLogin(AdminLogin event, Emitter<AdminState> emit) async {
-    try {
-      emit(state.copyWith(isLoading: true, errorMessage: null));
-
-      final result = await _authHelper.signInWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
+  Future<void> adminFetch(AdminFetch event, Emitter<AdminState> emit) async {
+    var currentUser = AuthServices.authServices.getCurrentUser();
+    AdminModal? adminModal;
+    if (currentUser != null) {
+      adminModal = AdminModal(
+        id: currentUser.uid,
+        name: currentUser.displayName ?? '',
+        email: currentUser.email ?? '',
+        companyName: '',
+        field: '',
+        phone: '',
       );
-
-      if (result == 'Success') {
-        final currentUser = _authHelper.getCurrentUser();
-        if (currentUser != null) {
-          final admin = AdminModal(
-            id: currentUser.uid,
-            email: currentUser.email ?? '',
-            name: currentUser.displayName ?? 'Admin', companyName: '', field: '',
-            // Add other required fields
-          );
-
-          emit(state.copyWith(
-            isLogin: true,
-            adminModal: admin,
-            selectedRole: "Admin",
-            isLoading: false,
-          ));
-        }
-      } else {
-        emit(state.copyWith(
-          errorMessage: result,
-          isLoading: false,
-        ));
-      }
-    } catch (e) {
-      emit(state.copyWith(
-        errorMessage: e.toString(),
-        isLoading: false,
-      ));
+      emit(state.copyWith(adminModal: adminModal));
     }
   }
 
-  Future<void> _onAdminLogout(AdminLogout event, Emitter<AdminState> emit) async {
-    try {
-      await _authHelper.signOut();
-      emit(const AdminState()); // Reset to initial state
-    } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
-    }
+  Future<void> adminLogin(AdminLogin event, Emitter<AdminState> emit) async {
+    log('Admin login with email: ${event.email}');
+    await AuthServices.authServices.signInWithEmailAndPassword(
+      email: event.email,
+      password: event.password,
+    );
+    add(AdminFetch());
   }
 
-  void _onAdminLoginCheck(AdminLoginCheck event, Emitter<AdminState> emit) {
+  Future<void> adminRegister(
+    AdminRegister event,
+    Emitter<AdminState> emit,
+  ) async {
+    log('Admin registration with email: ${event.email}');
+    AuthServices.authServices.createAccountWithEmailAndPassword(
+      email: event.email,
+      password: event.password,
+    );
+    final adminModal = AdminModal(
+      name: event.name,
+      email: event.email,
+      companyName: event.companyName,
+      field: event.field,
+      phone: event.phone,
+      id: '',
+    );
+    FirebaseDbHelper.firebase.createAdmin(adminModal);
+    add(AdminFetch());
+  }
+
+  Future<void> adminForgotPassword(
+    AdminForgotPassword event,
+    Emitter<AdminState> emit,
+  ) async {
+    AuthServices.authServices.forgotPassword(event.email);
+    log('Forgot password email sent to ${event.email}');
+    add(AdminFetch());
+  }
+
+  Future<void> adminLogout(AdminLogout event, Emitter<AdminState> emit) async {
+    await AuthServices.authServices.signOut();
+    emit(const AdminState());
+  }
+
+  Future<void> adminLoginCheck(
+    AdminLoginCheck event,
+    Emitter<AdminState> emit,
+  ) async {
     emit(state.copyWith(isLogin: event.isLogin));
   }
 
-  void _onSelectRole(SelectRole event, Emitter<AdminState> emit) {
-    emit(state.copyWith(
-      selectedRole: event.selectedRole,
-      adminModal: event.adminModal,
-      employeeModal: event.employeeModal,
-    ));
+  Future<void> selectRole(SelectRole event, Emitter<AdminState> emit) async {
+    emit(
+      state.copyWith(
+        selectedRole: event.selectedRole,
+        adminModal: event.adminModal,
+        employeeModal: event.employeeModal,
+      ),
+    );
   }
 }

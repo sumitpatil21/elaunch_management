@@ -1,4 +1,3 @@
-
 import 'package:equatable/equatable.dart';
 
 import '../Service/admin_modal.dart';
@@ -9,20 +8,15 @@ class AdminState extends Equatable {
   final AdminModal? adminModal;
   final EmployeeModal? employeeModal;
   final bool isLogin;
-  final bool isLoading;
+
   final String? selectedRole;
-  final String? errorMessage;
-  final String? successMessage;
 
   const AdminState({
     this.adminList,
     this.adminModal,
     this.employeeModal,
     this.isLogin = false,
-    this.isLoading = false,
     this.selectedRole,
-    this.errorMessage,
-    this.successMessage,
   });
 
   AdminState copyWith({
@@ -40,10 +34,8 @@ class AdminState extends Equatable {
       adminModal: adminModal ?? this.adminModal,
       employeeModal: employeeModal ?? this.employeeModal,
       isLogin: isLogin ?? this.isLogin,
-      isLoading: isLoading ?? this.isLoading,
+
       selectedRole: selectedRole ?? this.selectedRole,
-      errorMessage: errorMessage,
-      successMessage: successMessage,
     );
   }
 
@@ -53,16 +45,6 @@ class AdminState extends Equatable {
     adminModal,
     employeeModal,
     isLogin,
-    isLoading,
     selectedRole,
-    errorMessage,
-    successMessage,
   ];
 }
-
-
-
-
-
-
-

@@ -17,34 +17,16 @@ import 'Service/db_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
-    // Only use emulator in debug mode
-    if (kDebugMode) {
-      await FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
-    }
-
-    // Initialize database
-    // await DbHelper.dbHelper.createDatabase();
-
-    runApp(const MyApp());
-  } catch (e) {
-    print('Firebase initialization error: $e');
-    // Handle error appropriately
-  }
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const MyApp());
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-
-
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(useMaterial3: true),
       themeMode: ThemeMode.dark,
@@ -55,13 +37,13 @@ class MyApp extends StatelessWidget {
   }
 
   Map<String, WidgetBuilder> get routes => {
-    SplashScreen.routeName:SplashScreen.builder,
-    AdminView.routeName:AdminView.builder,
-    DashboardView.routeName:DashboardView.builder,
-    DepartmentScreen.routeName:DepartmentScreen.builder,
-    EmployeeScreen.routeName:EmployeeScreen.builder,
-    SystemView.routeName:SystemView.builder,
-    DeviceView.routeName:DeviceView.builder,
-    LeaveView.routeName:LeaveView.builder,
+    SplashScreen.routeName: SplashScreen.builder,
+    AdminView.routeName: AdminView.builder,
+    DashboardView.routeName: DashboardView.builder,
+    DepartmentScreen.routeName: DepartmentScreen.builder,
+    EmployeeScreen.routeName: EmployeeScreen.builder,
+    SystemView.routeName: SystemView.builder,
+    DeviceView.routeName: DeviceView.builder,
+    LeaveView.routeName: LeaveView.builder,
   };
 }

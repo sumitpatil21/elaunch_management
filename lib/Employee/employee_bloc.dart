@@ -273,4 +273,3 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 //     emit(state.copyWith(errorMessage: null, successMessage: null));
 //   }
 // }
-
