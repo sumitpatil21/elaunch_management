@@ -45,5 +45,6 @@ class MyApp extends StatelessWidget {
     SystemView.routeName: SystemView.builder,
     DeviceView.routeName: DeviceView.builder,
     LeaveView.routeName: LeaveView.builder,
+
   };
 }

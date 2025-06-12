@@ -1,18 +1,17 @@
 import 'package:elaunch_management/Employee/employee_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:textfield_search/textfield_search.dart';
 
 import '../Service/employee_modal.dart';
 import '../Service/leave_modal.dart';
-import '../SuperAdminLogin/admin_bloc.dart';
+
 import '../superAdminLogin/admin_event.dart';
 import 'leave_bloc.dart';
 import 'leave_event.dart';
 import 'leave_state.dart';
 
 class LeaveView extends StatelessWidget {
-  static String routeName = "/Leave";
+  static String routeName = "/leave";
 
   const LeaveView({super.key});
 
@@ -21,7 +20,7 @@ class LeaveView extends StatelessWidget {
       providers: [
         BlocProvider(create: (context) => LeaveBloc()..add(FetchLeaves())),
         BlocProvider(
-          create: (context) => EmployeeBloc()..add(FetchEmployees()),
+          create: (context) => EmployeeBloc()..add(LoadEmployees()),
         ),
       ],
       child: const LeaveView(),
@@ -36,7 +35,7 @@ class LeaveView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green.withOpacity(0.2),
-        title: const Text('Leave Management'),
+        title: const Text('leave Management'),
         elevation: 0,
       ),
       floatingActionButton: FloatingActionButton(
@@ -45,7 +44,7 @@ class LeaveView extends StatelessWidget {
         onPressed:
             () => showAddLeaveDialog(
               context,
-              user?.employeeModal,
+              user?.employeeModal as EmployeeModal?,
               context.read<LeaveBloc>(),
               context.read<EmployeeBloc>(),
             ),
@@ -295,7 +294,7 @@ class LeaveView extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Leave ${status == 'approved' ? 'approved' : 'rejected'} successfully',
+          'leave ${status == 'approved' ? 'approved' : 'rejected'} successfully',
         ),
         backgroundColor: status == 'approved' ? Colors.green : Colors.red,
       ),
@@ -310,7 +309,7 @@ class LeaveView extends StatelessWidget {
   ) {
     final formKey = GlobalKey<FormState>();
     final reasonController = TextEditingController();
-    String selectedLeaveType = 'Annual Leave';
+    String selectedLeaveType = 'Annual leave';
     DateTime? startDate;
     DateTime? endDate;
     String? selectedNotifyEmployee;
@@ -325,7 +324,7 @@ class LeaveView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               title: const Text(
-                'Apply for Leave',
+                'Apply for leave',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
               ),
               content: SingleChildScrollView(
@@ -345,7 +344,7 @@ class LeaveView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Employee: ${employee?.name ?? 'Current User'}',
+                              'employee: ${employee?.name ?? 'Current User'}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -368,27 +367,27 @@ class LeaveView extends StatelessWidget {
                       DropdownButtonFormField<String>(
                         value: selectedLeaveType,
                         decoration: InputDecoration(
-                          labelText: 'Leave Type',
+                          labelText: 'leave Type',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         items: const [
                           DropdownMenuItem(
-                            value: 'Annual Leave',
-                            child: Text('Annual Leave'),
+                            value: 'Annual leave',
+                            child: Text('Annual leave'),
                           ),
                           DropdownMenuItem(
-                            value: 'Sick Leave',
-                            child: Text('Sick Leave'),
+                            value: 'Sick leave',
+                            child: Text('Sick leave'),
                           ),
                           DropdownMenuItem(
-                            value: 'Excuse Leave',
-                            child: Text('Excuse Leave'),
+                            value: 'Excuse leave',
+                            child: Text('Excuse leave'),
                           ),
                           DropdownMenuItem(
-                            value: 'Emergency Leave',
-                            child: Text('Emergency Leave'),
+                            value: 'Emergency leave',
+                            child: Text('Emergency leave'),
                           ),
                         ],
                         onChanged: (value) {
@@ -555,7 +554,7 @@ class LeaveView extends StatelessWidget {
                         onTap: () async {
                           final result = await showEmployeeSelectionDialog(
                             context,
-                            employeeBloc.state.employees,
+                            employeeBloc.state.employees.cast<EmployeeModal>(),
                           );
                           if (result != null) {
                             setState(() {
@@ -581,7 +580,7 @@ class LeaveView extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Notify Employee',
+                                      'Notify employee',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey.shade600,
@@ -591,7 +590,7 @@ class LeaveView extends StatelessWidget {
                                     const SizedBox(height: 4),
                                     Text(
                                       selectedNotifyEmployee ??
-                                          'Select Employee',
+                                          'Select employee',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
@@ -619,7 +618,7 @@ class LeaveView extends StatelessWidget {
                         controller: reasonController,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: 'Reason for Leave',
+                          labelText: 'Reason for leave',
                           hintText: 'Enter your reason here...',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -628,7 +627,7 @@ class LeaveView extends StatelessWidget {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter reason for Leave';
+                            return 'Please enter reason for leave';
                           }
                           return null;
                         },
@@ -672,7 +671,7 @@ class LeaveView extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Leave application submitted successfully!',
+                            'leave application submitted successfully!',
                           ),
                           backgroundColor: Colors.green,
                         ),
@@ -735,7 +734,7 @@ class LeaveView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               title: const Text(
-                'Select Employee to Notify',
+                'Select employee to Notify',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               content: SizedBox(

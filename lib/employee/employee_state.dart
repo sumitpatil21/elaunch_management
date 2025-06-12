@@ -1,4 +1,9 @@
+
+
+
+// employee_state.dart
 part of 'employee_bloc.dart';
+
 
 class EmployeeState extends Equatable {
   final List<EmployeeModal> employees;
@@ -7,6 +12,10 @@ class EmployeeState extends Equatable {
   final String? departmentFilter;
   final String? managerFilter;
   final EmployeeModal? loggedInEmployee;
+  final bool isLogin;
+  final bool isLoading;
+  final bool isAuthenticated;
+
 
   const EmployeeState({
     this.employees = const [],
@@ -14,7 +23,11 @@ class EmployeeState extends Equatable {
     this.roleFilter,
     this.departmentFilter,
     this.managerFilter,
-    this.loggedInEmployee, // Add this
+    this.loggedInEmployee,
+    this.isLogin = false,
+    this.isLoading = false,
+    this.isAuthenticated = false,
+
   });
 
   EmployeeState copyWith({
@@ -24,6 +37,11 @@ class EmployeeState extends Equatable {
     String? departmentFilter,
     String? managerFilter,
     EmployeeModal? loggedInEmployee,
+    bool? isLogin,
+    bool? isLoading,
+    bool? isAuthenticated,
+    String? errorMessage,
+    String? successMessage,
   }) {
     return EmployeeState(
       employees: employees ?? this.employees,
@@ -31,7 +49,11 @@ class EmployeeState extends Equatable {
       roleFilter: roleFilter ?? this.roleFilter,
       departmentFilter: departmentFilter ?? this.departmentFilter,
       managerFilter: managerFilter ?? this.managerFilter,
+      isLogin: isLogin ?? this.isLogin,
       loggedInEmployee: loggedInEmployee ?? this.loggedInEmployee,
+      isLoading: isLoading ?? this.isLoading,
+      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+
     );
   }
 
@@ -43,5 +65,11 @@ class EmployeeState extends Equatable {
     departmentFilter,
     managerFilter,
     loggedInEmployee,
+    isLogin,
+    isLoading,
+    isAuthenticated,
+
   ];
 }
+
+

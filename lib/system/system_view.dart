@@ -1,16 +1,21 @@
 import 'dart:developer';
 
+import 'package:elaunch_management/Service/employee_modal.dart';
 import 'package:elaunch_management/System/system_event.dart';
 import 'package:elaunch_management/System/system_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:elaunch_management/Service/admin_modal.dart';
-import 'package:elaunch_management/Service/employee_modal.dart';
+
 import 'package:elaunch_management/Service/system_modal.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
-import '../Employee/employee_bloc.dart';
+
 import '../SuperAdminLogin/admin_event.dart';
+import '../employee/employee_bloc.dart';
+
+
+
 
 
 class SystemView extends StatefulWidget {
@@ -61,7 +66,7 @@ class _SystemViewState extends State<SystemView> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.yellow.withOpacity(0.2),
-        title: const Text("System"),
+        title: const Text("system"),
         actions: [
           if (loginEmployee?.adminModal != null)
             BlocBuilder<SystemBloc, SystemState>(
@@ -77,7 +82,7 @@ class _SystemViewState extends State<SystemView> {
                           context,
                           state.requests,
                           context.read<SystemBloc>(),
-                          loginEmployee?.employeeModal,
+                          loginEmployee?.employeeModal as EmployeeModal?,
                         );
                       },
                       child: const Text(
@@ -129,7 +134,7 @@ class _SystemViewState extends State<SystemView> {
                     adminId: loginEmployee?.adminModal?.id,
                   );
                 },
-                label: const Text("Add System"),
+                label: const Text("Add system"),
                 icon: const Icon(Icons.add),
               )
               : null,
@@ -238,7 +243,7 @@ class _SystemViewState extends State<SystemView> {
                             Text("OS: ${system.operatingSystem ?? 'Unknown'}"),
                             Text("Version: ${system.version ?? 'Unknown'}"),
                             Text(
-                              "Employee: ${system.employeeName ?? 'Unassigned'}",
+                              "employee: ${system.employeeName ?? 'Unassigned'}",
                             ),
                             Row(
                               children: [
@@ -357,7 +362,7 @@ class _SystemViewState extends State<SystemView> {
                                     system: system,
                                     employeeBloc:
                                         context.read<EmployeeBloc>()
-                                          ..add(const FetchEmployees()),
+                                          ..add( FetchEmployees()),
                                     systemBloc: context.read<SystemBloc>(),
                                     adminId: loginEmployee?.adminModal?.id,
                                   );
@@ -535,7 +540,7 @@ class _SystemViewState extends State<SystemView> {
       adminId: "",
     );
 
-    EmployeeModal? selectedEmployee = unassignedEmployee;
+    EmployeeModal selectedEmployee = unassignedEmployee;
     String selectedStatus = 'available';
     String selectedOS = 'Windows';
 
@@ -548,8 +553,7 @@ class _SystemViewState extends State<SystemView> {
       if (system.employeeId != null) {
         selectedEmployee = employeeBloc.state.employees.firstWhere(
           (emp) => emp.id == system.employeeId,
-          orElse: () => unassignedEmployee,
-        );
+        ) as EmployeeModal;
       }
     }
 
@@ -562,7 +566,7 @@ class _SystemViewState extends State<SystemView> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: Text(system != null ? 'Edit System' : 'Add System'),
+              title: Text(system != null ? 'Edit system' : 'Add system'),
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
@@ -574,10 +578,10 @@ class _SystemViewState extends State<SystemView> {
                         validator:
                             (value) =>
                                 value == null || value.isEmpty
-                                    ? 'Please enter a System name'
+                                    ? 'Please enter a system name'
                                     : null,
                         decoration: const InputDecoration(
-                          labelText: "System Name",
+                          labelText: "system Name",
 
                           border: OutlineInputBorder(),
                         ),
@@ -586,7 +590,7 @@ class _SystemViewState extends State<SystemView> {
                       DropdownButtonFormField<String>(
                         value: selectedOS,
                         decoration: const InputDecoration(
-                          labelText: "Operating System",
+                          labelText: "Operating system",
                           border: OutlineInputBorder(),
                         ),
                         items:
@@ -610,7 +614,7 @@ class _SystemViewState extends State<SystemView> {
                         validator:
                             (value) =>
                                 value == null || value.isEmpty
-                                    ? 'Please enter a System Version'
+                                    ? 'Please enter a system Version'
                                     : null,
                         decoration: const InputDecoration(
                           labelText: "Version",
@@ -640,22 +644,22 @@ class _SystemViewState extends State<SystemView> {
                         },
                       ),
                       const SizedBox(height: 12),
-                      const Text("Select Employee (Optional)"),
+                      const Text("Select employee (Optional)"),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<EmployeeModal>(
+                      DropdownButtonFormField<EmployeeModal?>(
                         value: selectedEmployee,
                         decoration: const InputDecoration(
-                          labelText: "Employee",
+                          labelText: "employee",
                           border: OutlineInputBorder(),
                         ),
                         items: [
-                          DropdownMenuItem<EmployeeModal>(
+                          DropdownMenuItem<EmployeeModal?>(
                             value: unassignedEmployee,
                             child: const Text("Unassigned"),
                           ),
                           ...employeeBloc.state.employees.map((emp) {
-                            return DropdownMenuItem<EmployeeModal>(
-                              value: emp,
+                            return DropdownMenuItem<EmployeeModal?>(
+                              // value: emp,
                               child: Text(emp.name),
                             );
                           }),
@@ -689,13 +693,13 @@ class _SystemViewState extends State<SystemView> {
                               status: selectedStatus,
                               operatingSystem: selectedOS,
                               employeeName:
-                                  selectedEmployee?.id == '-1'
+                                  selectedEmployee.id == '-1'
                                       ? null
-                                      : selectedEmployee?.name,
+                                      : selectedEmployee.name,
                               employeeId:
-                                  selectedEmployee?.id == '-1'
+                                  selectedEmployee.id == '-1'
                                       ? null
-                                      : selectedEmployee?.id,
+                                      : selectedEmployee.id,
                               adminId: adminId,
                             ),
                           ),
@@ -708,13 +712,13 @@ class _SystemViewState extends State<SystemView> {
                             status: selectedStatus,
                             operatingSystem: selectedOS,
                             employeeName:
-                                selectedEmployee?.id == '-1'
+                                selectedEmployee.id == '-1'
                                     ? null
-                                    : selectedEmployee?.name,
+                                    : selectedEmployee.name,
                             employeeId:
-                                selectedEmployee?.id == '-1'
+                                selectedEmployee.id == '-1'
                                     ? null
-                                    : selectedEmployee?.id,
+                                    : selectedEmployee.id,
                             adminId: adminId,
                           ),
                         );

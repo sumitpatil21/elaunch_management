@@ -1,5 +1,5 @@
 // import 'dart:developer';
-// import 'package:elaunch_management/Service/system_modal.dart';
+// import 'package:elaunch_management/service/system_modal.dart';
 // import 'package:path/path.dart';
 // import 'package:sqflite/sqflite.dart';
 // import 'admin_modal.dart';
@@ -106,7 +106,7 @@
 //             FOREIGN KEY (id_admin) REFERENCES admin (id) ON DELETE SET NULL,
 //         )
 //         ''');
-//         log("System table created.");
+//         log("system table created.");
 //       },
 //     );
 //   }
@@ -144,7 +144,7 @@
 //     List args = [departmentName, dob, id];
 //
 //     await db.rawInsert(query, args);
-//     log("Department added successfully");
+//     log("department added successfully");
 //   }
 //
 //   Future<void> updateDepartment({
@@ -161,7 +161,7 @@
 //     List args = [departmentName, dob, id];
 //
 //     await db.rawUpdate(query, args);
-//     log("Department updated successfully");
+//     log("department updated successfully");
 //   }
 //
 //   // Updated method with additional parameters
@@ -185,7 +185,7 @@
 //
 //     await db.rawInsert(query, args);
 //
-//     log("Employee inserted successfully");
+//     log("employee inserted successfully");
 //   }
 //
 //   Future<void> insertIntoManager({
@@ -325,7 +325,7 @@
 //     final db = await database;
 //     String query = "DELETE FROM employee WHERE emp_id = ?";
 //     await db.rawDelete(query, [id]);
-//     log("Employee deleted successfully");
+//     log("employee deleted successfully");
 //   }
 //
 //   Future<void> deleteManager(int id) async {
@@ -341,7 +341,7 @@
 //     String query = "DELETE FROM department WHERE id = ?";
 //
 //     await db.rawDelete(query, [id]);
-//     log("Department deleted successfully");
+//     log("department deleted successfully");
 //   }
 //
 //   Future<List<EmployeeModal>> employeeFetch() async {
@@ -368,7 +368,7 @@
 //   }
 //
 //
-//   // Fixed System CRUD methods for db_helper.dart
+//   // Fixed system CRUD methods for db_helper.dart
 //
 //   Future<void> insertIntoSystem({
 //     required String systemName,
@@ -386,7 +386,7 @@
 //   """;
 //     List args = [systemName, version, adminId, managerId, employeeId];
 //     await db.rawInsert(query, args);
-//     log("System inserted successfully: $systemName");
+//     log("system inserted successfully: $systemName");
 //   }
 //
 // // Fixed method name and parameters to match usage in bloc
@@ -445,7 +445,7 @@
 //     List args = [systemName, version, adminId, managerId, employeeId, id];
 //     int count = await db.rawUpdate(query, args);
 //     if (count > 0) {
-//       log("System with ID $id updated successfully.");
+//       log("system with ID $id updated successfully.");
 //     } else {
 //       log("Failed to update system with ID $id or system not found.");
 //     }
@@ -456,7 +456,7 @@
 //     String query = "DELETE FROM system WHERE id = ?";
 //     int count = await db.rawDelete(query, [id]);
 //     if (count > 0) {
-//       log("System with ID $id deleted successfully");
+//       log("system with ID $id deleted successfully");
 //     } else {
 //       log("Failed to delete system with ID $id or system not found.");
 //     }

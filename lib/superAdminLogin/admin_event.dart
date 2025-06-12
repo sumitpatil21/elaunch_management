@@ -1,9 +1,11 @@
+
+
 import 'package:equatable/equatable.dart';
+
 import '../Service/admin_modal.dart';
+import '../service/employee_modal.dart';
 
-import '../Service/employee_modal.dart';
-
-abstract class AdminEvent extends Equatable {
+class AdminEvent extends Equatable {
   const AdminEvent();
 
   @override
@@ -15,12 +17,11 @@ class AdminFetch extends AdminEvent {}
 class AdminLogin extends AdminEvent {
   final String email;
   final String password;
-   final String login;
 
-  const AdminLogin({required this.email, required this.password, required this.login});
+  const AdminLogin({required this.email, required this.password});
 
   @override
-  List<Object> get props => [email, password, login];
+  List<Object> get props => [email, password];
 }
 
 class AdminRegister extends AdminEvent {
@@ -78,3 +79,31 @@ class SelectRole extends AdminEvent {
   @override
   List<Object?> get props => [selectedRole, adminModal, employeeModal];
 }
+
+class ToggleObscurePassword extends AdminEvent {
+  final String passwordType;
+
+  const ToggleObscurePassword({required this.passwordType});
+
+  @override
+  List<Object> get props => [passwordType];
+}
+
+class ChangeRole extends AdminEvent {
+  final String role;
+
+  const ChangeRole({required this.role});
+
+  @override
+  List<Object> get props => [role];
+}
+
+class ChangeTabIndex extends AdminEvent {
+  final int tabIndex;
+
+  const ChangeTabIndex({required this.tabIndex});
+
+  @override
+  List<Object> get props => [tabIndex];
+}
+

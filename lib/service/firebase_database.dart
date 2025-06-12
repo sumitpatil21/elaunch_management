@@ -2,9 +2,11 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:elaunch_management/Service/device_modal.dart';
 import 'package:elaunch_management/Service/system_modal.dart';
+
+import '../service/employee_modal.dart';
 import 'admin_modal.dart';
 import 'department_modal.dart';
-import 'employee_modal.dart';
+
 import 'leave_modal.dart';
 
 class FirebaseDbHelper {
@@ -109,14 +111,14 @@ class FirebaseDbHelper {
             .isNotEmpty;
 
     if (hasEmployees) {
-      throw Exception('Department has employees and cannot be deleted');
+      throw Exception('department has employees and cannot be deleted');
     }
     await departments.doc(id).delete();
   }
 
   Future<void> createEmployee(EmployeeModal employee) async {
     if (!(await departments.doc(employee.departmentId).get()).exists) {
-      throw Exception('Department does not exist');
+      throw Exception('department does not exist');
     }
 
     final docRef = employees.doc();
@@ -129,30 +131,7 @@ class FirebaseDbHelper {
     });
   }
 
-  Future<EmployeeModal?> getEmployeeByEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    final snapshot =
-        await firestore
-            .collection('employees')
-            .where('email', isEqualTo: email)
-            .where('password', isEqualTo: password)
-            .limit(1)
-            .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      final doc = snapshot.docs.first;
-      final data = doc.data();
-      return EmployeeModal.fromJson({
-        ...data,
-        'id': doc.id,
-        'departmentId': (data['departmentRef'] as DocumentReference).id,
-        'adminId': (data['adminRef'] as DocumentReference).id,
-      });
-    }
-    return null;
-  }
 
   Future<List<EmployeeModal>> getEmployees({
     String? role,
@@ -173,17 +152,12 @@ class FirebaseDbHelper {
     }
 
     final snapshot = await query.get();
-    log("Employee docs count: ${snapshot.docs.length}");
+    log("employee docs count: ${snapshot.docs.length}");
 
     return snapshot.docs.map((doc) {
       final data = doc.data()! as Map<String, dynamic>;
-      log("Employee data: $data");
-      return EmployeeModal.fromJson({
-        ...data,
-        'id': doc.id,
-        'departmentId': (data['departmentRef'] as DocumentReference).id,
-        'adminId': (data['adminRef'] as DocumentReference).id,
-      });
+      log("employee data: $data");
+      return EmployeeModal.fromJson(data);
     }).toList();
   }
 
@@ -228,11 +202,11 @@ class FirebaseDbHelper {
     }
 
     final snapshot = await query.get();
-    log("System docs count: ${snapshot.docs.length}");
+    log("system docs count: ${snapshot.docs.length}");
 
     return snapshot.docs.map((doc) {
       final data = doc.data()! as Map<String, dynamic>;
-      log("System data: $data");
+      log("system data: $data");
       return SystemModal.fromJson({
         ...data,
         'id': doc.id,
@@ -389,7 +363,7 @@ class FirebaseDbHelper {
     };
 
     await docRef.set(leaveData);
-    print('Leave created successfully with ID: ${docRef.id}');
+    print('leave created successfully with ID: ${docRef.id}');
     return docRef.id;
   }
 
@@ -418,7 +392,7 @@ class FirebaseDbHelper {
 
   Future<void> updateLeaves(LeaveModal leave) async {
     if (leave.id.isEmpty) {
-      throw Exception('Leave ID is required for update');
+      throw Exception('leave ID is required for update');
     }
 
     final updateData = {
@@ -427,17 +401,17 @@ class FirebaseDbHelper {
     };
 
     await leaves.doc(leave.id).update(updateData);
-    print('Leave updated successfully: ${leave.id}');
+    print('leave updated successfully: ${leave.id}');
   }
 
   Future<void> deleteLeave(String id) async {
     await leaves.doc(id).delete();
-    print('Leave deleted successfully: $id');
+    print('leave deleted successfully: $id');
   }
 
   Future<LeaveModal?> getLeaveById(String id) async {
     if (id.isEmpty) {
-      throw Exception('Leave ID is required');
+      throw Exception('leave ID is required');
     }
 
     final doc = await leaves.doc(id).get();

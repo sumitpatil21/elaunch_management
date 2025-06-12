@@ -1,15 +1,17 @@
-import 'dart:developer';
 
-import 'package:elaunch_management/Service/admin_modal.dart';
 import 'package:elaunch_management/Service/device_modal.dart';
-import 'package:elaunch_management/Service/employee_modal.dart';
+
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Employee/employee_bloc.dart';
 
+
+
 import '../SuperAdminLogin/admin_event.dart';
+import '../service/employee_modal.dart';
+
 import 'device_bloc.dart';
 import 'device_event.dart';
 
@@ -23,7 +25,7 @@ class DeviceView extends StatefulWidget {
       providers: [
         BlocProvider(create: (context) => DeviceBloc()..add(FetchDevice())),
         BlocProvider(
-          create: (context) => EmployeeBloc()..add(FetchEmployees()),
+          create: (context) => EmployeeBloc()..add(LoadEmployees()),
         ),
         BlocProvider(create: (context) => AdminBloc()..add(AdminFetch())),
       ],
@@ -60,7 +62,7 @@ class _DeviceViewState extends State<DeviceView> {
         onPressed:
             () => showDeviceDialog(
               context,
-              employeeBloc: context.read<EmployeeBloc>()..add(FetchEmployees()),
+              employeeBloc: context.read<EmployeeBloc>()..add(LoadEmployees()),
               deviceBloc: context.read<DeviceBloc>(),
             ),
         label: const Text("Add Device"),
@@ -287,7 +289,7 @@ class _DeviceViewState extends State<DeviceView> {
                                         device: device,
                                         employeeBloc:
                                             context.read<EmployeeBloc>()
-                                              ..add(FetchEmployees()),
+                                              ..add(LoadEmployees()),
                                         deviceBloc: context.read<DeviceBloc>(),
                                       );
                                     },
@@ -339,25 +341,22 @@ class _DeviceViewState extends State<DeviceView> {
     final nameController = TextEditingController();
     final versionController = TextEditingController();
     final unassignedEmployee = EmployeeModal(
-      id: '-1',
+      id: "",
       name: "Unassigned",
       email: '',
       password: '',
       address: '',
-      // dob: '',
-      // departmentName: "",
-      // managerName: "",
       role: "",
       departmentId: "1",
       adminId: "1",
     );
 
-    EmployeeModal? selectedEmployee = unassignedEmployee;
+    String selectedEmployee = unassignedEmployee.name;
     String selectedStatus = device?.status ?? 'available';
     String selectedOS = device?.status ?? 'Android';
 
-    AdminModal? args =
-        ModalRoute.of(context)!.settings.arguments as AdminModal?;
+    SelectRole? args =
+        ModalRoute.of(context)!.settings.arguments as SelectRole?;
 
     if (device != null) {
       nameController.text = device.deviceName;
@@ -365,12 +364,11 @@ class _DeviceViewState extends State<DeviceView> {
       selectedStatus = device.status ?? 'available';
       selectedOS = device.operatingSystem ?? 'Android';
 
-      if (device.assignedToEmployeeId != null) {
-        selectedEmployee = employeeBloc.state.employees.firstWhere(
-          (emp) => emp.id == device.assignedToEmployeeId,
-          orElse: () => unassignedEmployee,
-        );
-      }
+      // if (device.assignedToEmployeeId != null) {
+      //   selectedEmployee = employeeBloc.state.employees.firstWhere(
+      //     (emp) => emp.id == device.assignedToEmployeeId,
+      //   ) as String ;
+      // }
     }
 
     showDialog(
@@ -405,7 +403,7 @@ class _DeviceViewState extends State<DeviceView> {
                       DropdownButtonFormField<String>(
                         value: selectedOS,
                         decoration: const InputDecoration(
-                          labelText: "Operating System",
+                          labelText: "Operating system",
                           border: OutlineInputBorder(),
                         ),
                         items:
@@ -459,32 +457,32 @@ class _DeviceViewState extends State<DeviceView> {
                         },
                       ),
                       const SizedBox(height: 12),
-                      const Text("Select Employee (Optional)"),
+                      const Text("Select employee (Optional)"),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<EmployeeModal>(
-                        value: selectedEmployee,
-                        decoration: const InputDecoration(
-                          labelText: "Employee",
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          DropdownMenuItem<EmployeeModal>(
-                            value: unassignedEmployee,
-                            child: const Text("Unassigned"),
-                          ),
-                          ...employeeBloc.state.employees.map((emp) {
-                            return DropdownMenuItem<EmployeeModal>(
-                              value: emp,
-                              child: Text(emp.name),
-                            );
-                          }).toList(),
-                        ],
-                        onChanged: (emp) {
-                          setState(() {
-                            selectedEmployee = emp ?? unassignedEmployee;
-                          });
-                        },
-                      ),
+                      // DropdownButtonFormField<String>(
+                      //   value: selectedEmployee,
+                      //   decoration: const InputDecoration(
+                      //     labelText: "employee",
+                      //     border: OutlineInputBorder(),
+                      //   ),
+                      //   // items: [
+                      //   //   DropdownMenuItem<String>(
+                      //   //     value: unassignedEmployee.name,
+                      //   //     child: const Text("Unassigned"),
+                      //   //   ),
+                      //   //   ...employeeBloc.state.employees.map((emp) {
+                      //   //     return DropdownMenuItem<String>(
+                      //   //       value: emp['name'],
+                      //   //       child: Text(emp.name),
+                      //   //     );
+                      //   //   }),
+                      //   // ],
+                      //   onChanged: (emp) {
+                      //     setState(() {
+                      //       selectedEmployee =emp ?? unassignedEmployee.name;
+                      //     });
+                      //   },
+                      // ),
                     ],
                   ),
                 ),
@@ -504,11 +502,11 @@ class _DeviceViewState extends State<DeviceView> {
                         operatingSystem: selectedOS,
                         osVersion: versionController.text,
                         status: selectedStatus,
-                        assignedToEmployeeId: selectedEmployee?.id,
-                        assignedEmployeeName: selectedEmployee?.name,
+                        assignedToEmployeeId: selectedEmployee,
+                        assignedEmployeeName: selectedEmployee,
                         lastCheckInDate: device?.lastCheckInDate,
                         lastCheckOutDate: device?.lastCheckOutDate,
-                        adminId: args?.id,
+                        adminId: args?.adminModal?.id,
                       );
 
                       if (device != null) {

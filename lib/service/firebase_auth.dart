@@ -16,14 +16,10 @@ class AuthServices
 
   Future<String> signInWithEmailAndPassword({ String? email, String? password})
   async {
-    try
-    {
+
       await _firebaseAuth.signInWithEmailAndPassword(email: email??"", password: password??"");
       return 'Success';
-    }
-    catch(e){
-      return e.toString();
-    }
+
   }
 
   Future<void> signOut()

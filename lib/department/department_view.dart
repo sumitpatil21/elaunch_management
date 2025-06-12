@@ -1,9 +1,10 @@
+
 import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Service/admin_modal.dart';
 import '../Service/department_modal.dart';
-import '../SuperAdminLogin/admin_bloc.dart';
+
 import '../superAdminLogin/admin_event.dart';
 import 'department_bloc.dart';
 
@@ -27,14 +28,13 @@ class DepartmentScreen extends StatefulWidget {
 class _DepartmentScreenState extends State<DepartmentScreen> {
   @override
   void initState() {
-    context.read<DepartmentBloc>().add(FetchDepartments());
     super.initState();
+    context.read<DepartmentBloc>().add(FetchDepartments());
   }
 
   @override
   Widget build(BuildContext context) {
-    SelectRole? user =
-        ModalRoute.of(context)!.settings.arguments as SelectRole?;
+    SelectRole? user  ;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.withOpacity(0.2),
@@ -96,42 +96,43 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   },
                   child: Card(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+
+                        borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue.withOpacity(0.2),
+                      child: const Icon(Icons.business, size: 16),
                     ),
-                    elevation: 4,
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue.withOpacity(0.2),
-                        child: const Icon(Icons.business, size: 16),
-                      ),
-                      title: Text(
-                        state.departments[index].name,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (user?.employeeModal == null)
-                            IconButton(
-                              onPressed:
-                                  () => _showDepartmentDialog(dept: dept),
-                              icon: const Icon(Icons.edit),
-                            ),
+                    title: Text(
+                      dept.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text('department • ${dept.date ?? 'No date'}'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (user?.employeeModal == null)
                           IconButton(
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                EmployeeScreen.routeName,
-                                arguments: user,
-                              );
-                            },
-                            icon: const Icon(Icons.arrow_forward_ios_rounded),
+                            onPressed: () => _showDepartmentDialog(dept: dept),
+                            icon: const Icon(Icons.edit),
                           ),
-                        ],
-                      ),
-                      subtitle: const Text('Department'),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              EmployeeScreen.routeName,
+                              arguments: user,
+                            );
+                          },
+                          icon: const Icon(Icons.arrow_forward_ios_rounded),
+                        ),
+                      ],
                     ),
                   ),
+                ),
                 );
               },
             );
@@ -181,7 +182,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: Text(dept != null ? 'Edit Department' : 'Add Department'),
+          title: Text(dept != null ? 'Edit department' : 'Add department'),
           content: Form(
             key: formKey,
             child: Column(
@@ -201,20 +202,20 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                       return null;
                     },
                     decoration: const InputDecoration(
-                      labelText: "Department ID",
+
+                      labelText: "department ID",
                       border: OutlineInputBorder(),
                     ),
                   ),
                 if (dept == null) const SizedBox(height: 12),
                 TextFormField(
                   controller: nameController,
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Please enter a department name'
-                              : null,
+                  validator: (value) =>
+                  value == null || value.isEmpty
+                      ? 'Please enter a department name'
+                      : null,
                   decoration: const InputDecoration(
-                    labelText: "Department Name",
+                    labelText: "department Name",
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -222,7 +223,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                 TextFormField(
                   controller: dobController,
                   decoration: const InputDecoration(
-                    labelText: "Department Field or Date",
+                    labelText: "department Field or Date",
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -273,14 +274,15 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                     Navigator.pop(dialogContext);
 
+                    // Refresh the department list
                     context.read<DepartmentBloc>().add(FetchDepartments());
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           dept != null
-                              ? "Department updated successfully"
-                              : "Department added successfully",
+                              ? "department updated successfully"
+                              : "department added successfully",
                         ),
                       ),
                     );

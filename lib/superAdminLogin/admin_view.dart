@@ -1,13 +1,13 @@
 import 'dart:developer';
-import 'package:elaunch_management/Service/firebase_database.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:elaunch_management/Dashboard/dashboard_view.dart';
-import 'package:elaunch_management/Employee/employee_bloc.dart';
 
-import '../SuperAdminLogin/admin_bloc.dart';
+import '../Dashboard/dashboard_view.dart';
+import '../Employee/employee_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
 import '../SuperAdminLogin/admin_state.dart';
+import 'admin_bloc.dart';
 
 class AdminView extends StatefulWidget {
   static String routeName = "/admin";
@@ -32,12 +32,8 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
   late TabController tabController;
   final loginFormKey = GlobalKey<FormState>();
   final registerFormKey = GlobalKey<FormState>();
-
-  // Login Controllers
   final loginEmailController = TextEditingController();
   final loginPasswordController = TextEditingController();
-
-  // Register Controllers
   final registerNameController = TextEditingController();
   final registerEmailController = TextEditingController();
   final registerPasswordController = TextEditingController();
@@ -46,21 +42,14 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
   final registerFieldController = TextEditingController();
   final registerPhoneController = TextEditingController();
 
-  bool isLoading = false;
-  bool obscureLoginPassword = true;
-  bool obscureRegisterPassword = true;
-  bool obscureConfirmPassword = true;
-  String selectedRole = 'Admin';
-  int currentTabIndex = 0;
-
   @override
   void initState() {
     super.initState();
     tabController = TabController(length: 2, vsync: this);
     tabController.addListener(() {
-      setState(() {
-        currentTabIndex = tabController.index;
-      });
+      context.read<AdminBloc>().add(
+        ChangeTabIndex(tabIndex: tabController.index),
+      );
     });
   }
 
@@ -94,72 +83,42 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
   }
 
   void loginLogic() {
+    final adminBloc = context.read<AdminBloc>();
+    final employeeBloc = context.read<EmployeeBloc>();
+
     if (loginFormKey.currentState!.validate()) {
-      setState(() => isLoading = true);
       final email = loginEmailController.text.trim();
       final password = loginPasswordController.text;
-
-      if (selectedRole == 'Admin') {
+      log('Admin login with email: ${adminBloc.state.selectedRole}');
+      if (adminBloc.state.selectedRole == 'Admin') {
         log('Admin login with email: $email');
-        context.read<AdminBloc>().add(
-          AdminLogin(email: email, password: password),
-        );
-      } else {
-        context.read<EmployeeBloc>().add(
-          EmployeeLogin(email: email, password: password),
-        );
-      }
-    }
-  }
-
-  void registerLogic() {
-    if (registerFormKey.currentState!.validate()) {
-      setState(() => isLoading = true);
-
-      final name = registerNameController.text.trim();
-      final email = registerEmailController.text.trim();
-      final password = registerPasswordController.text;
-      final companyName = registerCompanyNameController.text.trim();
-      final field = registerFieldController.text.trim();
-      final phone = registerPhoneController.text.trim();
-
-      if (selectedRole == 'Admin') {
-        context.read<AdminBloc>().add(
-          AdminRegister(
-            name: name,
-            email: email,
-            password: password,
-            companyName: companyName,
-            field: field,
-            phone: phone,
-          ),
-        );
-
-      } else {
-        // context.read<EmployeeBloc>().add(
-        // EmployeeRegister(
-        // name: name,
-        // email: email,
-        // password: password,
-        // companyName: companyName,
-        // field: field,
-        // phone: phone,
-        // ),
-        // );
+        adminBloc.add(AdminLogin(email: email, password: password));
+      } else if (adminBloc.state.selectedRole == 'Employee') {
+        log('Employee login with email.....: $email');
+        employeeBloc.add(EmployeeLogin(email: email, password: password));
       }
     }
   }
 
   void forgotPasswordLogic() {
     if (loginEmailController.text.trim().isEmpty) {
-      showSnackBar('Please enter your email first');
+      showSnackBar('Please enter your email address first');
       return;
     }
 
-    setState(() => isLoading = true);
     context.read<AdminBloc>().add(
       AdminForgotPassword(email: loginEmailController.text.trim()),
     );
+  }
+
+  void clearRegisterForm() {
+    registerNameController.clear();
+    registerEmailController.clear();
+    registerPasswordController.clear();
+    registerConfirmPasswordController.clear();
+    registerCompanyNameController.clear();
+    registerFieldController.clear();
+    registerPhoneController.clear();
   }
 
   bool get isMobile => MediaQuery.of(context).size.width < 600;
@@ -171,57 +130,52 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
       listeners: [
         BlocListener<AdminBloc, AdminState>(
           listener: (context, state) {
-            setState(() => isLoading = false);
-
             if (state.isLogin && state.adminModal != null) {
               log('Admin login successful: ${state.adminModal!.name}');
-              Navigator.pushReplacementNamed(
-                context,
-                DashboardView.routeName,
-                arguments: SelectRole(
-                  adminModal: state.adminModal,
-                  selectedRole: "Admin",
-                ),
-              );
+              Navigator.pushReplacementNamed(context, DashboardView.routeName);
+            }
+
+            if (tabController.index != state.currentTabIndex) {
+              tabController.animateTo(state.currentTabIndex);
             }
           },
         ),
-        // BlocListener<EmployeeBloc, EmployeeState>(
-        //   listener: (context, state) {
-        //     setState(() => isLoading = false);
-        //
-        //     if (state.errorMessage != null) {
-        //       showSnackBar(state.errorMessage!);
-        //     } else if (state.loggedInEmployee != null) {
-        //       log('Employee login successful: ${state.loggedInEmployee!.name}');
-        //       Navigator.pushReplacementNamed(
-        //         context,
-        //         DashboardView.routeName,
-        //         arguments: SelectRole(
-        //           employeeModal: state.loggedInEmployee,
-        //           selectedRole: "Employee",
-        //         ),
-        //       );
-        //     } else if (state.isRegistrationSuccess) {
-        //       showSnackBar('Registration successful! Please login.', isError: false);
-        //       _tabController.animateTo(0); // Switch to login tab
-        //       _clearRegisterForm();
-        //     }
-        //   },
-        // ),
-      ],
-      child: Scaffold(
-        body: SafeArea(
-          child: isDesktop ? _buildDesktopLayout() : _buildMobileLayout(),
+        BlocListener<EmployeeBloc, EmployeeState>(
+          listener: (context, state) {
+            if ( state.loggedInEmployee != null) {
+              log(
+                'Employee login successful...........: ${state.loggedInEmployee!.name}',
+              );
+              Navigator.pushReplacementNamed(context, DashboardView.routeName);
+              log('Employee.......');
+            }
+          },
         ),
+      ],
+      child: BlocBuilder<AdminBloc, AdminState>(
+        builder: (context, adminState) {
+          return BlocBuilder<EmployeeBloc, EmployeeState>(
+            builder: (context, employeeState) {
+              final isLoading = adminState.isLoading || employeeState.isLoading;
+
+              return Scaffold(
+                body: SafeArea(
+                  child:
+                      isDesktop
+                          ? desktopLayout(adminState, isLoading)
+                          : _buildMobileLayout(adminState, isLoading),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _buildDesktopLayout() {
+  Widget desktopLayout(AdminState state, bool isLoading) {
     return Row(
       children: [
-        // Left side - Branding
         Expanded(
           child: Container(
             decoration: BoxDecoration(
@@ -234,7 +188,6 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
                 end: Alignment.bottomRight,
               ),
             ),
-
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(40.0),
@@ -282,7 +235,7 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
-                    child: _buildAuthContent(),
+                    child: _buildAuthContent(state, isLoading),
                   ),
                 ),
               ),
@@ -293,13 +246,13 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(AdminState state, bool isLoading) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           const SizedBox(height: 20),
-          _buildMobileHeader(),
+          _buildMobileHeader(state),
           const SizedBox(height: 30),
           Card(
             elevation: 4,
@@ -308,7 +261,7 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
             ),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
-              child: _buildAuthContent(),
+              child: _buildAuthContent(state, isLoading),
             ),
           ),
         ],
@@ -320,7 +273,7 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
     final features = [
       '🚀 Launch Management',
       '👥 Team Collaboration',
-      '📊 Analytics Dashboard',
+      '📊 Analytics dashboard',
       '🔒 Secure Authentication',
     ];
 
@@ -341,11 +294,12 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMobileHeader() {
+  Widget _buildMobileHeader(AdminState state) {
     return Column(
       children: [
         Container(
           width: 100,
+
           height: 100,
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -366,25 +320,23 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 8),
         Text(
-          currentTabIndex == 0 ? 'Welcome Back!' : 'Create Account',
+          state.currentTabIndex == 0 ? 'Welcome Back!' : 'Create Account',
           style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
       ],
     );
   }
 
-  Widget _buildAuthContent() {
+  Widget _buildAuthContent(AdminState state, bool isLoading) {
     return Column(
       children: [
-        // Role Selection
         Container(
           decoration: BoxDecoration(
-
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey[300]!),
           ),
           child: DropdownButtonFormField<String>(
-            value: selectedRole,
+            value: state.selectedRole,
             decoration: const InputDecoration(
               labelText: 'Login As',
               border: InputBorder.none,
@@ -400,57 +352,22 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
                 }).toList(),
             onChanged: (value) {
               if (value != null) {
-                setState(() => selectedRole = value);
+                context.read<AdminBloc>().add(ChangeRole(role: value));
               }
             },
           ),
         ),
         const SizedBox(height: 24),
 
-        // Tab Bar
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF283653),
-                const Color(0xFF283653).withOpacity(0.7),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: TabBar(
-            controller: tabController,
-            indicator: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              // color: Theme.of(context).primaryColor,
-            ),
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.grey[600],
-            dividerColor: Colors.transparent,
-            tabs: const [
-              SizedBox(width: 100, child: Tab(text: 'Login')),
-              SizedBox(width: 100, child: Tab(text: 'Register')),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Tab Content
         SizedBox(
-          height: currentTabIndex == 0 ? 320 : 600,
-          child: TabBarView(
-            controller: tabController,
-            children: [_buildLoginForm(), _buildRegisterForm()],
-          ),
+          height: state.currentTabIndex == 0 ? 320 : 600,
+          child: _buildLoginForm(state, isLoading),
         ),
       ],
     );
   }
 
-
-  Widget _buildLoginForm() {
+  Widget _buildLoginForm(AdminState state, bool isLoading) {
     return Form(
       key: loginFormKey,
       child: Column(
@@ -467,11 +384,10 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
               prefixIcon: const Icon(Icons.email_outlined),
             ),
             validator: (value) {
-              // FIX: Changed from "value.isEmpty" to "|| value.isEmpty"
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                 return 'Please enter a valid email';
               }
               return null;
@@ -481,7 +397,7 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
 
           TextFormField(
             controller: loginPasswordController,
-            obscureText: obscureLoginPassword,
+            obscureText: state.obscureLoginPassword,
             decoration: InputDecoration(
               labelText: 'Password',
               border: OutlineInputBorder(
@@ -490,186 +406,20 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
                 icon: Icon(
-                  obscureLoginPassword ? Icons.visibility : Icons.visibility_off,
+                  state.obscureLoginPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                 ),
                 onPressed: () {
-                  setState(() => obscureLoginPassword = !obscureLoginPassword);
+                  context.read<AdminBloc>().add(
+                    ToggleObscurePassword(passwordType: 'login'),
+                  );
                 },
               ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your password';
-              }
-              if (value.length < 4) {
-                return 'Password must be at least 4 characters';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 8),
-
-          // Forgot Password
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: isLoading ? null : forgotPasswordLogic,
-              child: const Text('Forgot Password?'),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Login Button
-          ElevatedButton(
-            onPressed: isLoading ? null : loginLogic,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: isLoading
-                ? const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-                : const Text('Sign In', style: TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
-    );
-  }
-
-// 2. CRITICAL FIX: Register form validator syntax errors
-  Widget _buildRegisterForm() {
-    return Form(
-      key: registerFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextFormField(
-            controller: registerNameController,
-            decoration: InputDecoration(
-              labelText: 'Full Name',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.person_outline),
-            ),
-            validator: (value) {
-              // FIX: Changed from "value.trim().isEmpty" to "|| value.trim().isEmpty"
-
-
-              if (value == null || value.trim().isEmpty) {
-              return 'Please enter your full name';
-              }
-              if (value.trim().length < 2) {
-              return 'Name must be at least 2 characters';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          TextFormField(
-            controller: registerEmailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.email_outlined),
-            ),
-            validator: (value) {
-              // FIX: Changed from "value.isEmpty" to "|| value.isEmpty"
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          TextFormField(
-            controller: registerPhoneController,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: 'Phone Number',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.phone_outlined),
-            ),
-            validator: (value) {
-              // FIX: Changed from "value.trim().isEmpty" to "|| value.trim().isEmpty"
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter your phone number';
-              }
-              if (value.trim().length < 10) {
-                return 'Please enter a valid phone number';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          TextFormField(
-            controller: registerCompanyNameController,
-            decoration: InputDecoration(
-              labelText: 'Company Name',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.business_outlined),
-            ),
-            validator: (value) {
-              // FIX: Changed from "value.trim().isEmpty" to "|| value.trim().isEmpty"
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter your company name';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          TextFormField(
-            controller: registerFieldController,
-            decoration: InputDecoration(
-              labelText: 'Field/Industry',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.work_outline),
-            ),
-            validator: (value) {
-              // FIX: Changed from "value.trim().isEmpty" to "|| value.trim().isEmpty"
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter your field/industry';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          TextFormField(
-            controller: registerPasswordController,
-            obscureText: obscureRegisterPassword,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  obscureRegisterPassword ? Icons.visibility : Icons.visibility_off,
-                ),
-                onPressed: () {
-                  setState(() => obscureRegisterPassword = !obscureRegisterPassword);
-
-                },
-              ),
-            ),
-            validator: (value) {
-              // FIX: Changed from "value.isEmpty" to "|| value.isEmpty"
-              if (value == null || value.isEmpty) {
-                return 'Please enter a password';
               }
               if (value.length < 6) {
                 return 'Password must be at least 6 characters';
@@ -679,61 +429,47 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 16),
 
-          TextFormField(
-            controller: registerConfirmPasswordController,
-            obscureText: obscureConfirmPassword,
-            decoration: InputDecoration(
-              labelText: 'Confirm Password',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                ),
-                onPressed: () {
-                  setState(() => obscureConfirmPassword = !obscureConfirmPassword);
-                },
+          if (state.selectedRole == 'Admin')
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: forgotPasswordLogic,
+                child: const Text('Forgot Password?'),
               ),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please confirm your password';
-              }
-              if (value != registerPasswordController.text) {
-                return 'Passwords do not match';
-              }
-              return null;
-            },
-          ),
           const SizedBox(height: 24),
 
-          // Register Button
+          // Login Button
           ElevatedButton(
-            onPressed: isLoading ? null : registerLogic,
+            onPressed: isLoading ? null : loginLogic,
             style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF283653),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: isLoading
-                ? const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            )
-                : const Text('Create Account', style: TextStyle(fontSize: 16)),
+            child:
+                isLoading
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                    : Text(
+                      'Login as ${state.selectedRole}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
           ),
         ],
       ),
     );
-  }
-
-  void _clearRegisterForm() {
-    registerNameController.clear();
-    registerEmailController.clear();
-    registerPasswordController.clear();
-    registerConfirmPasswordController.clear();
-    registerCompanyNameController.clear();
-    registerFieldController.clear();
-    registerPhoneController.clear();
   }
 }

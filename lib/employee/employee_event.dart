@@ -7,6 +7,8 @@ abstract class EmployeeEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class LoadEmployees extends EmployeeEvent {}
+
 class FetchEmployees extends EmployeeEvent {
   final String? role;
   final String? departmentId;
@@ -18,107 +20,62 @@ class FetchEmployees extends EmployeeEvent {
 }
 
 class AddEmployee extends EmployeeEvent {
-  final String? id;
-  final String? adminId;
-  final String? departmentId;
+  final String id;
   final String name;
   final String email;
   final String password;
   final String address;
-  final String dob;
   final String role;
-  final String managerName;
-  final String department;
+  final String? adminId;
+  final String? departmentId;
 
   const AddEmployee({
-    this.id,
-    this.adminId,
-    this.departmentId,
+    required this.id,
     required this.name,
     required this.email,
     required this.password,
     required this.address,
-    required this.dob,
     required this.role,
-    required this.managerName,
-    required this.department,
+    this.adminId,
+    this.departmentId,
   });
 
   @override
-  List<Object?> get props => [
-    id,
-    adminId,
-    departmentId,
-    name,
-    email,
-    password,
-    address,
-    dob,
-    role,
-    managerName,
-    department,
-  ];
+  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId];
 }
 
 class UpdateEmployee extends EmployeeEvent {
   final String id;
-  final String? adminId;
-  final String? departmentId;
   final String name;
   final String email;
   final String password;
   final String address;
-  final String dob;
   final String role;
-
-  final String managerName;
-  final String department;
+  final String? adminId;
+  final String? departmentId;
 
   const UpdateEmployee({
     required this.id,
-    this.adminId,
-    this.departmentId,
     required this.name,
     required this.email,
     required this.password,
     required this.address,
-    required this.dob,
     required this.role,
-    required this.managerName,
-    required this.department,
+    this.adminId,
+    this.departmentId,
   });
 
   @override
-  List<Object?> get props => [
-    id,
-    adminId,
-    departmentId,
-    name,
-    email,
-    password,
-    address,
-    dob,
-    role,
-    managerName,
-    department,
-  ];
+  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId];
 }
 
 class DeleteEmployee extends EmployeeEvent {
   final String id;
-  final int? adminId;
-  final String? managerName;
-  final String? departmentName;
 
-  const DeleteEmployee({
-    required this.id,
-    this.adminId,
-    this.managerName,
-    this.departmentName,
-  });
+  const DeleteEmployee({required this.id});
 
   @override
-  List<Object?> get props => [id, adminId, managerName, departmentName];
+  List<Object?> get props => [id];
 }
 
 class FilterEmployeesByRole extends EmployeeEvent {
@@ -142,6 +99,7 @@ class FilterEmployeesByDepartment extends EmployeeEvent {
 class FilterEmployeesByManager extends EmployeeEvent {
   final String? manager;
 
+
   const FilterEmployeesByManager({this.manager});
 
   @override
@@ -153,11 +111,27 @@ class ResetEmployeeFilters extends EmployeeEvent {
 }
 
 class EmployeeLogin extends EmployeeEvent {
-  final String email;
-  final String password;
+  final String? email;
+  final String? password;
 
-  const EmployeeLogin({required this.email, required this.password});
+
+  const EmployeeLogin({
+     this.email,
+     this.password,
+  });
 
   @override
   List<Object?> get props => [email, password];
+}
+
+class EmployeeLogout extends EmployeeEvent {
+  const EmployeeLogout();
+}
+class EmployeeLoginCheck extends EmployeeEvent {
+  final bool isLogin;
+
+  const EmployeeLoginCheck({required this.isLogin});
+
+  @override
+  List<Object> get props => [isLogin];
 }
