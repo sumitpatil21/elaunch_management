@@ -1,5 +1,5 @@
+// device_event.dart - Updated Events
 import 'package:equatable/equatable.dart';
-
 import '../Service/device_modal.dart';
 
 class DeviceEvent extends Equatable {
@@ -11,7 +11,6 @@ class DeviceEvent extends Equatable {
 
 class FetchDevice extends DeviceEvent {
   final String? employeeId;
-
   const FetchDevice({this.employeeId});
 
   @override
@@ -20,7 +19,6 @@ class FetchDevice extends DeviceEvent {
 
 class AddDevice extends DeviceEvent {
   final TestingDeviceModal device;
-
   const AddDevice(this.device);
 
   @override
@@ -29,7 +27,6 @@ class AddDevice extends DeviceEvent {
 
 class UpdateDevice extends DeviceEvent {
   final TestingDeviceModal device;
-
   const UpdateDevice(this.device);
 
   @override
@@ -38,10 +35,50 @@ class UpdateDevice extends DeviceEvent {
 
 class DeleteDevice extends DeviceEvent {
   final String id;
-  final String? adminId;
-
-  const DeleteDevice({required this.id, this.adminId});
+  const DeleteDevice(this.id);
 
   @override
-  List<Object?> get props => [id, adminId];
+  List<Object?> get props => [id];
+}
+
+// New events for UI state management
+class UpdateSearchQuery extends DeviceEvent {
+  final String query;
+  const UpdateSearchQuery(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+class UpdateStatusFilter extends DeviceEvent {
+  final String status;
+  const UpdateStatusFilter(this.status);
+
+  @override
+  List<Object?> get props => [status];
+}
+
+class ClearSearch extends DeviceEvent {
+  const ClearSearch();
+}
+
+class ShowDeviceDialog extends DeviceEvent {
+  final TestingDeviceModal? device;
+  const ShowDeviceDialog({this.device});
+
+  @override
+  List<Object?> get props => [device];
+}
+
+class HideDeviceDialog extends DeviceEvent {
+  const HideDeviceDialog();
+}
+
+class UpdateDialogField extends DeviceEvent {
+  final String field;
+  final dynamic value;
+  const UpdateDialogField(this.field, this.value);
+
+  @override
+  List<Object?> get props => [field, value];
 }
