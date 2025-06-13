@@ -1,20 +1,19 @@
 class DepartmentModal {
   late String id;
-  late String name, date, id_admin;
+  late String name, field;
 
   DepartmentModal({
     required this.name,
-    required this.date,
+    required this.field,
     required this.id,
-    required this.id_admin,
+
   });
 
   factory DepartmentModal.fromJson(Map m1) {
     return DepartmentModal(
       name: m1['departmentName'] ?? "",
-      date: m1['date'] ?? "",
+      field: m1['field'] ?? "",
       id: m1['id'] ?? "0",
-      id_admin: m1['id_admin'] ?? "",
     );
   }
 
@@ -22,8 +21,8 @@ class DepartmentModal {
     return {
       'id': id,
       'departmentName': name,
-      'date': date,
-      'id_admin': id_admin,
+      'field': field,
+
     };
   }
 }

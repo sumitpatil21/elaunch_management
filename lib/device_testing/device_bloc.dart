@@ -9,19 +9,19 @@ part 'device_state.dart';
 
 class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   DeviceBloc() : super(const DeviceState()) {
-    on<FetchDevice>(_fetchDeviceData);
-    on<AddDevice>(_insertDeviceData);
-    on<UpdateDevice>(_updateDeviceData);
-    on<DeleteDevice>(_deleteDeviceData);
-    on<UpdateSearchQuery>(_updateSearchQuery);
-    on<UpdateStatusFilter>(_updateStatusFilter);
-    on<ClearSearch>(_clearSearch);
-    on<ShowDeviceDialog>(_showDeviceDialog);
-    on<HideDeviceDialog>(_hideDeviceDialog);
-    on<UpdateDialogField>(_updateDialogField);
+    on<FetchDevice>(fetchDeviceData);
+    on<AddDevice>(insertDeviceData);
+    on<UpdateDevice>(updateDeviceData);
+    on<DeleteDevice>(deleteDeviceData);
+    on<UpdateSearchQuery>(updateSearchQuery);
+    on<UpdateStatusFilter>(updateStatusFilter);
+    on<ClearSearch>(clearSearch);
+    on<ShowDeviceDialog>(showDeviceDialog);
+    on<HideDeviceDialog>(hideDeviceDialog);
+    on<UpdateDialogField>(updateDialogField);
   }
 
-  Future<void> _fetchDeviceData(
+  Future<void> fetchDeviceData(
       FetchDevice event,
       Emitter<DeviceState> emit,
       ) async {
@@ -42,7 +42,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  Future<void> _insertDeviceData(
+  Future<void> insertDeviceData(
       AddDevice event,
       Emitter<DeviceState> emit,
       ) async {
@@ -58,7 +58,6 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
         dialogData: {},
       ));
 
-      // Fetch updated data
       add(FetchDevice());
     } catch (e) {
       emit(state.copyWith(
@@ -68,7 +67,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  Future<void> _updateDeviceData(
+  Future<void> updateDeviceData(
       UpdateDevice event,
       Emitter<DeviceState> emit,
       ) async {
@@ -77,7 +76,6 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
 
       await FirebaseDbHelper.firebase.updateDevice(event.device);
 
-      // Hide dialog after successful update
       emit(state.copyWith(
         isDialogVisible: false,
         dialogDevice: null,
@@ -94,7 +92,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  Future<void> _deleteDeviceData(
+  Future<void> deleteDeviceData(
       DeleteDevice event,
       Emitter<DeviceState> emit,
       ) async {
@@ -113,28 +111,28 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  void _updateSearchQuery(
+  void updateSearchQuery(
       UpdateSearchQuery event,
       Emitter<DeviceState> emit,
       ) {
     emit(state.copyWith(searchQuery: event.query));
   }
 
-  void _updateStatusFilter(
+  void updateStatusFilter(
       UpdateStatusFilter event,
       Emitter<DeviceState> emit,
       ) {
     emit(state.copyWith(selectedStatusFilter: event.status));
   }
 
-  void _clearSearch(
+  void clearSearch(
       ClearSearch event,
       Emitter<DeviceState> emit,
       ) {
     emit(state.copyWith(searchQuery: ''));
   }
 
-  void _showDeviceDialog(
+  void showDeviceDialog(
       ShowDeviceDialog event,
       Emitter<DeviceState> emit,
       ) {
@@ -169,7 +167,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     ));
   }
 
-  void _hideDeviceDialog(
+  void hideDeviceDialog(
       HideDeviceDialog event,
       Emitter<DeviceState> emit,
       ) {
@@ -180,7 +178,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     ));
   }
 
-  void _updateDialogField(
+  void updateDialogField(
       UpdateDialogField event,
       Emitter<DeviceState> emit,
       ) {

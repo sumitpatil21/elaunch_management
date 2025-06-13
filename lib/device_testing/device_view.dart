@@ -2,13 +2,14 @@ import 'dart:developer';
 
 import 'package:elaunch_management/Service/admin_modal.dart';
 import 'package:elaunch_management/Service/device_modal.dart';
-import 'package:elaunch_management/Service/employee_modal.dart';
+
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Employee/employee_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
+import '../service/employee_modal.dart';
 import 'device_bloc.dart';
 import 'device_event.dart';
 
@@ -45,8 +46,8 @@ class _DeviceViewState extends State<DeviceView> {
 
   @override
   Widget build(BuildContext context) {
-    SelectRole? user =
-    ModalRoute.of(context)!.settings.arguments as SelectRole?;
+    SelectRole user =
+        ModalRoute.of(context)!.settings.arguments as SelectRole;
 
     return Scaffold(
       appBar: AppBar(
@@ -75,10 +76,7 @@ class _DeviceViewState extends State<DeviceView> {
           }
         },
         child: Column(
-          children: [
-            _buildSearchAndFilters(),
-            _buildDeviceList(user),
-          ],
+          children: [_buildSearchAndFilters(), _buildDeviceList(user)],
         ),
       ),
     );
@@ -129,12 +127,14 @@ class _DeviceViewState extends State<DeviceView> {
                         style: TextStyle(
                           color: isSelected ? Colors.white : Colors.black87,
                           fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       selected: isSelected,
                       onSelected: (selected) {
-                        context.read<DeviceBloc>().add(UpdateStatusFilter(status));
+                        context.read<DeviceBloc>().add(
+                          UpdateStatusFilter(status),
+                        );
                       },
                       backgroundColor: getStatusColor(status),
                       selectedColor: getStatusColor(status),
@@ -186,7 +186,11 @@ class _DeviceViewState extends State<DeviceView> {
     );
   }
 
-  Widget _buildDeviceCard(BuildContext context, TestingDeviceModal device, SelectRole? user) {
+  Widget _buildDeviceCard(
+    BuildContext context,
+    TestingDeviceModal device,
+    SelectRole? user,
+  ) {
     return Dismissible(
       key: Key(device.id.toString()),
       background: Container(
@@ -202,14 +206,12 @@ class _DeviceViewState extends State<DeviceView> {
       confirmDismiss: (_) => _showDeleteConfirmation(context, device),
       onDismissed: (_) {
         context.read<DeviceBloc>().add(DeleteDevice(device.id ?? ""));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${device.deviceName} deleted")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("${device.deviceName} deleted")));
       },
       child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 2,
         child: ListTile(
           leading: CircleAvatar(
@@ -224,12 +226,17 @@ class _DeviceViewState extends State<DeviceView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("${device.operatingSystem ?? ''} ${device.osVersion ?? ''}"),
-              Text("Assigned to: ${device.assignedEmployeeName ?? 'Unassigned'}"),
+              Text(
+                "Assigned to: ${device.assignedEmployeeName ?? 'Unassigned'}",
+              ),
               Row(
                 children: [
                   const Text("Status: "),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: getStatusColor(device.status ?? 'available'),
                       borderRadius: BorderRadius.circular(12),
@@ -252,18 +259,20 @@ class _DeviceViewState extends State<DeviceView> {
             children: [
               (user?.employeeModal == null)
                   ? IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () {
-                  context.read<DeviceBloc>().add(ShowDeviceDialog(device: device));
-                },
-              )
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      context.read<DeviceBloc>().add(
+                        ShowDeviceDialog(device: device),
+                      );
+                    },
+                  )
                   : ElevatedButton(
-                onPressed: () {},
-                child: const Text(
-                  "Apply",
-                  style: TextStyle(color: Colors.green),
-                ),
-              ),
+                    onPressed: () {},
+                    child: const Text(
+                      "Apply",
+                      style: TextStyle(color: Colors.green),
+                    ),
+                  ),
             ],
           ),
         ),
@@ -271,26 +280,30 @@ class _DeviceViewState extends State<DeviceView> {
     );
   }
 
-  Future<bool?> _showDeleteConfirmation(BuildContext context, TestingDeviceModal device) {
+  Future<bool?> _showDeleteConfirmation(
+    BuildContext context,
+    TestingDeviceModal device,
+  ) {
     return showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Confirm Delete"),
-        content: Text(
-          "Are you sure you want to delete ${device.deviceName} device?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("CANCEL"),
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Confirm Delete"),
+            content: Text(
+              "Are you sure you want to delete ${device.deviceName} device?",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("CANCEL"),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("DELETE"),
+              ),
+            ],
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("DELETE"),
-          ),
-        ],
-      ),
     );
   }
 
@@ -301,10 +314,11 @@ class _DeviceViewState extends State<DeviceView> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => _DeviceDialog(
-          device: state.dialogDevice,
-          dialogData: state.dialogData,
-        ),
+        builder:
+            (_) => _DeviceDialog(
+              device: state.dialogDevice,
+              dialogData: state.dialogData,
+            ),
       ).then((_) {
         context.read<DeviceBloc>().add(HideDeviceDialog());
       });
@@ -331,10 +345,7 @@ class _DeviceDialog extends StatefulWidget {
   final TestingDeviceModal? device;
   final Map<String, dynamic> dialogData;
 
-  const _DeviceDialog({
-    required this.device,
-    required this.dialogData,
-  });
+  const _DeviceDialog({required this.device, required this.dialogData});
 
   @override
   State<_DeviceDialog> createState() => _DeviceDialogState();
@@ -348,8 +359,12 @@ class _DeviceDialogState extends State<_DeviceDialog> {
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(text: widget.dialogData['deviceName'] ?? '');
-    versionController = TextEditingController(text: widget.dialogData['osVersion'] ?? '');
+    nameController = TextEditingController(
+      text: widget.dialogData['deviceName'] ?? '',
+    );
+    versionController = TextEditingController(
+      text: widget.dialogData['osVersion'] ?? '',
+    );
   }
 
   @override
@@ -374,21 +389,27 @@ class _DeviceDialogState extends State<_DeviceDialog> {
           role: "",
           departmentId: "1",
           adminId: "1",
+          managerId: "1",
         );
 
         EmployeeModal? selectedEmployee = unassignedEmployee;
         if (widget.dialogData['assignedToEmployeeId'] != null) {
           try {
-            selectedEmployee = employeeState.employees.firstWhere(
-                  (emp) => emp.id == widget.dialogData['assignedToEmployeeId'],
-            );
+            selectedEmployee =
+                employeeState.employees.firstWhere(
+                      (emp) =>
+                          emp.id == widget.dialogData['assignedToEmployeeId'],
+                    )
+                    as EmployeeModal?;
           } catch (e) {
             selectedEmployee = unassignedEmployee;
           }
         }
 
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(widget.device != null ? 'Edit Device' : 'Add Device'),
           content: SingleChildScrollView(
             child: Form(
@@ -398,14 +419,19 @@ class _DeviceDialogState extends State<_DeviceDialog> {
                 children: [
                   TextFormField(
                     controller: nameController,
-                    validator: (value) =>
-                    value?.isEmpty == true ? 'Please enter a device name' : null,
+                    validator:
+                        (value) =>
+                            value?.isEmpty == true
+                                ? 'Please enter a device name'
+                                : null,
                     decoration: const InputDecoration(
                       labelText: "Device Name",
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (value) {
-                      context.read<DeviceBloc>().add(UpdateDialogField('deviceName', value));
+                      context.read<DeviceBloc>().add(
+                        UpdateDialogField('deviceName', value),
+                      );
                     },
                   ),
                   const SizedBox(height: 12),
@@ -415,24 +441,35 @@ class _DeviceDialogState extends State<_DeviceDialog> {
                       labelText: "Operating System",
                       border: OutlineInputBorder(),
                     ),
-                    items: ['Android', 'iOS']
-                        .map((os) => DropdownMenuItem(value: os, child: Text(os)))
-                        .toList(),
+                    items:
+                        ['Android', 'iOS']
+                            .map(
+                              (os) =>
+                                  DropdownMenuItem(value: os, child: Text(os)),
+                            )
+                            .toList(),
                     onChanged: (value) {
-                      context.read<DeviceBloc>().add(UpdateDialogField('operatingSystem', value));
+                      context.read<DeviceBloc>().add(
+                        UpdateDialogField('operatingSystem', value),
+                      );
                     },
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: versionController,
-                    validator: (value) =>
-                    value?.isEmpty == true ? 'Please enter OS version' : null,
+                    validator:
+                        (value) =>
+                            value?.isEmpty == true
+                                ? 'Please enter OS version'
+                                : null,
                     decoration: const InputDecoration(
                       labelText: "OS Version",
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (value) {
-                      context.read<DeviceBloc>().add(UpdateDialogField('osVersion', value));
+                      context.read<DeviceBloc>().add(
+                        UpdateDialogField('osVersion', value),
+                      );
                     },
                   ),
                   const SizedBox(height: 12),
@@ -442,11 +479,19 @@ class _DeviceDialogState extends State<_DeviceDialog> {
                       labelText: "Status",
                       border: OutlineInputBorder(),
                     ),
-                    items: ['available', 'assigned', 'maintenance', 'retired']
-                        .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-                        .toList(),
+                    items:
+                        ['available', 'assigned', 'maintenance', 'retired']
+                            .map(
+                              (status) => DropdownMenuItem(
+                                value: status,
+                                child: Text(status),
+                              ),
+                            )
+                            .toList(),
                     onChanged: (value) {
-                      context.read<DeviceBloc>().add(UpdateDialogField('status', value));
+                      context.read<DeviceBloc>().add(
+                        UpdateDialogField('status', value),
+                      );
                     },
                   ),
                   const SizedBox(height: 12),
@@ -471,8 +516,12 @@ class _DeviceDialogState extends State<_DeviceDialog> {
                       }),
                     ],
                     onChanged: (emp) {
-                      context.read<DeviceBloc>().add(UpdateDialogField('assignedToEmployeeId', emp?.id));
-                      context.read<DeviceBloc>().add(UpdateDialogField('assignedEmployeeName', emp?.name));
+                      context.read<DeviceBloc>().add(
+                        UpdateDialogField('assignedToEmployeeId', emp?.id),
+                      );
+                      context.read<DeviceBloc>().add(
+                        UpdateDialogField('assignedEmployeeName', emp?.name),
+                      );
                     },
                   ),
                 ],

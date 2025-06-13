@@ -81,7 +81,6 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
       );
     }
   }
-
   void loginLogic() {
     final adminBloc = context.read<AdminBloc>();
     final employeeBloc = context.read<EmployeeBloc>();
@@ -89,16 +88,21 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
     if (loginFormKey.currentState!.validate()) {
       final email = loginEmailController.text.trim();
       final password = loginPasswordController.text;
-      log('Admin login with email: ${adminBloc.state.selectedRole}');
-      if (adminBloc.state.selectedRole == 'Admin') {
+      log('User login with : ${adminBloc.state.selectedRole}');
+
+      if (adminBloc.state.selectedRole == 'Admin'&&email =="admin123@gmail.com") {
         log('Admin login with email: $email');
         adminBloc.add(AdminLogin(email: email, password: password));
       } else if (adminBloc.state.selectedRole == 'Employee') {
-        log('Employee login with email.....: $email');
+        log('Employee login with email: $email');
         employeeBloc.add(EmployeeLogin(email: email, password: password));
+      }
+      else {
+        showSnackBar('Invalid credentials');
       }
     }
   }
+
 
   void forgotPasswordLogic() {
     if (loginEmailController.text.trim().isEmpty) {
@@ -132,9 +136,8 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
           listener: (context, state) {
             if (state.isLogin && state.adminModal != null) {
               log('Admin login successful: ${state.adminModal!.name}');
-              Navigator.pushReplacementNamed(context, DashboardView.routeName);
+              Navigator.pushReplacementNamed(context, DashboardView.routeName,arguments: SelectRole(adminModal: state.adminModal,selectedRole: "Admin"));
             }
-
             if (tabController.index != state.currentTabIndex) {
               tabController.animateTo(state.currentTabIndex);
             }
@@ -142,13 +145,11 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
         ),
         BlocListener<EmployeeBloc, EmployeeState>(
           listener: (context, state) {
-            if ( state.loggedInEmployee != null) {
-              log(
-                'Employee login successful...........: ${state.loggedInEmployee!.name}',
-              );
-              Navigator.pushReplacementNamed(context, DashboardView.routeName);
-              log('Employee.......');
+            if (state.isLogin && state.loggedInEmployee != null) {
+              log('Employee login successful: ${state.loggedInEmployee!.name}');
+              Navigator.pushReplacementNamed(context, DashboardView.routeName,arguments: SelectRole(employeeModal: state.loggedInEmployee,selectedRole: "Employee"));
             }
+
           },
         ),
       ],

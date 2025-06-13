@@ -17,6 +17,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   static const String loginKey = 'is_login';
   static const String roleKey = 'user_role';
   static const String idKey = 'user_id';
+
+// 5. Register the missing event handler in EmployeeBloc constructor:
+
   EmployeeBloc() : super(const EmployeeState()) {
     on<FetchEmployees>(fetchEmployeesData);
     on<LoadEmployees>(loadEmployees);
@@ -28,19 +31,134 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     on<ResetEmployeeFilters>(resetFilters);
     on<FilterEmployeesByRole>(filterRole);
     on<EmployeeLogin>(employeeLogin);
+    on<EmployeeLoginCheck>(employeeLoginCheck); // Add this line
     on<EmployeeLogout>(employeeLogout);
     loginGet();
+  }
+
+// 6. Fix the loginGet method in EmployeeBloc:
+  Future<void> employeeLogin(
+      EmployeeLogin event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+
+    try {
+      log('Employee login attempt with email: ${event.email}');
+
+      await AuthServices.authServices.signInWithEmailAndPassword(
+        email: event.email,
+        password: event.password,
+      );
+
+      var currentUser = AuthServices.authServices.getCurrentUser();
+      EmployeeModal? employeeModal;
+
+      if (currentUser != null) {
+        // You might want to fetch additional employee data from your database here
+        employeeModal = EmployeeModal(
+          id: currentUser.uid,
+          name: currentUser.displayName ?? '',
+          email: currentUser.email ?? '',
+          password: '',
+          address: '',
+          role: 'Employee',
+          adminId: '',
+          departmentId: '',
+          departmentName: '',
+          managerName: '',
+          managerId: '',
+        );
+
+        await saveLogin(true, 'Employee', currentUser.uid);
+
+        emit(state.copyWith(
+          loggedInEmployee: employeeModal,
+          isLogin: true,
+          isLoading: false,
+          successMessage: 'Employee login successful!',
+        ));
+      } else {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Failed to get user information',
+        ));
+      }
+    } catch (e) {
+      log('Employee login error: $e');
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: 'Login failed: ${e.toString()}',
+      ));
+    }
+  }
+
+// 4. Add the missing EmployeeLoginCheck handler:
+
+  Future<void> employeeLoginCheck(
+      EmployeeLoginCheck event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    emit(state.copyWith(isLogin: event.isLogin));
   }
 
   Future<void> loginGet() async {
     final prefs = await SharedPreferences.getInstance();
     final isLogin = prefs.getBool(loginKey) ?? false;
     final userRole = prefs.getString(roleKey) ?? 'Admin';
+    final userId = prefs.getString(idKey);
 
-    if (isLogin) {
+    if (isLogin && userRole == 'Employee' && userId != null) {
       add(EmployeeLoginCheck(isLogin: true));
-      add(EmployeeLogin());
+
+      var currentUser = AuthServices.authServices.getCurrentUser();
+      if (currentUser != null) {
+        final employeeModal = EmployeeModal(
+          id: currentUser.uid,
+          name: currentUser.displayName ?? '',
+          email: currentUser.email ?? '',
+          password: '',
+          address: '',
+          role: 'Employee',
+          adminId: '',
+          departmentId: '',
+          departmentName: '',
+          managerName: '',
+          managerId: '',
+        );
+
+        emit(state.copyWith(loggedInEmployee: employeeModal, isLogin: true));
+      }
     }
+  }
+
+// 7. Fix the logical operator issue in applyAllFilters method:
+
+  void applyAllFilters(Emitter<EmployeeState> emit) {
+    List<EmployeeModal> filtered = List.from(state.employees);
+
+    if (state.roleFilter != null) {
+      filtered = filtered.where((e) => e.role == state.roleFilter).toList();
+    }
+
+    if (state.departmentFilter != null) {
+      filtered = filtered
+          .where((e) => e.departmentId == state.departmentFilter)
+          .toList();
+    }
+
+    if (state.managerFilter != null) {
+// Fixed: Using logical OR operator instead of missing operator
+      filtered = filtered
+          .where(
+            (e) =>
+        e.managerName == state.managerFilter ||
+            e.managerId == state.managerFilter,
+      )
+          .toList();
+    }
+
+    emit(state.copyWith(filteredEmployees: filtered));
   }
 
   Future<void> saveLogin(
@@ -62,34 +180,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     await prefs.remove(roleKey);
     await prefs.remove(idKey);
   }
-  Future<void> employeeLogin(
-    EmployeeLogin event,
-    Emitter<EmployeeState> emit,
-  ) async {
 
-
-
-    await AuthServices.authServices.signInWithEmailAndPassword(
-      email: event.email,
-      password: event.password,
-    );
-
-    var currentUser = AuthServices.authServices.getCurrentUser();
-    EmployeeModal? employeeModal;
-    if (currentUser != null) {
-
-      employeeModal = EmployeeModal(
-        id: currentUser.uid,
-        name: currentUser.displayName ?? '',
-        email: currentUser.email ?? '',
-        password: '',
-        address: '',
-        role: '',
-        adminId: '',
-        departmentId: '',);
-    }
-    state.copyWith(loggedInEmployee: employeeModal);
-  }
 
   Future<void> employeeLogout(
     EmployeeLogout event,
@@ -120,11 +211,11 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       role: event.role,
       departmentId: event.departmentId,
     );
-
+    log("Employee data ->>>>>: $employees");
     emit(
       state.copyWith(
-        employees: employees ?? [],
-        filteredEmployees: employees ?? [],
+        employees: employees ,
+        filteredEmployees: employees,
         isLoading: false,
         errorMessage: null,
       ),
@@ -151,6 +242,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       role: event.role,
       adminId: event.adminId ?? "",
       departmentId: event.departmentId ?? "",
+      departmentName: event.departmentName ?? "",
+      managerName: event.managerName ?? "",
+      managerId: event.managerId ?? "",
     );
 
     await FirebaseDbHelper.firebase.createEmployee(employee);
@@ -179,6 +273,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       role: event.role,
       adminId: event.adminId ?? "",
       departmentId: event.departmentId ?? "",
+      departmentName: event.departmentName ?? "",
+      managerName: event.managerName ?? "",
+      managerId: event.managerId ?? "",
     );
 
     await FirebaseDbHelper.firebase.updateEmployee(updated);
@@ -252,32 +349,4 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
   }
 
-  void applyAllFilters(Emitter<EmployeeState> emit) {
-    List<EmployeeModal> filtered = List.from(state.employees);
-
-    if (state.roleFilter != null) {
-      filtered = filtered.where((e) => e.role == state.roleFilter).toList();
-    }
-
-    if (state.departmentFilter != null) {
-      filtered =
-          filtered
-              .where((e) => e.departmentId == state.departmentFilter)
-              .toList();
-    }
-
-    if (state.managerFilter != null) {
-      // Fixed: Using managerId or managerName instead of status
-      filtered =
-          filtered
-              .where(
-                (e) =>
-                    e.managerName == state.managerFilter ||
-                    e.managerId == state.managerFilter,
-              )
-              .toList();
-    }
-
-    emit(state.copyWith(filteredEmployees: filtered));
-  }
 }

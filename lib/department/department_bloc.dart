@@ -1,5 +1,3 @@
-
-
 import 'package:bloc/bloc.dart';
 
 import 'package:elaunch_management/Service/firebase_database.dart';
@@ -32,14 +30,11 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
     final department = DepartmentModal(
       id: "1",
       name: event.departmentName,
-      date: event.dob,
-      id_admin: event.adminId,
+      field: event.dob,
     );
 
     await FirebaseDbHelper.firebase.createDepartment(department);
-    final departments = await FirebaseDbHelper.firebase.getDepartments(
-      event.adminId,
-    );
+    final departments = await FirebaseDbHelper.firebase.getDepartments();
     emit(DepartmentState(departments: departments));
   }
 
@@ -49,9 +44,7 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
   ) async {
     await FirebaseDbHelper.firebase.updateDepartment(event.departmentModal);
 
-    final departments = await FirebaseDbHelper.firebase.getDepartments(
-      event.departmentModal.id_admin,
-    );
+    final departments = await FirebaseDbHelper.firebase.getDepartments();
     emit(DepartmentState(departments: departments));
   }
 

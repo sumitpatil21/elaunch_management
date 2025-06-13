@@ -16,7 +16,6 @@ import '../SuperAdminLogin/admin_view.dart';
 import '../System/system_view.dart';
 import '../service/employee_modal.dart';
 
-
 class EmployeeScreen extends StatefulWidget {
   static String routeName = "/emp";
 
@@ -29,6 +28,7 @@ class EmployeeScreen extends StatefulWidget {
           create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
         BlocProvider(create: (_) => DepartmentBloc()..add(FetchDepartments())),
+        BlocProvider(create: (_) => AdminBloc()..add(AdminFetch())),
       ],
       child: const EmployeeScreen(),
     );
@@ -276,15 +276,15 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     return employees.where((employee) {
       return employee.name.toLowerCase().contains(query) ||
           employee.email.toLowerCase().contains(query) ||
-          (employee.departmentName?.toLowerCase().contains(query) ?? false) ||
-          (employee.managerName?.toLowerCase().contains(query) ?? false);
+          (employee.departmentName.toLowerCase().contains(query) ?? false) ||
+          (employee.managerName.toLowerCase().contains(query) ?? false);
     }).toList();
   }
 
   Drawer buildDrawer(BuildContext context, AdminModal? admin) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWeb = screenWidth > 800;
-
+    SelectRole? args = ModalRoute.of(context)!.settings.arguments as SelectRole?;
     return Drawer(
       width: isWeb ? 300 : 240,
       child: Column(
@@ -344,7 +344,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
               style: TextStyle(fontSize: isWeb ? 18 : 16),
             ),
             onTap: () {
-              Navigator.pushNamed(context, DepartmentScreen.routeName);
+              Navigator.pushNamed(context, DepartmentScreen.routeName,arguments: args);
             },
           ),
           ListTile(
@@ -366,14 +366,14 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             leading: Icon(Icons.phone_android_outlined, size: isWeb ? 28 : 24),
             title: Text("Device", style: TextStyle(fontSize: isWeb ? 18 : 16)),
             onTap: () {
-              Navigator.pushNamed(context, DeviceView.routeName);
+              Navigator.pushNamed(context, DeviceView.routeName,arguments: args);
             },
           ),
           ListTile(
             leading: Icon(Icons.computer_outlined, size: isWeb ? 28 : 24),
             title: Text("System", style: TextStyle(fontSize: isWeb ? 18 : 16)),
             onTap: () {
-              Navigator.pushNamed(context, SystemView.routeName);
+              Navigator.pushNamed(context, SystemView.routeName,arguments: args);
             },
           ),
           const Divider(),

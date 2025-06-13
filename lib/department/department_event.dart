@@ -16,18 +16,18 @@ class FetchDepartments extends DepartmentEvent {
 
 class AddDepartment extends DepartmentEvent {
   final String departmentName;
-  final String dob, adminId;
+  final String dob;
   final int id;
 
   const AddDepartment({
     required this.departmentName,
     required this.dob,
-    required this.adminId,
+
     required this.id,
   });
 
   @override
-  List<Object> get props => [departmentName, dob, adminId, id];
+  List<Object> get props => [departmentName, dob, id];
 }
 
 class UpdateDepartment extends DepartmentEvent {

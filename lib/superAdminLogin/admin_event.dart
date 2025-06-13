@@ -66,12 +66,12 @@ class AdminLoginCheck extends AdminEvent {
 }
 
 class SelectRole extends AdminEvent {
-  final String selectedRole;
-  final AdminModal? adminModal;
-  final EmployeeModal? employeeModal;
+   String selectedRole;
+   AdminModal? adminModal;
+   EmployeeModal? employeeModal;
 
-  const SelectRole({
-    required this.selectedRole,
+   SelectRole({
+     required this.selectedRole,
     this.adminModal,
     this.employeeModal,
   });

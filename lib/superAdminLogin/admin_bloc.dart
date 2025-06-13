@@ -24,7 +24,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<AdminForgotPassword>(adminForgotPassword);
     on<AdminLogout>(adminLogout);
     on<AdminLoginCheck>(adminLoginCheck);
-    on<SelectRole>(selectRole);
+
     on<ToggleObscurePassword>(toggleObscurePassword);
     on<ChangeRole>(changeRole);
     on<ChangeTabIndex>(changeTabIndex);

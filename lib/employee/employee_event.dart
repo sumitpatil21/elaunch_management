@@ -28,6 +28,9 @@ class AddEmployee extends EmployeeEvent {
   final String role;
   final String? adminId;
   final String? departmentId;
+  final String? departmentName;
+  final String? managerName;
+  final String? managerId;
 
   const AddEmployee({
     required this.id,
@@ -38,10 +41,13 @@ class AddEmployee extends EmployeeEvent {
     required this.role,
     this.adminId,
     this.departmentId,
+    this.departmentName,
+    this.managerName,
+    this.managerId,
   });
 
   @override
-  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId];
+  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId, departmentName, managerName, managerId];
 }
 
 class UpdateEmployee extends EmployeeEvent {
@@ -53,6 +59,9 @@ class UpdateEmployee extends EmployeeEvent {
   final String role;
   final String? adminId;
   final String? departmentId;
+  final String? departmentName;
+  final String? managerName;
+  final String? managerId;
 
   const UpdateEmployee({
     required this.id,
@@ -63,10 +72,13 @@ class UpdateEmployee extends EmployeeEvent {
     required this.role,
     this.adminId,
     this.departmentId,
+    this.departmentName,
+    this.managerName,
+    this.managerId,
   });
 
   @override
-  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId];
+  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId, departmentName, managerName, managerId];
 }
 
 class DeleteEmployee extends EmployeeEvent {

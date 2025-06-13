@@ -4,6 +4,8 @@ import 'package:elaunch_management/Department/department_view.dart';
 import 'package:elaunch_management/Device_Testing/device_view.dart';
 import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
+import 'package:elaunch_management/SuperAdminLogin/admin_event.dart';
+
 import 'package:elaunch_management/System/system_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,15 +17,11 @@ import '../Employee/employee_bloc.dart';
 
 import '../Leave/leave_view.dart';
 
-
-import '../SuperAdminLogin/admin_event.dart';
 import '../SuperAdminLogin/admin_state.dart';
 import '../SuperAdminLogin/admin_view.dart';
 import '../System/system_event.dart';
 import '../System/system_state.dart';
 import '../System/system_view.dart';
-
-
 
 class DashboardView extends StatefulWidget {
   static String routeName = "/dash";
@@ -57,20 +55,16 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   void _initializeData() {
-    final adminBloc = context.read<AdminBloc>();
-    adminBloc.add(AdminFetch());
-    adminBloc.add(SelectRole(selectedRole: ''));
 
     context.read<EmployeeBloc>().add(LoadEmployees());
     context.read<DepartmentBloc>().add(FetchDepartments());
     context.read<SystemBloc>().add(FetchSystem());
     context.read<DeviceBloc>().add(FetchDevice());
 
-    log(adminBloc.state.adminModal?.email ?? "Data Not Found");
-    log(adminBloc.state.employeeModal?.email ?? "Data Not Found");
+
   }
 
-  void _refreshData() {
+  void refreshData() {
     context.read<AdminBloc>().add(AdminFetch());
     context.read<EmployeeBloc>().add(LoadEmployees());
     context.read<DepartmentBloc>().add(FetchDepartments());
@@ -81,46 +75,47 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 600;
+    SelectRole user = ModalRoute.of(context)!.settings.arguments as SelectRole;
 
-    return BlocBuilder<AdminBloc, AdminState>(
-      builder: (context, adminState) {
 
-        SelectRole user = SelectRole(
-          selectedRole: adminState.selectedRole,
-          adminModal: adminState.adminModal,
+    return BlocBuilder<EmployeeBloc, EmployeeState>(
+      builder: (context, state) {
+        return BlocBuilder<AdminBloc, AdminState>(
+          builder: (context, adminState) {
 
-        );
-
-        return Scaffold(
-          appBar: _buildAppBar(context, user),
-          drawer: isMobile ? drawer(context, user) : null,
-          body: Row(
-            children: [
-              if (!isMobile) SizedBox(width: 240, child: drawer(context, user)),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        welcomeSection(context, user, isMobile),
-                        managementSection(context, user, isMobile),
-                        SizedBox(height: 24),
-                        overviewSection(context, user, isMobile),
-                      ],
+            return Scaffold(
+              appBar: buildAppBar(context, user),
+              drawer: isMobile ? drawer(context, user) : null,
+              body: Row(
+                children: [
+                  if (!isMobile)
+                    SizedBox(width: 240, child: drawer(context, user)),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            welcomeSection(context, user, isMobile),
+                            managementSection(context, user, isMobile),
+                            SizedBox(height: 24),
+                            overviewSection(context, user, isMobile),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  AppBar _buildAppBar(BuildContext context, SelectRole user) {
+  AppBar buildAppBar(BuildContext context, SelectRole user) {
     return AppBar(
       backgroundColor: Theme.of(context).primaryColor,
       title: Text(
@@ -133,7 +128,7 @@ class _DashboardViewState extends State<DashboardView> {
       ),
       actions: [
         IconButton(
-          onPressed: _refreshData,
+          onPressed: refreshData,
           icon: Icon(Icons.refresh, color: Colors.white),
         ),
         Padding(
@@ -362,9 +357,7 @@ class _DashboardViewState extends State<DashboardView> {
           onTap:
               () =>
                   Navigator.pushNamed(context, cardData.route, arguments: user),
-          onHover: (isHovered) {
-
-          },
+          onHover: (isHovered) {},
           borderRadius: BorderRadius.circular(8),
           child: Card(
             elevation: 4,
@@ -387,7 +380,6 @@ class _DashboardViewState extends State<DashboardView> {
                   children: [
                     Icon(cardData.icon, size: 32, color: Colors.white),
                     SizedBox(height: 8),
-
                     Text(
                       cardData.title,
                       style: TextStyle(fontSize: 14, color: Colors.white),
@@ -502,22 +494,22 @@ class _DashboardViewState extends State<DashboardView> {
               }
               return Column(
                 children: [
-                  // ...state.employees
-                  //     .take(3)
-                  //     .map(
-                  //       (emp) => listTile(
-                  //         emp.name,
-                  //         'employee',
-                  //         null,
-                  //         Colors.red,
-                  //         () => Navigator.pushNamed(
-                  //           context,
-                  //           EmployeeScreen.routeName,
-                  //           arguments: user,
-                  //         ),
-                  //         empName: emp.name,
-                  //       ),
-                  //     ),
+                  ...state.employees
+                      .take(3)
+                      .map(
+                        (emp) => listTile(
+                          emp.name,
+                          'employee',
+                          null,
+                          Colors.red,
+                          () => Navigator.pushNamed(
+                            context,
+                            EmployeeScreen.routeName,
+                            arguments: user,
+                          ),
+                          empName: emp.name,
+                        ),
+                      ),
                   if (state.employees.length > 3)
                     Padding(
                       padding: EdgeInsets.all(8),
@@ -576,8 +568,9 @@ class _DashboardViewState extends State<DashboardView> {
           user,
           BlocBuilder<DepartmentBloc, DepartmentState>(
             builder: (context, state) {
-              if (state.departments.isEmpty)
+              if (state.departments.isEmpty) {
                 return Center(child: Text("No Departments"));
+              }
               return ListView.builder(
                 padding: EdgeInsets.zero,
                 itemCount: state.departments.length,
@@ -605,8 +598,9 @@ class _DashboardViewState extends State<DashboardView> {
           user,
           BlocBuilder<EmployeeBloc, EmployeeState>(
             builder: (context, state) {
-              if (state.employees.isEmpty)
+              if (state.employees.isEmpty) {
                 return Center(child: Text("No Employees"));
+              }
               return ListView.builder(
                 padding: EdgeInsets.zero,
                 itemCount: state.employees.length,
@@ -635,8 +629,9 @@ class _DashboardViewState extends State<DashboardView> {
           user,
           BlocBuilder<SystemBloc, SystemState>(
             builder: (context, state) {
-              if (state.systems.isEmpty)
+              if (state.systems.isEmpty) {
                 return Center(child: Text("No Systems"));
+              }
               return ListView.builder(
                 padding: EdgeInsets.zero,
                 itemCount: state.systems.length,
@@ -664,8 +659,9 @@ class _DashboardViewState extends State<DashboardView> {
           user,
           BlocBuilder<DeviceBloc, DeviceState>(
             builder: (context, state) {
-              if (state.devices.isEmpty)
+              if (state.devices.isEmpty) {
                 return Center(child: Text("No Devices"));
+              }
               return ListView.builder(
                 padding: EdgeInsets.zero,
                 itemCount: state.devices.length,
@@ -783,8 +779,8 @@ class _DashboardViewState extends State<DashboardView> {
 
   Drawer drawer(BuildContext context, SelectRole user) {
     final drawerItems = [
-      _DrawerItem("dashboard", Icons.dashboard, () {}),
-      _DrawerItem(
+      DrawerItem("dashboard", Icons.dashboard, () {}),
+      DrawerItem(
         "department",
         Icons.business,
         () => Navigator.pushNamed(
@@ -793,7 +789,7 @@ class _DashboardViewState extends State<DashboardView> {
           arguments: user,
         ),
       ),
-      _DrawerItem(
+      DrawerItem(
         "employee",
         Icons.group,
         () => Navigator.pushNamed(
@@ -802,19 +798,19 @@ class _DashboardViewState extends State<DashboardView> {
           arguments: user,
         ),
       ),
-      _DrawerItem(
+      DrawerItem(
         "system",
         Icons.computer_outlined,
         () =>
             Navigator.pushNamed(context, SystemView.routeName, arguments: user),
       ),
-      _DrawerItem(
+      DrawerItem(
         "Device",
         Icons.phone_android_outlined,
         () =>
             Navigator.pushNamed(context, DeviceView.routeName, arguments: user),
       ),
-      _DrawerItem(
+      DrawerItem(
         "leave",
         Icons.leave_bags_at_home_outlined,
         () =>
@@ -885,10 +881,10 @@ class ManagementCardData {
   });
 }
 
-class _DrawerItem {
+class DrawerItem {
   final String title;
   final IconData icon;
   final VoidCallback onTap;
 
-  _DrawerItem(this.title, this.icon, this.onTap);
+  DrawerItem(this.title, this.icon, this.onTap);
 }

@@ -1,11 +1,10 @@
-
 import 'package:elaunch_management/Employee/employee_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Service/admin_modal.dart';
 import '../Service/department_modal.dart';
 
-import '../superAdminLogin/admin_event.dart';
+import '../SuperAdminLogin/admin_event.dart';
 import 'department_bloc.dart';
 
 class DepartmentScreen extends StatefulWidget {
@@ -27,18 +26,14 @@ class DepartmentScreen extends StatefulWidget {
 
 class _DepartmentScreenState extends State<DepartmentScreen> {
   @override
-  void initState() {
-    super.initState();
-    context.read<DepartmentBloc>().add(FetchDepartments());
-  }
-
-  @override
   Widget build(BuildContext context) {
-    SelectRole? user  ;
+    final SelectRole user =
+        ModalRoute.of(context)?.settings.arguments as SelectRole;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.withOpacity(0.2),
-        title: const Text("Departments"),
+        title: Text("Departments${getUserTitle(user)}"),
       ),
       body: BlocBuilder<DepartmentBloc, DepartmentState>(
         builder: (context, state) {
@@ -61,6 +56,15 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   ),
                   direction: DismissDirection.endToStart,
                   confirmDismiss: (direction) async {
+                    if (!isAdmin(user)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Only admins can delete departments"),
+                        ),
+                      );
+                      return false;
+                    }
+
                     return await showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -96,68 +100,94 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                   },
                   child: Card(
                     shape: RoundedRectangleBorder(
-
-
-                        borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue.withOpacity(0.2),
-                      child: const Icon(Icons.business, size: 16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    title: Text(
-                      dept.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    subtitle: Text('department • ${dept.date ?? 'No date'}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (user?.employeeModal == null)
+                    elevation: 4,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue.withOpacity(0.2),
+                        child: const Icon(Icons.business, size: 16),
+                      ),
+                      title: Text(
+                        dept.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        'Department • ${dept.field ?? 'No field'}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Only show edit button for admins
+                          if (isAdmin(user))
+                            IconButton(
+                              onPressed:
+                                  () => showDepartmentDialog(
+                                    dept: dept,
+                                    user: user,
+                                  ),
+                              icon: const Icon(Icons.edit),
+                            ),
                           IconButton(
-                            onPressed: () => _showDepartmentDialog(dept: dept),
-                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                EmployeeScreen.routeName,
+                                arguments: user,
+                              );
+                            },
+                            icon: const Icon(Icons.arrow_forward_ios_rounded),
                           ),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              EmployeeScreen.routeName,
-                              arguments: user,
-                            );
-                          },
-                          icon: const Icon(Icons.arrow_forward_ios_rounded),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 );
               },
             );
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue.withOpacity(0.2),
-        onPressed: () => _showDepartmentDialog(),
-        child: const Icon(Icons.add),
-      ),
+      // Only show add button for admins
+      floatingActionButton:
+          isAdmin(user)
+              ? FloatingActionButton(
+                backgroundColor: Colors.blue.withOpacity(0.2),
+                onPressed: () => showDepartmentDialog(user: user),
+                child: const Icon(Icons.add),
+              )
+              : null,
     );
   }
 
-  void _showDepartmentDialog({DepartmentModal? dept}) {
-    final args = ModalRoute.of(context)?.settings.arguments;
+  bool isAdmin(SelectRole? user) {
+    if (user == null) return false;
+    return user.selectedRole == "Admin" && user.adminModal != null;
+  }
 
-    AdminModal? admin;
-    if (args is SelectRole && args.adminModal != null) {
-      admin = args.adminModal;
-    } else if (args is AdminModal) {
-      admin = args;
+  String getUserTitle(SelectRole? user) {
+    if (user == null) return " - Unknown User";
+
+    if (isAdmin(user)) {
+      return " - Admin (${user.adminModal!.name})";
+    } else if (user.selectedRole == "Employee" && user.employeeModal != null) {
+      return " - Employee (${user.employeeModal!.name})";
     }
 
-    if (admin == null) {
+    return " - ${user.selectedRole}";
+  }
+
+  void showDepartmentDialog({DepartmentModal? dept, SelectRole? user}) {
+    if (!isAdmin(user)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Only admins can add or edit departments"),
+        ),
+      );
+      return;
+    }
+
+    if (user!.adminModal == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Admin information not available")),
       );
@@ -168,8 +198,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     final TextEditingController nameController = TextEditingController(
       text: dept?.name ?? '',
     );
-    final TextEditingController dobController = TextEditingController(
-      text: dept?.date ?? '',
+    final TextEditingController fieldController = TextEditingController(
+      text: dept?.field ?? '',
     );
     final TextEditingController idController = TextEditingController(
       text: dept?.id.toString() ?? '',
@@ -182,13 +212,13 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: Text(dept != null ? 'Edit department' : 'Add department'),
+          title: Text(dept != null ? 'Edit Department' : 'Add Department'),
           content: Form(
             key: formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (dept == null) // Only show ID field for new departments
+                if (dept == null)
                   TextFormField(
                     controller: idController,
                     keyboardType: TextInputType.number,
@@ -202,28 +232,28 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                       return null;
                     },
                     decoration: const InputDecoration(
-
-                      labelText: "department ID",
+                      labelText: "Department ID",
                       border: OutlineInputBorder(),
                     ),
                   ),
                 if (dept == null) const SizedBox(height: 12),
                 TextFormField(
                   controller: nameController,
-                  validator: (value) =>
-                  value == null || value.isEmpty
-                      ? 'Please enter a department name'
-                      : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Please enter a department name'
+                              : null,
                   decoration: const InputDecoration(
-                    labelText: "department Name",
+                    labelText: "Department Name",
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: dobController,
+                  controller: fieldController,
                   decoration: const InputDecoration(
-                    labelText: "department Field or Date",
+                    labelText: "Department Field",
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -246,8 +276,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                           departmentModal: DepartmentModal(
                             id: dept.id,
                             name: nameController.text.trim(),
-                            date: dobController.text.trim(),
-                            id_admin: admin!.id ?? "",
+                            field: fieldController.text.trim(),
                           ),
                         ),
                       );
@@ -264,9 +293,8 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                       context.read<DepartmentBloc>().add(
                         AddDepartment(
-                          adminId: admin!.id ?? "",
                           departmentName: nameController.text.trim(),
-                          dob: dobController.text.trim(),
+                          dob: fieldController.text.trim(),
                           id: departmentId,
                         ),
                       );
@@ -274,15 +302,14 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
 
                     Navigator.pop(dialogContext);
 
-                    // Refresh the department list
                     context.read<DepartmentBloc>().add(FetchDepartments());
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           dept != null
-                              ? "department updated successfully"
-                              : "department added successfully",
+                              ? "Department updated successfully"
+                              : "Department added successfully",
                         ),
                       ),
                     );

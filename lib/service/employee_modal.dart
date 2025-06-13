@@ -7,9 +7,9 @@ class EmployeeModal {
   final String role;
   final String adminId;
   final String departmentId;
-  final String? departmentName;
-  final String? managerName;
-  final String? managerId;
+  final String departmentName;
+  final String managerName;
+  final String managerId;
 
   EmployeeModal({
     required this.id,
@@ -20,9 +20,9 @@ class EmployeeModal {
     required this.role,
     required this.adminId,
     required this.departmentId,
-    this.departmentName,
-    this.managerName,
-    this.managerId,
+    required this.departmentName,
+    required this.managerName,
+    required this.managerId,
   });
 
   Map<String, dynamic> toJson() {
@@ -52,9 +52,9 @@ class EmployeeModal {
       role: json['role'] ?? '',
       adminId: json['adminId'] ?? '',
       departmentId: json['departmentId'] ?? '',
-      departmentName: json['departmentName'],
-      managerName: json['managerName'],
-      managerId: json['managerId'],
+      departmentName: json['departmentName']??"",
+      managerName: json['managerName']??"",
+      managerId: json['managerId']??"",
     );
   }
 }

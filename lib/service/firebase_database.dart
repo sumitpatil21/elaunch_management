@@ -58,15 +58,12 @@ class FirebaseDbHelper {
   }
 
   Future<void> createDepartment(DepartmentModal department) async {
-    if (!(await admins.doc(department.id_admin.toString()).get()).exists) {
-      throw Exception('Admin does not exist');
-    }
+
 
     final docRef = departments.doc();
     await docRef.set({
       ...department.toJson(),
       'id': docRef.id,
-      'adminRef': admins.doc(department.id_admin.toString()),
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -97,7 +94,6 @@ class FirebaseDbHelper {
   Future<void> updateDepartment(DepartmentModal department) async {
     await departments.doc(department.id).update({
       ...department.toJson(),
-      'adminRef': admins.doc(department.id_admin.toString()),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -335,7 +331,6 @@ class FirebaseDbHelper {
       });
     }).toList();
   }
-
   Future<List<TestingDeviceModal>> getAllDevices() async {
     return getDevices();
   }
@@ -351,6 +346,32 @@ class FirebaseDbHelper {
 
   Future<void> deleteDevice(String id) async {
     await devices.doc(id).delete();
+  }
+
+  Future<void> approveDeviceRequest(TestingDeviceModal system) async {
+    await devices.doc(system.id).update(
+      system.toJson(),
+    );
+  }
+
+  Future<void> rejectDeviceRequest(TestingDeviceModal system) async {
+    await devices.doc(system.id).update(
+      system.toJson(),
+    );
+  }
+
+  Future<void> cancelDeviceRequest(String systemId, String requestId) async {
+    await devices.doc(systemId).update(
+      {
+        'isRequested': false,
+        'request_status': 'cancelled',
+        'requestId': null,
+        'requested_by_name': null,
+        'requestedAt': null,
+        'cancelledAt': FieldValue.serverTimestamp(),
+      },
+
+    );
   }
 
   Future<String> createLeaves(LeaveModal leave) async {
