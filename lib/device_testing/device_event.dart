@@ -41,44 +41,24 @@ class DeleteDevice extends DeviceEvent {
   List<Object?> get props => [id];
 }
 
-// New events for UI state management
-class UpdateSearchQuery extends DeviceEvent {
+
+class UpdateSearchQueryDevice extends DeviceEvent {
   final String query;
-  const UpdateSearchQuery(this.query);
+  final List<TestingDeviceModal> devices;
+  const UpdateSearchQueryDevice(this.query, this.devices);
 
   @override
-  List<Object?> get props => [query];
+  List<Object?> get props => [query, devices];
 }
 
-class UpdateStatusFilter extends DeviceEvent {
+class UpdateStatusFilterDevice extends DeviceEvent {
   final String status;
-  const UpdateStatusFilter(this.status);
+  const UpdateStatusFilterDevice(this.status);
 
   @override
   List<Object?> get props => [status];
 }
 
-class ClearSearch extends DeviceEvent {
-  const ClearSearch();
-}
-
-class ShowDeviceDialog extends DeviceEvent {
-  final TestingDeviceModal? device;
-  const ShowDeviceDialog({this.device});
-
-  @override
-  List<Object?> get props => [device];
-}
-
-class HideDeviceDialog extends DeviceEvent {
-  const HideDeviceDialog();
-}
-
-class UpdateDialogField extends DeviceEvent {
-  final String field;
-  final dynamic value;
-  const UpdateDialogField(this.field, this.value);
-
-  @override
-  List<Object?> get props => [field, value];
+class ClearSearchDevice extends DeviceEvent {
+  const ClearSearchDevice();
 }

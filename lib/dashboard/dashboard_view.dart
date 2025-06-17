@@ -24,7 +24,7 @@ import '../System/system_state.dart';
 import '../System/system_view.dart';
 
 class DashboardView extends StatefulWidget {
-  static String routeName = "/dash";
+  static String routeName = "/Dashboard";
 
   const DashboardView({super.key});
 
@@ -37,7 +37,7 @@ class DashboardView extends StatefulWidget {
         ),
         BlocProvider(create: (context) => SystemBloc()..add(FetchSystem())),
         BlocProvider(create: (context) => DeviceBloc()..add(FetchDevice())),
-        BlocProvider(create: (context) => EmployeeBloc()..add(LoadEmployees())),
+        BlocProvider(create: (context) => EmployeeBloc()..add(FetchEmployees())),
       ],
       child: DashboardView(),
     );
@@ -56,7 +56,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   void _initializeData() {
 
-    context.read<EmployeeBloc>().add(LoadEmployees());
+    context.read<EmployeeBloc>().add(FetchEmployees());
     context.read<DepartmentBloc>().add(FetchDepartments());
     context.read<SystemBloc>().add(FetchSystem());
     context.read<DeviceBloc>().add(FetchDevice());
@@ -66,7 +66,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   void refreshData() {
     context.read<AdminBloc>().add(AdminFetch());
-    context.read<EmployeeBloc>().add(LoadEmployees());
+    context.read<EmployeeBloc>().add(FetchEmployees());
     context.read<DepartmentBloc>().add(FetchDepartments());
     context.read<SystemBloc>().add(FetchSystem());
     context.read<DeviceBloc>().add(FetchDevice());

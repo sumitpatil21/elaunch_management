@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:equatable/equatable.dart';
 
 import '../Service/system_modal.dart';
@@ -109,4 +111,17 @@ class CancelRequest extends SystemEvent {
 
   @override
   List<Object> get props => [requestId, systemId];
+}
+class LoadStatusColors extends SystemEvent {
+  const LoadStatusColors();
+}
+
+class UpdateStatusColor extends SystemEvent {
+  final String status;
+  final Color color;
+
+  const UpdateStatusColor(this.status, this.color);
+
+  @override
+  List<Object> get props => [status, color];
 }

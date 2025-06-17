@@ -1,8 +1,10 @@
 import 'dart:developer';
 import 'package:bloc/bloc.dart';
+
 import '../Leave/leave_event.dart';
 import '../Leave/leave_state.dart';
-import '../service/firebase_database.dart';
+import '../Service/firebase_database.dart';
+
 
 
 class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
@@ -28,14 +30,14 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
 
     log('Fetched ${leaves.length} leaves from Firebase');
 
-    // emit(
-    //   state.copyWith(
-    //     leaves: leaves,
-    //     filteredLeaves: leaves,
-    //     isLoading: false,
-    //     error: null,
-    //   ),
-    // );
+    emit(
+      state.copyWith(
+        leaves: leaves,
+        filteredLeaves: leaves,
+        isLoading: false,
+        error: null,
+      ),
+    );
   }
 
   Future<void> addLeave(AddLeave event, Emitter<LeaveState> emit) async {
@@ -49,7 +51,7 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
             )
             : event.leave;
 
-    // await FirebaseDbHelper.firebase.createLeaves(leaveWithId);
+     await FirebaseDbHelper.firebase.createLeaves(leaveWithId);
     log('leave added successfully');
   }
 
@@ -62,7 +64,7 @@ class LeaveBloc extends Bloc<LeaveEvent, LeaveState> {
       'Updating leave status: ${event.leaveModal.id} to ${event.leaveModal.status}',
     );
 
-    // await FirebaseDbHelper.firebase.updateLeaves(event.leaveModal);
+     await FirebaseDbHelper.firebase.updateLeaves(event.leaveModal);
 
     final updatedLeaves =
         state.leaves.map((leave) {

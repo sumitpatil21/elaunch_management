@@ -33,7 +33,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.withOpacity(0.2),
-        title: Text("Departments${getUserTitle(user)}"),
+        title: Text("Departments"),
       ),
       body: BlocBuilder<DepartmentBloc, DepartmentState>(
         builder: (context, state) {
@@ -113,7 +113,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       subtitle: Text(
-                        'Department • ${dept.field ?? 'No field'}',
+                        'Department • ',
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,

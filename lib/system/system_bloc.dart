@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:elaunch_management/System/system_event.dart';
 import 'package:elaunch_management/System/system_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,8 +18,27 @@ class SystemBloc extends Bloc<SystemEvent, SystemState> {
     on<ApproveRequest>(approveRequestData);
     on<RejectRequest>(rejectRequestData);
     on<CancelRequest>(cancelRequestData);
+    on<LoadStatusColors>(fetchStatusColors);
+    on<UpdateStatusColor>(updateStatusColor);
   }
 
+  void fetchStatusColors(
+      LoadStatusColors event,
+      Emitter<SystemState> emit,
+      ) {
+
+    emit(state);
+  }
+
+  void updateStatusColor(
+      UpdateStatusColor event,
+      Emitter<SystemState> emit,
+      ) {
+    final newColors = Map<String, Color>.from(state.statusColors);
+    newColors[event.status] = event.color;
+
+    emit(state.copyWith(statusColors: newColors));
+  }
   Future<void> fetchSystemData(
     FetchSystem event,
     Emitter<SystemState> emit,

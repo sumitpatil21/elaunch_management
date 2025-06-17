@@ -82,7 +82,7 @@ class FirebaseDbHelper {
       return DepartmentModal.fromJson({
         ...data,
         'id': doc.id,
-        'id_admin': (data['adminRef'] as DocumentReference).id,
+       // 'id_admin': (data['adminRef'] as DocumentReference).id,
       });
     }).toList();
   }
@@ -122,7 +122,7 @@ class FirebaseDbHelper {
       ...employee.toJson(),
       'id': docRef.id,
       'departmentRef': departments.doc(employee.departmentId),
-      'adminRef': admins.doc(employee.adminId),
+      // 'adminRef': admins.doc(employee.adminId),
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -166,7 +166,7 @@ class FirebaseDbHelper {
     await employees.doc(employee.id).update({
       ...employee.toJson(),
       'departmentRef': departments.doc(employee.departmentId.toString()),
-      'adminRef': admins.doc(employee.adminId.toString()),
+      // 'adminRef': admins.doc(employee.adminId.toString()),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

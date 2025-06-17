@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
 
 import 'package:elaunch_management/Service/firebase_database.dart';
@@ -20,6 +22,7 @@ class DepartmentBloc extends Bloc<DepartmentEvent, DepartmentState> {
     Emitter<DepartmentState> emit,
   ) async {
     final fire = await FirebaseDbHelper.firebase.getDepartments();
+    log(fire.toString());
     emit(DepartmentState(departments: fire));
   }
 

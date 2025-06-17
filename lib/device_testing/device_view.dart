@@ -1,17 +1,14 @@
-import 'dart:developer';
-
-import 'package:elaunch_management/Service/admin_modal.dart';
-import 'package:elaunch_management/Service/device_modal.dart';
-
-import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../ utils/status_color_utils.dart';
+import '../Device_Testing/device_bloc.dart';
+import '../Device_Testing/device_dialog.dart';
+import '../Device_Testing/device_event.dart';
 import '../Employee/employee_bloc.dart';
+import '../Service/device_modal.dart';
+import '../SuperAdminLogin/admin_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
-import '../service/employee_modal.dart';
-import 'device_bloc.dart';
-import 'device_event.dart';
 
 class DeviceView extends StatefulWidget {
   static String routeName = "/device";
@@ -36,30 +33,52 @@ class DeviceView extends StatefulWidget {
 }
 
 class _DeviceViewState extends State<DeviceView> {
-  final List<String> statusFilters = [
-    'all',
-    'available',
-    'assigned',
-    'maintenance',
-    'retired',
-  ];
+  final TextEditingController searchController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
-    SelectRole user =
-        ModalRoute.of(context)!.settings.arguments as SelectRole;
+    SelectRole user = ModalRoute.of(context)!.settings.arguments as SelectRole;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWeb = screenWidth > 800;
+    final isMobile = screenWidth < 600;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.purple.withOpacity(0.2),
-        title: const Text("Device"),
+        title: Text(
+          "Device Management",
+          style: TextStyle(
+            fontSize: isWeb ? 24 : 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.purple.withOpacity(0.2),
-        onPressed: () => context.read<DeviceBloc>().add(ShowDeviceDialog()),
-        label: const Text("Add Device"),
-        icon: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          user.adminModal != null
+              ? FloatingActionButton.extended(
+                backgroundColor: Colors.purple.withOpacity(0.8),
+                onPressed: () {
+                  final deviceBloc = context.read<DeviceBloc>();
+                  final employeeBloc = context.read<EmployeeBloc>();
+
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => MultiBlocProvider(
+                          providers: [
+                            BlocProvider.value(value: deviceBloc),
+                            BlocProvider.value(value: employeeBloc),
+                          ],
+                          child: DeviceDialog(device: null, dialogData: {}),
+                        ),
+                  );
+                },
+                label: Text(isMobile ? "" : "Add Device"),
+                icon: const Icon(Icons.add),
+              )
+              : null,
       body: BlocListener<DeviceBloc, DeviceState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
@@ -70,54 +89,96 @@ class _DeviceViewState extends State<DeviceView> {
               ),
             );
           }
-
-          if (state.isDialogVisible) {
-            _showDeviceDialog(context, state);
-          }
         },
         child: Column(
-          children: [_buildSearchAndFilters(), _buildDeviceList(user)],
+          children: [
+            buildSearchAndFilters(isWeb, isMobile),
+            buildDeviceList(user, isWeb, screenWidth),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildSearchAndFilters() {
-    return BlocBuilder<DeviceBloc, DeviceState>(
-      builder: (context, state) {
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  labelText: "Search",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+  Widget buildSearchAndFilters(bool isWeb, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.all(isWeb ? 24.0 : 16.0),
+      child: Column(
+        children: [
+          // Search Bar - Responsive
+          Row(
+            children: [
+              Expanded(
+                flex: isWeb ? 3 : 1,
+                child: TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    labelText: "Search Devices",
+                    hintText: "Enter device name...",
+
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon:
+                        searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                searchController.clear();
+                                setState(() {});
+                              },
+                            )
+                            : null,
                   ),
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      context.read<DeviceBloc>().add(ClearSearch());
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              if (isWeb) ...[
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 200,
+                  child: DropdownButtonFormField<String>(
+                    value: selectedStatusFilter,
+                    decoration: InputDecoration(
+                      labelText: "Filter by Status",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items:
+                        statusFilters.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(
+                              status == 'all'
+                                  ? 'All Status'
+                                  : status.toUpperCase(),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedStatusFilter = value ?? 'all';
+                      });
                     },
                   ),
                 ),
-                onChanged: (query) {
-                  context.read<DeviceBloc>().add(UpdateSearchQuery(query));
-                },
-                controller: TextEditingController()..text = state.searchQuery,
-              ),
-            ),
-            Container(
+              ],
+            ],
+          ),
+
+          // Status Filter Chips - Mobile Only
+          if (!isWeb) ...[
+            const SizedBox(height: 16),
+            SizedBox(
               height: 60,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: statusFilters.length,
                 itemBuilder: (context, index) {
                   final status = statusFilters[index];
-                  final isSelected = state.selectedStatusFilter == status;
+                  final isSelected = selectedStatusFilter == status;
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
@@ -132,28 +193,24 @@ class _DeviceViewState extends State<DeviceView> {
                       ),
                       selected: isSelected,
                       onSelected: (selected) {
-                        context.read<DeviceBloc>().add(
-                          UpdateStatusFilter(status),
-                        );
+                        setState(() {
+                          selectedStatusFilter = status;
+                        });
                       },
                       backgroundColor: getStatusColor(status),
                       selectedColor: getStatusColor(status),
-                      checkmarkColor: Colors.white,
-                      elevation: isSelected ? 4 : 1,
-                      pressElevation: 2,
                     ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 8),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 
-  Widget _buildDeviceList(SelectRole? user) {
+  Widget buildDeviceList(SelectRole? user, bool isWeb, double screenWidth) {
     return Expanded(
       child: BlocBuilder<DeviceBloc, DeviceState>(
         builder: (context, state) {
@@ -161,168 +218,274 @@ class _DeviceViewState extends State<DeviceView> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final filteredDevices = state.filteredDevices;
+          List<TestingDeviceModal> filteredDevices =
+              state.devices.where((device) {
+                final matchesSearch = device.deviceName.toLowerCase().contains(
+                  searchController.text.toLowerCase(),
+                );
+                final matchesStatus =
+                    selectedStatusFilter == 'all' ||
+                    device.status == selectedStatusFilter;
+                return matchesSearch && matchesStatus;
+              }).toList();
 
           if (filteredDevices.isEmpty) {
             return Center(
-              child: Text(
-                state.searchQuery.isNotEmpty
-                    ? 'No results for "${state.searchQuery}"'
-                    : 'No Devices found',
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.phone_android_outlined,
+                    size: isWeb ? 80 : 60,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No devices found',
+                    style: TextStyle(
+                      fontSize: isWeb ? 20 : 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  if (searchController.text.isNotEmpty ||
+                      selectedStatusFilter != 'all') ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() {
+                          selectedStatusFilter = 'all';
+                        });
+                      },
+                      child: const Text('Clear Filters'),
+                    ),
+                  ],
+                ],
               ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: filteredDevices.length,
-            itemBuilder: (context, index) {
-              final device = filteredDevices[index];
-              return _buildDeviceCard(context, device, user);
-            },
+          // Grid layout for web, list for mobile
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: screenWidth > 1200 ? 3 : 1,
+                childAspectRatio: 1.5,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: filteredDevices.length,
+              itemBuilder: (context, index) {
+                final device = filteredDevices[index];
+                return buildDeviceCard(context, device, user, isWeb);
+              },
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildDeviceCard(
+  Widget buildDeviceCard(
     BuildContext context,
     TestingDeviceModal device,
     SelectRole? user,
+    bool isWebLayout,
   ) {
-    return Dismissible(
-      key: Key(device.id.toString()),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: Colors.red.shade700,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (_) => _showDeleteConfirmation(context, device),
-      onDismissed: (_) {
-        context.read<DeviceBloc>().add(DeleteDevice(device.id ?? ""));
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("${device.deviceName} deleted")));
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: getStatusColor(device.status ?? 'available'),
-            child: const Icon(Icons.phone_android),
-          ),
-          title: Text(
-            device.deviceName,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("${device.operatingSystem ?? ''} ${device.osVersion ?? ''}"),
-              Text(
-                "Assigned to: ${device.assignedEmployeeName ?? 'Unassigned'}",
-              ),
-              Row(
-                children: [
-                  const Text("Status: "),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 1,
+    return Card(
+      elevation: isWebLayout ? 4 : 2,
+      margin: EdgeInsets.only(bottom: isWebLayout ? 12 : 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    device.deviceName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isWebLayout ? 18 : 16,
                     ),
-                    decoration: BoxDecoration(
-                      color: getStatusColor(device.status ?? 'available'),
-                      borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: getStatusColor(device.status ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    (device.status ).toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Text(
-                      (device.status ?? 'available').toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            detailRow(
+              Icons.smartphone,
+              "OS",
+              "${device.operatingSystem ?? 'Unknown'} ${device.osVersion ?? ''}",
+            ),
+            detailRow(
+              Icons.person,
+              "Assigned to",
+              device.assignedEmployeeName ?? 'Unassigned',
+            ),
+
+            const Spacer(),
+
+            // Action Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (user?.employeeModal != null)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Device request submitted!'),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.withOpacity(0.1),
+                        foregroundColor: Colors.green,
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.send, size: 16),
+                      label: const Text(
+                        "Request Device",
+                        style: TextStyle(fontSize: 12),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              (user?.employeeModal == null)
-                  ? IconButton(
-                    icon: const Icon(Icons.edit),
+                  )
+                else if (user?.adminModal != null) ...[
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
                     onPressed: () {
-                      context.read<DeviceBloc>().add(
-                        ShowDeviceDialog(device: device),
+                      final deviceBloc = context.read<DeviceBloc>();
+                      final employeeBloc = context.read<EmployeeBloc>();
+                      final adminBloc = context.read<AdminBloc>();
+
+                      showDialog(
+                        context: context,
+                        builder:
+                            (context) => MultiBlocProvider(
+                              providers: [
+                                BlocProvider.value(value: deviceBloc),
+                                BlocProvider.value(value: employeeBloc),
+                                BlocProvider.value(value: adminBloc),
+                              ],
+                              child: DeviceDialog(
+                                device: device,
+                                dialogData: {
+                                  'deviceName': device.deviceName,
+                                  'osVersion': device.osVersion,
+                                  'operatingSystem': device.operatingSystem,
+                                  'status': device.status,
+                                  'assignedToEmployeeId':
+                                      device.assignedToEmployeeId,
+                                  'assignedEmployeeName':
+                                      device.assignedEmployeeName,
+                                },
+                              ),
+                            ),
                       );
                     },
-                  )
-                  : ElevatedButton(
-                    onPressed: () {},
-                    child: const Text(
-                      "Apply",
-                      style: TextStyle(color: Colors.green),
-                    ),
                   ),
-            ],
-          ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => confirmDelete(context, device),
+                  ),
+                ],
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Future<bool?> _showDeleteConfirmation(
-    BuildContext context,
-    TestingDeviceModal device,
-  ) {
-    return showDialog<bool>(
+  Widget detailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(
+            "$label: ",
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+              fontSize: 12,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void confirmDelete(BuildContext context, TestingDeviceModal device) {
+    showDialog(
       context: context,
       builder:
-          (_) => AlertDialog(
-            title: const Text("Confirm Delete"),
+          (context) => AlertDialog(
+            title: const Text('Delete Device'),
             content: Text(
-              "Are you sure you want to delete ${device.deviceName} device?",
+              'Are you sure you want to delete "${device.deviceName}"?',
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("CANCEL"),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-              TextButton(
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("DELETE"),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<DeviceBloc>().add(DeleteDevice(device.id ?? ""));
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Device deleted successfully!'),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
     );
-  }
-
-  void _showDeviceDialog(BuildContext context, DeviceState state) {
-    if (!state.isDialogVisible) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder:
-            (_) => _DeviceDialog(
-              device: state.dialogDevice,
-              dialogData: state.dialogData,
-            ),
-      ).then((_) {
-        context.read<DeviceBloc>().add(HideDeviceDialog());
-      });
-    });
   }
 
   Color getStatusColor(String status) {
@@ -337,236 +500,6 @@ class _DeviceViewState extends State<DeviceView> {
         return Colors.red;
       default:
         return Colors.purple.withOpacity(0.2);
-    }
-  }
-}
-
-class _DeviceDialog extends StatefulWidget {
-  final TestingDeviceModal? device;
-  final Map<String, dynamic> dialogData;
-
-  const _DeviceDialog({required this.device, required this.dialogData});
-
-  @override
-  State<_DeviceDialog> createState() => _DeviceDialogState();
-}
-
-class _DeviceDialogState extends State<_DeviceDialog> {
-  final formKey = GlobalKey<FormState>();
-  late TextEditingController nameController;
-  late TextEditingController versionController;
-
-  @override
-  void initState() {
-    super.initState();
-    nameController = TextEditingController(
-      text: widget.dialogData['deviceName'] ?? '',
-    );
-    versionController = TextEditingController(
-      text: widget.dialogData['osVersion'] ?? '',
-    );
-  }
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    versionController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<EmployeeBloc, EmployeeState>(
-      builder: (context, employeeState) {
-        final unassignedEmployee = EmployeeModal(
-          id: '-1',
-          name: "Unassigned",
-          email: '',
-          password: '',
-          address: '',
-          departmentName: "",
-          managerName: "",
-          role: "",
-          departmentId: "1",
-          adminId: "1",
-          managerId: "1",
-        );
-
-        EmployeeModal? selectedEmployee = unassignedEmployee;
-        if (widget.dialogData['assignedToEmployeeId'] != null) {
-          try {
-            selectedEmployee =
-                employeeState.employees.firstWhere(
-                      (emp) =>
-                          emp.id == widget.dialogData['assignedToEmployeeId'],
-                    )
-                    as EmployeeModal?;
-          } catch (e) {
-            selectedEmployee = unassignedEmployee;
-          }
-        }
-
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(widget.device != null ? 'Edit Device' : 'Add Device'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: nameController,
-                    validator:
-                        (value) =>
-                            value?.isEmpty == true
-                                ? 'Please enter a device name'
-                                : null,
-                    decoration: const InputDecoration(
-                      labelText: "Device Name",
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      context.read<DeviceBloc>().add(
-                        UpdateDialogField('deviceName', value),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: widget.dialogData['operatingSystem'] ?? 'Android',
-                    decoration: const InputDecoration(
-                      labelText: "Operating System",
-                      border: OutlineInputBorder(),
-                    ),
-                    items:
-                        ['Android', 'iOS']
-                            .map(
-                              (os) =>
-                                  DropdownMenuItem(value: os, child: Text(os)),
-                            )
-                            .toList(),
-                    onChanged: (value) {
-                      context.read<DeviceBloc>().add(
-                        UpdateDialogField('operatingSystem', value),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: versionController,
-                    validator:
-                        (value) =>
-                            value?.isEmpty == true
-                                ? 'Please enter OS version'
-                                : null,
-                    decoration: const InputDecoration(
-                      labelText: "OS Version",
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      context.read<DeviceBloc>().add(
-                        UpdateDialogField('osVersion', value),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: widget.dialogData['status'] ?? 'available',
-                    decoration: const InputDecoration(
-                      labelText: "Status",
-                      border: OutlineInputBorder(),
-                    ),
-                    items:
-                        ['available', 'assigned', 'maintenance', 'retired']
-                            .map(
-                              (status) => DropdownMenuItem(
-                                value: status,
-                                child: Text(status),
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (value) {
-                      context.read<DeviceBloc>().add(
-                        UpdateDialogField('status', value),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  const Text("Select Employee (Optional)"),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<EmployeeModal>(
-                    value: selectedEmployee,
-                    decoration: const InputDecoration(
-                      labelText: "Employee",
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      DropdownMenuItem<EmployeeModal>(
-                        value: unassignedEmployee,
-                        child: const Text("Unassigned"),
-                      ),
-                      ...employeeState.employees.map((emp) {
-                        return DropdownMenuItem<EmployeeModal>(
-                          value: emp,
-                          child: Text(emp.name),
-                        );
-                      }),
-                    ],
-                    onChanged: (emp) {
-                      context.read<DeviceBloc>().add(
-                        UpdateDialogField('assignedToEmployeeId', emp?.id),
-                      );
-                      context.read<DeviceBloc>().add(
-                        UpdateDialogField('assignedEmployeeName', emp?.name),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text("Cancel"),
-              onPressed: () => Navigator.pop(context),
-            ),
-            ElevatedButton(
-              child: Text(widget.device != null ? "Update" : "Add"),
-              onPressed: () => _saveDevice(context),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _saveDevice(BuildContext context) {
-    if (formKey.currentState!.validate()) {
-      final args = ModalRoute.of(context)!.settings.arguments as AdminModal?;
-
-      final deviceData = TestingDeviceModal(
-        id: widget.device?.id,
-        deviceName: nameController.text,
-        operatingSystem: widget.dialogData['operatingSystem'] ?? 'Android',
-        osVersion: versionController.text,
-        status: widget.dialogData['status'] ?? 'available',
-        assignedToEmployeeId: widget.dialogData['assignedToEmployeeId'],
-        assignedEmployeeName: widget.dialogData['assignedEmployeeName'],
-        lastCheckInDate: widget.device?.lastCheckInDate,
-        lastCheckOutDate: widget.device?.lastCheckOutDate,
-        adminId: args?.id,
-      );
-
-      if (widget.device != null) {
-        context.read<DeviceBloc>().add(UpdateDevice(deviceData));
-      } else {
-        context.read<DeviceBloc>().add(AddDevice(deviceData));
-      }
-
-      Navigator.pop(context);
     }
   }
 }

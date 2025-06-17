@@ -8,7 +8,6 @@ import '../SuperAdminLogin/admin_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
 import '../SuperAdminLogin/admin_view.dart';
 
-import '../superAdminLogin/admin_state.dart';
 import 'dashboard_view.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -58,9 +57,21 @@ class _SplashScreenState extends State<SplashScreen>
     final employeeBloc = context.read<EmployeeBloc>().state;
 
     if (adminBloc.isLogin && adminBloc.adminModal != null) {
-      Navigator.of(context).pushReplacementNamed(DashboardView.routeName,arguments: SelectRole(adminModal: adminBloc.adminModal!,selectedRole: "Admin"));
+      Navigator.of(context).pushReplacementNamed(
+        DashboardView.routeName,
+        arguments: SelectRole(
+          adminModal: adminBloc.adminModal!,
+          selectedRole: "Admin",
+        ),
+      );
     } else if (employeeBloc.isLogin && employeeBloc.loggedInEmployee != null) {
-      Navigator.of(context).pushReplacementNamed(DashboardView.routeName,arguments: SelectRole(employeeModal: employeeBloc.loggedInEmployee!,selectedRole: "Employee"));
+      Navigator.of(context).pushReplacementNamed(
+        DashboardView.routeName,
+        arguments: SelectRole(
+          employeeModal: employeeBloc.loggedInEmployee!,
+          selectedRole: "Employee",
+        ),
+      );
     } else {
       Navigator.of(context).pushReplacementNamed(AdminView.routeName);
     }

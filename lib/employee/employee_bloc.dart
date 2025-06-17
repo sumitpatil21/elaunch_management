@@ -1,7 +1,6 @@
-
 import 'dart:developer';
 
-import 'package:bloc/bloc.dart';
+import "package:bloc/bloc.dart";
 import 'package:elaunch_management/service/firebase_database.dart';
 
 import 'package:equatable/equatable.dart';
@@ -18,11 +17,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   static const String roleKey = 'user_role';
   static const String idKey = 'user_id';
 
-// 5. Register the missing event handler in EmployeeBloc constructor:
-
   EmployeeBloc() : super(const EmployeeState()) {
     on<FetchEmployees>(fetchEmployeesData);
-    on<LoadEmployees>(loadEmployees);
+
     on<AddEmployee>(insertEmployeeData);
     on<UpdateEmployee>(updateEmployeeData);
     on<DeleteEmployee>(deleteEmployeeData);
@@ -33,14 +30,16 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     on<EmployeeLogin>(employeeLogin);
     on<EmployeeLoginCheck>(employeeLoginCheck); // Add this line
     on<EmployeeLogout>(employeeLogout);
+    on<UpdateSearchQuery>(updateSearchQuery);
+    on<ClearSearch>(clearSearch);
+
     loginGet();
   }
 
-// 6. Fix the loginGet method in EmployeeBloc:
   Future<void> employeeLogin(
-      EmployeeLogin event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    EmployeeLogin event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
@@ -72,33 +71,37 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
         await saveLogin(true, 'Employee', currentUser.uid);
 
-        emit(state.copyWith(
-          loggedInEmployee: employeeModal,
-          isLogin: true,
-          isLoading: false,
-          successMessage: 'Employee login successful!',
-        ));
+        emit(
+          state.copyWith(
+            loggedInEmployee: employeeModal,
+            isLogin: true,
+            isLoading: false,
+            successMessage: 'Employee login successful!',
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          isLoading: false,
-          errorMessage: 'Failed to get user information',
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            errorMessage: 'Failed to get user information',
+          ),
+        );
       }
     } catch (e) {
       log('Employee login error: $e');
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Login failed: ${e.toString()}',
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: 'Login failed: ${e.toString()}',
+        ),
+      );
     }
   }
 
-// 4. Add the missing EmployeeLoginCheck handler:
-
   Future<void> employeeLoginCheck(
-      EmployeeLoginCheck event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    EmployeeLoginCheck event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(isLogin: event.isLogin));
   }
 
@@ -132,40 +135,8 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     }
   }
 
-// 7. Fix the logical operator issue in applyAllFilters method:
 
-  void applyAllFilters(Emitter<EmployeeState> emit) {
-    List<EmployeeModal> filtered = List.from(state.employees);
-
-    if (state.roleFilter != null) {
-      filtered = filtered.where((e) => e.role == state.roleFilter).toList();
-    }
-
-    if (state.departmentFilter != null) {
-      filtered = filtered
-          .where((e) => e.departmentId == state.departmentFilter)
-          .toList();
-    }
-
-    if (state.managerFilter != null) {
-// Fixed: Using logical OR operator instead of missing operator
-      filtered = filtered
-          .where(
-            (e) =>
-        e.managerName == state.managerFilter ||
-            e.managerId == state.managerFilter,
-      )
-          .toList();
-    }
-
-    emit(state.copyWith(filteredEmployees: filtered));
-  }
-
-  Future<void> saveLogin(
-      bool isLogin,
-      String role,
-      String? userId,
-      ) async {
+  Future<void> saveLogin(bool isLogin, String role, String? userId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(loginKey, isLogin);
     await prefs.setString(roleKey, role);
@@ -181,7 +152,6 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     await prefs.remove(idKey);
   }
 
-
   Future<void> employeeLogout(
     EmployeeLogout event,
     Emitter<EmployeeState> emit,
@@ -196,13 +166,6 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
   }
 
-  Future<void> loadEmployees(
-    LoadEmployees event,
-    Emitter<EmployeeState> emit,
-  ) async {
-    add(FetchEmployees());
-  }
-
   Future<void> fetchEmployeesData(
     FetchEmployees event,
     Emitter<EmployeeState> emit,
@@ -214,7 +177,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     log("Employee data ->>>>>: $employees");
     emit(
       state.copyWith(
-        employees: employees ,
+        employees: employees,
         filteredEmployees: employees,
         isLoading: false,
         errorMessage: null,
@@ -311,42 +274,88 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     applyAllFilters(emit);
   }
 
+  void applyAllFilters(Emitter<EmployeeState> emit) {
+    List<EmployeeModal> filtered = List.from(state.employees);
+
+    // Apply role filter
+    if (state.roleFilter != null && state.roleFilter != 'All') {
+      filtered = filtered.where((e) => e.role == state.roleFilter).toList();
+    }
+
+    // Apply department filter
+    if (state.departmentFilter != null) {
+      filtered = filtered.where((e) => e.departmentId == state.departmentFilter).toList();
+    }
+
+    // Apply manager filter
+    if (state.managerFilter != null) {
+      filtered = filtered.where((e) => e.managerId == state.managerFilter).toList();
+    }
+
+    // Apply search filter
+    if (state.searchQuery.isNotEmpty) {
+      final query = state.searchQuery.toLowerCase();
+      filtered = filtered.where((e) =>
+      e.name.toLowerCase().contains(query) ||
+          e.email.toLowerCase().contains(query) ||
+          e.role.toLowerCase().contains(query) ||
+          e.id.toLowerCase().contains(query)
+      ).toList();
+    }
+
+    emit(state.copyWith(filteredEmployees: filtered));
+  }
+
   Future<void> filterRole(
-    FilterEmployeesByRole event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FilterEmployeesByRole event,
+      Emitter<EmployeeState> emit,
+      ) async {
     emit(state.copyWith(roleFilter: event.role == 'All' ? null : event.role));
     applyAllFilters(emit);
   }
 
   Future<void> filterDepartment(
-    FilterEmployeesByDepartment event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FilterEmployeesByDepartment event,
+      Emitter<EmployeeState> emit,
+      ) async {
     emit(state.copyWith(departmentFilter: event.department));
     applyAllFilters(emit);
   }
 
   Future<void> filterManager(
-    FilterEmployeesByManager event,
-    Emitter<EmployeeState> emit,
-  ) async {
+      FilterEmployeesByManager event,
+      Emitter<EmployeeState> emit,
+      ) async {
     emit(state.copyWith(managerFilter: event.manager));
     applyAllFilters(emit);
   }
 
   Future<void> resetFilters(
-    ResetEmployeeFilters event,
-    Emitter<EmployeeState> emit,
-  ) async {
-    emit(
-      state.copyWith(
-        filteredEmployees: state.employees,
-        roleFilter: null,
-        departmentFilter: null,
-        managerFilter: null,
-      ),
-    );
+      ResetEmployeeFilters event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    emit(state.copyWith(
+      roleFilter: null,
+      departmentFilter: null,
+      managerFilter: null,
+      searchQuery: '',
+      filteredEmployees: state.employees,
+    ));
   }
 
+  Future<void> updateSearchQuery(
+      UpdateSearchQuery event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    emit(state.copyWith(searchQuery: event.query));
+    applyAllFilters(emit);
+  }
+
+  Future<void> clearSearch(
+      ClearSearch event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    emit(state.copyWith(searchQuery: ''));
+    applyAllFilters(emit);
+  }
 }

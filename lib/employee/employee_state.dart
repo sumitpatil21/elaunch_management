@@ -7,7 +7,8 @@ part of 'employee_bloc.dart';
 
 class EmployeeState extends Equatable {
   final List<EmployeeModal> employees;
-  final List<EmployeeModal> filteredEmployees;
+
+  final String searchQuery;
   final String? roleFilter;
   final String? departmentFilter;
   final String? managerFilter;
@@ -19,7 +20,8 @@ class EmployeeState extends Equatable {
 
   const EmployeeState({
     this.employees = const [],
-    this.filteredEmployees = const [],
+
+    this.searchQuery = '',
     this.roleFilter,
     this.departmentFilter,
     this.managerFilter,
@@ -33,6 +35,7 @@ class EmployeeState extends Equatable {
   EmployeeState copyWith({
     List<EmployeeModal>? employees,
     List<EmployeeModal>? filteredEmployees,
+    String? searchQuery,
     String? roleFilter,
     String? departmentFilter,
     String? managerFilter,
@@ -45,7 +48,8 @@ class EmployeeState extends Equatable {
   }) {
     return EmployeeState(
       employees: employees ?? this.employees,
-      filteredEmployees: filteredEmployees ?? this.filteredEmployees,
+
+      searchQuery: searchQuery ?? this.searchQuery,
       roleFilter: roleFilter ?? this.roleFilter,
       departmentFilter: departmentFilter ?? this.departmentFilter,
       managerFilter: managerFilter ?? this.managerFilter,
@@ -60,7 +64,8 @@ class EmployeeState extends Equatable {
   @override
   List<Object?> get props => [
     employees,
-    filteredEmployees,
+
+    searchQuery,
     roleFilter,
     departmentFilter,
     managerFilter,

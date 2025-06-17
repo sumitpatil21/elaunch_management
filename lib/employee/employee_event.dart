@@ -7,7 +7,7 @@ abstract class EmployeeEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadEmployees extends EmployeeEvent {}
+
 
 class FetchEmployees extends EmployeeEvent {
   final String? role;
@@ -146,4 +146,18 @@ class EmployeeLoginCheck extends EmployeeEvent {
 
   @override
   List<Object> get props => [isLogin];
+}
+class UpdateSearchQuery extends EmployeeEvent {
+  final String query;
+  final List<EmployeeModal> employees;
+  const UpdateSearchQuery(this.query, this.employees);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+
+
+class ClearSearch extends EmployeeEvent {
+  const ClearSearch();
 }

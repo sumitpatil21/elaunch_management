@@ -13,19 +13,17 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     on<AddDevice>(insertDeviceData);
     on<UpdateDevice>(updateDeviceData);
     on<DeleteDevice>(deleteDeviceData);
-    on<UpdateSearchQuery>(updateSearchQuery);
-    on<UpdateStatusFilter>(updateStatusFilter);
-    on<ClearSearch>(clearSearch);
-    on<ShowDeviceDialog>(showDeviceDialog);
-    on<HideDeviceDialog>(hideDeviceDialog);
-    on<UpdateDialogField>(updateDialogField);
+    on<UpdateSearchQueryDevice>(updateSearchQuery);
+    on<UpdateStatusFilterDevice>(updateStatusFilter);
+    on<ClearSearchDevice>(clearSearch);
+
   }
 
   Future<void> fetchDeviceData(
       FetchDevice event,
       Emitter<DeviceState> emit,
       ) async {
-    try {
+
       emit(state.copyWith(isLoading: true, errorMessage: null));
 
       final devices = await FirebaseDbHelper.firebase.getDevices();
@@ -34,19 +32,14 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
         devices: devices,
         isLoading: false,
       ));
-    } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to fetch devices: ${e.toString()}',
-      ));
-    }
+
   }
 
   Future<void> insertDeviceData(
       AddDevice event,
       Emitter<DeviceState> emit,
       ) async {
-    try {
+
       emit(state.copyWith(isLoading: true, errorMessage: null));
 
       await FirebaseDbHelper.firebase.createDevice(event.device);
@@ -59,19 +52,14 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
       ));
 
       add(FetchDevice());
-    } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to add device: ${e.toString()}',
-      ));
-    }
+
   }
 
   Future<void> updateDeviceData(
       UpdateDevice event,
       Emitter<DeviceState> emit,
       ) async {
-    try {
+
       emit(state.copyWith(isLoading: true, errorMessage: null));
 
       await FirebaseDbHelper.firebase.updateDevice(event.device);
@@ -82,109 +70,49 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
         dialogData: {},
       ));
 
-      // Fetch updated data
+
       add(FetchDevice());
-    } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to update device: ${e.toString()}',
-      ));
-    }
+
   }
 
   Future<void> deleteDeviceData(
       DeleteDevice event,
       Emitter<DeviceState> emit,
       ) async {
-    try {
+
       emit(state.copyWith(isLoading: true, errorMessage: null));
 
       await FirebaseDbHelper.firebase.deleteDevice(event.id);
 
-      // Fetch updated data
       add(FetchDevice());
-    } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to delete device: ${e.toString()}',
-      ));
-    }
+
   }
 
   void updateSearchQuery(
-      UpdateSearchQuery event,
+      UpdateSearchQueryDevice event,
       Emitter<DeviceState> emit,
       ) {
-    emit(state.copyWith(searchQuery: event.query));
+   List<TestingDeviceModal> filteredDevices = event.devices.where((device) => event.query.isEmpty ||
+          device.deviceName.toLowerCase().contains(event.query.toLowerCase()) ||
+          (device.osVersion?.toLowerCase().contains(event.query.toLowerCase()) ?? false) ||
+          (device.assignedEmployeeName?.toLowerCase().contains(event.query.toLowerCase()) ?? false) ||
+          (device.operatingSystem?.toLowerCase().contains(event.query.toLowerCase()) ?? false)).toList();
+    emit(state.copyWith(searchQuery: event.query,devices: filteredDevices));
   }
 
   void updateStatusFilter(
-      UpdateStatusFilter event,
+      UpdateStatusFilterDevice event,
       Emitter<DeviceState> emit,
       ) {
     emit(state.copyWith(selectedStatusFilter: event.status));
   }
 
   void clearSearch(
-      ClearSearch event,
+      ClearSearchDevice event,
       Emitter<DeviceState> emit,
       ) {
     emit(state.copyWith(searchQuery: ''));
   }
 
-  void showDeviceDialog(
-      ShowDeviceDialog event,
-      Emitter<DeviceState> emit,
-      ) {
-    final dialogData = <String, dynamic>{};
 
-    if (event.device != null) {
-      // Pre-populate dialog data for editing
-      dialogData.addAll({
-        'deviceName': event.device!.deviceName,
-        'operatingSystem': event.device!.operatingSystem ?? 'Android',
-        'osVersion': event.device!.osVersion ?? '',
-        'status': event.device!.status ?? 'available',
-        'assignedToEmployeeId': event.device!.assignedToEmployeeId,
-        'assignedEmployeeName': event.device!.assignedEmployeeName,
-      });
-    } else {
-      // Default values for new device
-      dialogData.addAll({
-        'deviceName': '',
-        'operatingSystem': 'Android',
-        'osVersion': '',
-        'status': 'available',
-        'assignedToEmployeeId': null,
-        'assignedEmployeeName': null,
-      });
-    }
-
-    emit(state.copyWith(
-      isDialogVisible: true,
-      dialogDevice: event.device,
-      dialogData: dialogData,
-    ));
-  }
-
-  void hideDeviceDialog(
-      HideDeviceDialog event,
-      Emitter<DeviceState> emit,
-      ) {
-    emit(state.copyWith(
-      isDialogVisible: false,
-      dialogDevice: null,
-      dialogData: {},
-    ));
-  }
-
-  void updateDialogField(
-      UpdateDialogField event,
-      Emitter<DeviceState> emit,
-      ) {
-    final updatedDialogData = Map<String, dynamic>.from(state.dialogData);
-    updatedDialogData[event.field] = event.value;
-
-    emit(state.copyWith(dialogData: updatedDialogData));
-  }
 }

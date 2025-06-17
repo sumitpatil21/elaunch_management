@@ -1,7 +1,6 @@
-import 'package:elaunch_management/Service/firebase_database.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
+
 import 'Device_Testing/device_view.dart';
 import 'Leave/leave_view.dart';
 import 'System/system_view.dart';
@@ -10,10 +9,9 @@ import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_view.dart';
 import 'package:flutter/material.dart';
-
 import 'Dashboard/dashboard_view.dart';
 import 'Employee/employee_view.dart';
-import 'Service/db_helper.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +40,7 @@ class MyApp extends StatelessWidget {
     DashboardView.routeName: DashboardView.builder,
     DepartmentScreen.routeName: DepartmentScreen.builder,
     EmployeeScreen.routeName: EmployeeScreen.builder,
-    SystemView.routeName: SystemView.builder,
+    SystemView.routeName: SystemView.builder  ,
     DeviceView.routeName: DeviceView.builder,
     LeaveView.routeName: LeaveView.builder,
 
