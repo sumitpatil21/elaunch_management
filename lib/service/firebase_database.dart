@@ -87,9 +87,7 @@ class FirebaseDbHelper {
     }).toList();
   }
 
-  Future<List<DepartmentModal>> getAllDepartments() async {
-    return getDepartments();
-  }
+
 
   Future<void> updateDepartment(DepartmentModal department) async {
     await departments.doc(department.id).update({

@@ -5,6 +5,9 @@ import 'package:equatable/equatable.dart';
 import '../Service/admin_modal.dart';
 import '../service/employee_modal.dart';
 
+
+
+
 class AdminEvent extends Equatable {
   const AdminEvent();
 
@@ -98,12 +101,5 @@ class ChangeRole extends AdminEvent {
   List<Object> get props => [role];
 }
 
-class ChangeTabIndex extends AdminEvent {
-  final int tabIndex;
 
-  const ChangeTabIndex({required this.tabIndex});
-
-  @override
-  List<Object> get props => [tabIndex];
-}
 

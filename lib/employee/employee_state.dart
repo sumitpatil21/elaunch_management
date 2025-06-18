@@ -1,9 +1,12 @@
 
 
 
-// employee_state.dart
-part of 'employee_bloc.dart';
 
+
+
+import 'package:equatable/equatable.dart';
+
+import '../service/employee_modal.dart';
 
 class EmployeeState extends Equatable {
   final List<EmployeeModal> employees;
@@ -15,7 +18,7 @@ class EmployeeState extends Equatable {
   final EmployeeModal? loggedInEmployee;
   final bool isLogin;
   final bool isLoading;
-  final bool isAuthenticated;
+
 
 
   const EmployeeState({
@@ -28,7 +31,7 @@ class EmployeeState extends Equatable {
     this.loggedInEmployee,
     this.isLogin = false,
     this.isLoading = false,
-    this.isAuthenticated = false,
+
 
   });
 
@@ -56,7 +59,6 @@ class EmployeeState extends Equatable {
       isLogin: isLogin ?? this.isLogin,
       loggedInEmployee: loggedInEmployee ?? this.loggedInEmployee,
       isLoading: isLoading ?? this.isLoading,
-      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
 
     );
   }
@@ -64,7 +66,6 @@ class EmployeeState extends Equatable {
   @override
   List<Object?> get props => [
     employees,
-
     searchQuery,
     roleFilter,
     departmentFilter,
@@ -72,7 +73,7 @@ class EmployeeState extends Equatable {
     loggedInEmployee,
     isLogin,
     isLoading,
-    isAuthenticated,
+
 
   ];
 }

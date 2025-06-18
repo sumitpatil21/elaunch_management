@@ -2,15 +2,12 @@ import 'dart:developer';
 
 import "package:bloc/bloc.dart";
 import 'package:elaunch_management/service/firebase_database.dart';
-
-import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../Service/firebase_auth.dart';
 import '../service/employee_modal.dart';
+import 'employee_event.dart';
+import 'employee_state.dart';
 
-part 'employee_event.dart';
-part 'employee_state.dart';
 
 class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   static const String loginKey = 'is_login';
@@ -32,7 +29,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     on<EmployeeLogout>(employeeLogout);
     on<UpdateSearchQuery>(updateSearchQuery);
     on<ClearSearch>(clearSearch);
-
+    applyAllFilters;
     loginGet();
   }
 
@@ -40,9 +37,9 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     EmployeeLogin event,
     Emitter<EmployeeState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(state.copyWith(isLoading: true));
 
-    try {
+
       log('Employee login attempt with email: ${event.email}');
 
       await AuthServices.authServices.signInWithEmailAndPassword(
@@ -54,7 +51,6 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       EmployeeModal? employeeModal;
 
       if (currentUser != null) {
-        // You might want to fetch additional employee data from your database here
         employeeModal = EmployeeModal(
           id: currentUser.uid,
           name: currentUser.displayName ?? '',
@@ -73,29 +69,20 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
         emit(
           state.copyWith(
-            loggedInEmployee: employeeModal,
             isLogin: true,
             isLoading: false,
-            successMessage: 'Employee login successful!',
+
           ),
         );
       } else {
         emit(
           state.copyWith(
             isLoading: false,
-            errorMessage: 'Failed to get user information',
+
           ),
         );
       }
-    } catch (e) {
-      log('Employee login error: $e');
-      emit(
-        state.copyWith(
-          isLoading: false,
-          errorMessage: 'Login failed: ${e.toString()}',
-        ),
-      );
-    }
+
   }
 
   Future<void> employeeLoginCheck(
@@ -160,30 +147,13 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     emit(
       state.copyWith(
         loggedInEmployee: null,
-        isAuthenticated: false,
-        errorMessage: null,
+
+
       ),
     );
   }
 
-  Future<void> fetchEmployeesData(
-    FetchEmployees event,
-    Emitter<EmployeeState> emit,
-  ) async {
-    final employees = await FirebaseDbHelper.firebase.getEmployees(
-      role: event.role,
-      departmentId: event.departmentId,
-    );
-    log("Employee data ->>>>>: $employees");
-    emit(
-      state.copyWith(
-        employees: employees,
-        filteredEmployees: employees,
-        isLoading: false,
-        errorMessage: null,
-      ),
-    );
-  }
+
 
   Future<void> insertEmployeeData(
     AddEmployee event,
@@ -212,13 +182,12 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
     await FirebaseDbHelper.firebase.createEmployee(employee);
 
-    // Refresh the employee list
     add(FetchEmployees(role: event.role));
 
     emit(
       state.copyWith(
         isLoading: false,
-        successMessage: 'Employee added successfully',
+
       ),
     );
   }
@@ -242,57 +211,37 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     );
 
     await FirebaseDbHelper.firebase.updateEmployee(updated);
-
-    // Refresh the employee list
     add(FetchEmployees(role: event.role));
 
     emit(
       state.copyWith(
         isLoading: false,
-        successMessage: 'Employee updated successfully',
+
       ),
     );
   }
 
-  Future<void> deleteEmployeeData(
-    DeleteEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
-    await FirebaseDbHelper.firebase.deleteEmployee(event.id.toString());
 
-    final updatedEmployees =
-        state.employees.where((e) => e.id != event.id.toString()).toList();
-
-    emit(
-      state.copyWith(
-        employees: updatedEmployees,
-        isLoading: false,
-        successMessage: 'Employee deleted successfully',
-      ),
-    );
-
-    applyAllFilters(emit);
-  }
 
   void applyAllFilters(Emitter<EmployeeState> emit) {
     List<EmployeeModal> filtered = List.from(state.employees);
 
-    // Apply role filter
-    if (state.roleFilter != null && state.roleFilter != 'All') {
+
+    if (state.employees != null) {
       filtered = filtered.where((e) => e.role == state.roleFilter).toList();
     }
 
-    // Apply department filter
+
     if (state.departmentFilter != null) {
       filtered = filtered.where((e) => e.departmentId == state.departmentFilter).toList();
     }
 
-    // Apply manager filter
+
     if (state.managerFilter != null) {
       filtered = filtered.where((e) => e.managerId == state.managerFilter).toList();
     }
 
-    // Apply search filter
+
     if (state.searchQuery.isNotEmpty) {
       final query = state.searchQuery.toLowerCase();
       filtered = filtered.where((e) =>
@@ -304,6 +253,38 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     }
 
     emit(state.copyWith(filteredEmployees: filtered));
+  }
+
+  Future<void> fetchEmployeesData(
+      FetchEmployees event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    emit(state.copyWith(isLoading: true));
+
+    final employees = await FirebaseDbHelper.firebase.getEmployees(
+      role: event.role,
+      departmentId: event.departmentId,
+    );
+
+    log("Employee data ->>>>>: $employees");
+
+    emit(state.copyWith(
+      employees: employees,
+      filteredEmployees: employees,
+      isLoading: false,
+    ));
+  }
+
+  Future<void> deleteEmployeeData(
+      DeleteEmployee event,
+      Emitter<EmployeeState> emit,
+      ) async {
+    await FirebaseDbHelper.firebase.deleteEmployee(event.id.toString());
+
+    final updatedEmployees = state.employees.where((e) => e.id != event.id.toString()).toList();
+
+    emit(state.copyWith(employees: updatedEmployees));
+    applyAllFilters(emit);
   }
 
   Future<void> filterRole(

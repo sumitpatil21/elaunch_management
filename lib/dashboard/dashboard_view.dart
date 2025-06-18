@@ -15,6 +15,11 @@ import '../Device_Testing/device_bloc.dart';
 import '../Device_Testing/device_event.dart';
 import '../Employee/employee_bloc.dart';
 
+import '../Employee/employee_event.dart';
+import '../Employee/employee_state.dart';
+import '../Leave/leave_bloc.dart';
+import '../Leave/leave_event.dart';
+import '../Leave/leave_state.dart';
 import '../Leave/leave_view.dart';
 
 import '../SuperAdminLogin/admin_state.dart';
@@ -38,6 +43,7 @@ class DashboardView extends StatefulWidget {
         BlocProvider(create: (context) => SystemBloc()..add(FetchSystem())),
         BlocProvider(create: (context) => DeviceBloc()..add(FetchDevice())),
         BlocProvider(create: (context) => EmployeeBloc()..add(FetchEmployees())),
+        BlocProvider(create: (context) => LeaveBloc()..add(FetchLeaves())),
       ],
       child: DashboardView(),
     );
@@ -51,15 +57,16 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    initializeData();
   }
 
-  void _initializeData() {
+  void initializeData() {
 
     context.read<EmployeeBloc>().add(FetchEmployees());
     context.read<DepartmentBloc>().add(FetchDepartments());
     context.read<SystemBloc>().add(FetchSystem());
     context.read<DeviceBloc>().add(FetchDevice());
+    context.read<LeaveBloc>().add(FetchLeaves());
 
 
   }
@@ -70,6 +77,7 @@ class _DashboardViewState extends State<DashboardView> {
     context.read<DepartmentBloc>().add(FetchDepartments());
     context.read<SystemBloc>().add(FetchSystem());
     context.read<DeviceBloc>().add(FetchDevice());
+    context.read<LeaveBloc>().add(FetchLeaves());
   }
 
   @override
@@ -327,10 +335,10 @@ class _DashboardViewState extends State<DashboardView> {
         route: LeaveView.routeName,
         selectRole: user,
         builder:
-            (context, state) => BlocBuilder<DeviceBloc, DeviceState>(
+            (context, state) => BlocBuilder<LeaveBloc, LeaveState>(
               builder:
                   (context, state) => Text(
-                    '${state.devices.length}',
+                    '${state.leaves.length}',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,

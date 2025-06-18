@@ -4,9 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Device_Testing/device_bloc.dart';
 import '../Device_Testing/device_event.dart';
 import '../Employee/employee_bloc.dart';
+import '../Employee/employee_state.dart';
 import '../Service/device_modal.dart';
+
 import '../SuperAdminLogin/admin_event.dart';
 import '../service/employee_modal.dart';
+
 
 class DeviceDialog extends StatefulWidget {
   final TestingDeviceModal? device;

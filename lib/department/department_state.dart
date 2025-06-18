@@ -7,8 +7,7 @@ class DepartmentState extends Equatable {
 
   DepartmentState copyWith({
     List<DepartmentModal>? depart,
-    List<DepartmentModal>? fireDepart,
-    bool? network,
+
   }) {
     return DepartmentState(departments: depart ?? this.departments);
   }

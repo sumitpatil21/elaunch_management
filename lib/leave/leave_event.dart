@@ -1,4 +1,3 @@
-
 import 'package:equatable/equatable.dart';
 import '../Service/leave_modal.dart';
 
@@ -63,3 +62,53 @@ class SearchLeaves extends LeaveEvent {
   @override
   List<Object?> get props => [query];
 }
+
+class SelectLeaveType extends LeaveEvent {
+  final String leaveType;
+
+  const SelectLeaveType(this.leaveType);
+
+  @override
+  List<Object?> get props => [leaveType];
+}
+
+class SelectStartDate extends LeaveEvent {
+  final DateTime date;
+
+  const SelectStartDate(this.date);
+
+  @override
+  List<Object?> get props => [date];
+}
+
+class SelectEndDate extends LeaveEvent {
+  final DateTime date;
+
+
+  const SelectEndDate(this.date);
+
+  @override
+  List<Object?> get props => [date];
+}
+
+class SelectNotifyEmployee extends LeaveEvent {
+  final String? employeeName;
+
+  const SelectNotifyEmployee(this.employeeName);
+
+  @override
+  List<Object?> get props => [employeeName];
+}
+
+class UpdateReason extends LeaveEvent {
+  final String reason;
+
+  const UpdateReason(this.reason);
+  @override
+  List<Object?> get props => [reason];
+}
+
+class ResetLeaveForm extends LeaveEvent {
+  const ResetLeaveForm();
+}
+

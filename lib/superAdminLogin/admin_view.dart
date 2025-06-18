@@ -1,3 +1,5 @@
+
+
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -5,9 +7,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Dashboard/dashboard_view.dart';
 import '../Employee/employee_bloc.dart';
+import '../Employee/employee_event.dart';
+import '../Employee/employee_state.dart';
+import '../SuperAdminLogin/admin_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
 import '../SuperAdminLogin/admin_state.dart';
-import 'admin_bloc.dart';
+
 
 class AdminView extends StatefulWidget {
   static String routeName = "/login";
@@ -29,7 +34,7 @@ class AdminView extends StatefulWidget {
 }
 
 class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
-  late TabController tabController;
+
   final loginFormKey = GlobalKey<FormState>();
   final registerFormKey = GlobalKey<FormState>();
   final loginEmailController = TextEditingController();
@@ -45,12 +50,7 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 2, vsync: this);
-    tabController.addListener(() {
-      context.read<AdminBloc>().add(
-        ChangeTabIndex(tabIndex: tabController.index),
-      );
-    });
+
   }
 
   bool get isMobile => MediaQuery.of(context).size.width < 600;
@@ -72,9 +72,6 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
                   selectedRole: "Admin",
                 ),
               );
-            }
-            if (tabController.index != state.currentTabIndex) {
-              tabController.animateTo(state.currentTabIndex);
             }
           },
         ),

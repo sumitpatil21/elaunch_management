@@ -25,7 +25,6 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<AdminLogout>(adminLogout);
     on<AdminLoginCheck>(adminLoginCheck);
 
-    on<ToggleObscurePassword>(toggleObscurePassword);
     on<ChangeRole>(changeRole);
     on<ChangeTabIndex>(changeTabIndex);
     loginGet();
@@ -179,23 +178,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     );
   }
 
-  Future<void> toggleObscurePassword(
-    ToggleObscurePassword event,
-    Emitter<AdminState> emit,
-  ) async {
-    switch (event.passwordType) {
-      case 'login':
-        emit(state.copyWith(obscureLoginPassword: !state.obscureLoginPassword));
-        break;
-      case 'register':
-        emit(
-          state.copyWith(
-            obscureRegisterPassword: !state.obscureRegisterPassword,
-          ),
-        );
-        break;
-    }
-  }
+
 
   Future<void> changeRole(ChangeRole event, Emitter<AdminState> emit) async {
     emit(state.copyWith(selectedRole: event.role));

@@ -6,6 +6,7 @@ import '../Device_Testing/device_bloc.dart';
 import '../Device_Testing/device_dialog.dart';
 import '../Device_Testing/device_event.dart';
 import '../Employee/employee_bloc.dart';
+import '../Employee/employee_event.dart';
 import '../Service/device_modal.dart';
 import '../SuperAdminLogin/admin_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
@@ -35,6 +36,11 @@ class DeviceView extends StatefulWidget {
 class _DeviceViewState extends State<DeviceView> {
   final TextEditingController searchController = TextEditingController();
 
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,134 +85,138 @@ class _DeviceViewState extends State<DeviceView> {
                 icon: const Icon(Icons.add),
               )
               : null,
-      body: BlocListener<DeviceBloc, DeviceState>(
-        listener: (context, state) {
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: Column(
-          children: [
-            buildSearchAndFilters(isWeb, isMobile),
-            buildDeviceList(user, isWeb, screenWidth),
-          ],
-        ),
+      body: Column(
+        children: [
+          buildSearchAndFilters(isWeb, isMobile),
+          buildDeviceList(user, isWeb, screenWidth),
+        ],
       ),
     );
   }
 
   Widget buildSearchAndFilters(bool isWeb, bool isMobile) {
-    return Container(
-      padding: EdgeInsets.all(isWeb ? 24.0 : 16.0),
-      child: Column(
-        children: [
-          // Search Bar - Responsive
-          Row(
+    return BlocBuilder<DeviceBloc, DeviceState>(
+      builder: (context, state) {
+        return Container(
+          padding: EdgeInsets.all(isWeb ? 24.0 : 16.0),
+          child: Column(
             children: [
-              Expanded(
-                flex: isWeb ? 3 : 1,
-                child: TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    labelText: "Search Devices",
-                    hintText: "Enter device name...",
+              // Search Bar - Responsive
+              Row(
+                children: [
+                  Expanded(
+                    flex: isWeb ? 3 : 1,
+                    child: TextField(
+                      controller: searchController,
+                      onChanged: (value) {
+                        context.read<DeviceBloc>().add(
+                          SearchSystems(searchQuery: value),
+                        );
+                      },
+                      decoration: InputDecoration(
+                        labelText: "Search Devices",
 
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon:
-                        searchController.text.isNotEmpty
-                            ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                searchController.clear();
-                                setState(() {});
-                              },
-                            )
-                            : null,
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-              if (isWeb) ...[
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 200,
-                  child: DropdownButtonFormField<String>(
-                    value: selectedStatusFilter,
-                    decoration: InputDecoration(
-                      labelText: "Filter by Status",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        hintText: "Enter device name...",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon:
+                            searchController.text.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    searchController.clear();
+                                    context.read<DeviceBloc>().add(
+                                      const SearchSystems(searchQuery: ''),
+                                    );
+                                  },
+                                )
+                                : null,
                       ),
                     ),
-                    items:
-                        statusFilters.map((status) {
-                          return DropdownMenuItem(
-                            value: status,
-                            child: Text(
-                              status == 'all'
-                                  ? 'All Status'
-                                  : status.toUpperCase(),
-                            ),
+                  ),
+                  if (isWeb) ...[
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 200,
+                      child: DropdownButtonFormField<String>(
+                        value: state.statusFilter,
+                        decoration: InputDecoration(
+                          labelText: "Filter by Status",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        items:
+                            statusFilters.map((status) {
+                              return DropdownMenuItem(
+                                value: status,
+                                child: Text(
+                                  status == 'all'
+                                      ? 'All Status'
+                                      : status.toUpperCase(),
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          context.read<DeviceBloc>().add(
+                            FilterSystems(statusFilter: value ?? 'all'),
                           );
-                        }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStatusFilter = value ?? 'all';
-                      });
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+
+              // Status Filter Chips - Mobile Only
+              if (!isWeb) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 60,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: statusFilters.length,
+                    itemBuilder: (context, index) {
+                      final status = statusFilters[index];
+                      final isSelected = state.statusFilter == status;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: FilterChip(
+                          label: Text(
+                            status == 'all' ? 'All' : status.toUpperCase(),
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black87,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                            ),
+                          ),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            context.read<DeviceBloc>().add(
+                              FilterSystems(statusFilter: status),
+                            );
+                          },
+                          backgroundColor: StatusColorUtils.getStatusColor(
+                            status,
+                          ),
+                          selectedColor: StatusColorUtils.getStatusColor(
+                            status,
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ),
               ],
             ],
           ),
-
-          // Status Filter Chips - Mobile Only
-          if (!isWeb) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 60,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: statusFilters.length,
-                itemBuilder: (context, index) {
-                  final status = statusFilters[index];
-                  final isSelected = selectedStatusFilter == status;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: FilterChip(
-                      label: Text(
-                        status == 'all' ? 'All' : status.toUpperCase(),
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          selectedStatusFilter = status;
-                        });
-                      },
-                      backgroundColor: getStatusColor(status),
-                      selectedColor: getStatusColor(status),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -214,22 +224,7 @@ class _DeviceViewState extends State<DeviceView> {
     return Expanded(
       child: BlocBuilder<DeviceBloc, DeviceState>(
         builder: (context, state) {
-          if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          List<TestingDeviceModal> filteredDevices =
-              state.devices.where((device) {
-                final matchesSearch = device.deviceName.toLowerCase().contains(
-                  searchController.text.toLowerCase(),
-                );
-                final matchesStatus =
-                    selectedStatusFilter == 'all' ||
-                    device.status == selectedStatusFilter;
-                return matchesSearch && matchesStatus;
-              }).toList();
-
-          if (filteredDevices.isEmpty) {
+          if (state.filteredDevices.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -247,15 +242,13 @@ class _DeviceViewState extends State<DeviceView> {
                       color: Colors.grey,
                     ),
                   ),
-                  if (searchController.text.isNotEmpty ||
-                      selectedStatusFilter != 'all') ...[
+                  if (state.searchQuery.isNotEmpty ||
+                      state.statusFilter != 'all') ...[
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
                         searchController.clear();
-                        setState(() {
-                          selectedStatusFilter = 'all';
-                        });
+                        // context.read<DeviceBloc>().add( ClearSearch());
                       },
                       child: const Text('Clear Filters'),
                     ),
@@ -265,7 +258,6 @@ class _DeviceViewState extends State<DeviceView> {
             );
           }
 
-          // Grid layout for web, list for mobile
           return Padding(
             padding: const EdgeInsets.all(24.0),
             child: GridView.builder(
@@ -275,9 +267,9 @@ class _DeviceViewState extends State<DeviceView> {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
-              itemCount: filteredDevices.length,
+              itemCount: state.filteredDevices.length,
               itemBuilder: (context, index) {
-                final device = filteredDevices[index];
+                final device = state.filteredDevices[index];
                 return buildDeviceCard(context, device, user, isWeb);
               },
             ),
@@ -320,7 +312,9 @@ class _DeviceViewState extends State<DeviceView> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: getStatusColor(device.status ),
+                    color: StatusColorUtils.getStatusColor(
+                      device.status,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -350,7 +344,6 @@ class _DeviceViewState extends State<DeviceView> {
 
             const Spacer(),
 
-            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -358,7 +351,6 @@ class _DeviceViewState extends State<DeviceView> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Device request submitted!'),
@@ -456,6 +448,7 @@ class _DeviceViewState extends State<DeviceView> {
   void confirmDelete(BuildContext context, TestingDeviceModal device) {
     showDialog(
       context: context,
+
       builder:
           (context) => AlertDialog(
             title: const Text('Delete Device'),
@@ -486,20 +479,5 @@ class _DeviceViewState extends State<DeviceView> {
             ],
           ),
     );
-  }
-
-  Color getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'available':
-        return Colors.green;
-      case 'assigned':
-        return Colors.blue;
-      case 'maintenance':
-        return Colors.orange;
-      case 'retired':
-        return Colors.red;
-      default:
-        return Colors.purple.withOpacity(0.2);
-    }
   }
 }

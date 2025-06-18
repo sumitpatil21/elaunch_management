@@ -4,9 +4,13 @@ import 'package:elaunch_management/Service/system_modal.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
 import 'package:elaunch_management/System/system_event.dart';
 import 'package:elaunch_management/employee/employee_bloc.dart';
-import 'package:elaunch_management/service/employee_modal.dart';
+
 
 import '../ utils/status_color_utils.dart';
+
+import '../employee/employee_event.dart';
+import '../service/employee_modal.dart';
+
 
 class RequestDialog extends StatefulWidget {
   final List<SystemModal> requests;
@@ -21,83 +25,84 @@ class RequestDialog extends StatefulWidget {
 class _RequestDialogState extends State<RequestDialog> {
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
+
+    // Responsive dimensions
+    double dialogWidth;
+    double dialogHeight;
+
+    if (widget.isWeb) {
+      // Web responsive sizing
+      if (screenWidth > 1200) {
+        dialogWidth = 600;
+      } else if (screenWidth > 800) {
+        dialogWidth = screenWidth * 0.6;
+      } else {
+        dialogWidth = screenWidth * 0.9;
+      }
+
+      if (screenHeight > 700) {
+        dialogHeight = 500;
+      } else {
+        dialogHeight = screenHeight * 0.7;
+      }
+    } else {
+      // Mobile responsive sizing
+      dialogWidth = screenWidth > 400 ? double.maxFinite : screenWidth * 0.95;
+
+      if (screenHeight > 600) {
+        dialogHeight = 400;
+      } else {
+        dialogHeight = screenHeight * 0.6;
+      }
+    }
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [
           const Icon(Icons.pending_actions, color: Colors.orange),
           const SizedBox(width: 8),
-          Text('Pending Requests (${widget.requests.length})'),
+          Flexible(
+            child: Text(
+              'Pending Requests (${widget.requests.length})',
+              style: TextStyle(
+                fontSize: _getResponsiveFontSize(screenWidth, 15),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: SizedBox(
-        width: widget.isWeb ? 600 : double.maxFinite,
-        height: widget.isWeb ? 500 : 400,
-        child:
-            widget.requests.isEmpty
-                ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'No pending requests',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                )
-                : ListView.builder(
-                  itemCount: widget.requests.length,
-                  itemBuilder: (context, index) {
-                    final request = widget.requests[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: Icon(
-                          Icons.computer,
-                          color: StatusColorUtils.getStatusColor('pending'),
-                        ),
-                        title: Text(
-                          request.systemName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Requested by: ${request.requestedByName ?? 'Unknown'}',
-                            ),
-                            if (request.requestedAt != null)
-                              Text(
-                                'Date: ${formatDate(request.requestedAt!)}',
-                              ),
-                            Text('OS: ${request.operatingSystem ?? 'Unknown'}'),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                              ),
-                              onPressed: () => approveRequest(request),
-                              tooltip: 'Approve',
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.cancel, color: Colors.red),
-                              onPressed: () => rejectRequest(request),
-                              tooltip: 'Reject',
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+        width: dialogWidth,
+        height: dialogHeight,
+        child: widget.requests.isEmpty
+            ? const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                'No pending requests',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        )
+            : ListView.builder(
+          itemCount: widget.requests.length,
+          itemBuilder: (context, index) {
+            final request = widget.requests[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: _buildResponsiveListTile(request, screenWidth),
+            );
+          },
+        ),
       ),
       actions: [
         TextButton(
@@ -106,6 +111,191 @@ class _RequestDialogState extends State<RequestDialog> {
         ),
       ],
     );
+  }
+
+  Widget _buildResponsiveListTile(SystemModal request, double screenWidth) {
+    final isSmallScreen = screenWidth < 600;
+
+    if (isSmallScreen) {
+
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            Row(
+              children: [
+                Icon(
+                  Icons.computer,
+                  color: StatusColorUtils.getStatusColor('pending'),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    request.systemName,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+
+
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Request details
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Requested by: ${request.requestedByName ?? 'Unknown'}',
+                  style: TextStyle(fontSize: _getResponsiveFontSize(screenWidth, 10)),
+                ),
+                if (request.requestedAt != null)
+                  Text(
+                    'Date: ${formatDate(request.requestedAt!)}',
+                    style: TextStyle(fontSize: _getResponsiveFontSize(screenWidth, 12)),
+                  ),
+                Text(
+                  'OS: ${request.operatingSystem ?? 'Unknown'}',
+                  style: TextStyle(fontSize: _getResponsiveFontSize(screenWidth, 12)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 36,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.check_circle, size: 16),
+                      label: const Text('Approve', style: TextStyle(fontSize: 9)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () => approveRequest(request),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SizedBox(
+                    height: 36,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.cancel, size: 16),
+                      label: const Text('Reject', style: TextStyle(fontSize: 9)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () => rejectRequest(request),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    } else {
+
+      return ListTile(
+        leading: Icon(
+          Icons.computer,
+          color: StatusColorUtils.getStatusColor('pending'),
+        ),
+        title: Text(
+          request.systemName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Requested by: ${request.requestedByName ?? 'Unknown'}',
+              style: TextStyle(fontSize: _getResponsiveFontSize(screenWidth, 10)),
+            ),
+            if (request.requestedAt != null)
+              Text(
+                'Date: ${formatDate(request.requestedAt!)}',
+              ),
+            Text('OS: ${request.operatingSystem ?? 'Unknown'}'),
+          ],
+        ),
+        trailing: screenWidth > 800
+            ? Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.check_circle,
+                color: Colors.green,
+              ),
+              onPressed: () => approveRequest(request),
+              tooltip: 'Approve',
+            ),
+            IconButton(
+              icon: const Icon(Icons.cancel, color: Colors.red),
+              onPressed: () => rejectRequest(request),
+              tooltip: 'Reject',
+            ),
+          ],
+        )
+            : PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'approve') {
+              approveRequest(request);
+            } else if (value == 'reject') {
+              rejectRequest(request);
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'approve',
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  SizedBox(width: 8),
+                  Text('Approve'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'reject',
+              child: Row(
+                children: [
+                  Icon(Icons.cancel, color: Colors.red, size: 16),
+                  SizedBox(width: 8),
+                  Text('Reject'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  double _getResponsiveFontSize(double screenWidth, double baseFontSize) {
+    if (screenWidth < 360) {
+      return baseFontSize * 0.9;
+    } else if (screenWidth < 600) {
+      return baseFontSize;
+    } else {
+      return baseFontSize * 1.1;
+    }
   }
 
   void approveRequest(SystemModal request) {
@@ -129,7 +319,7 @@ class _RequestDialogState extends State<RequestDialog> {
       ),
     );
     Navigator.pop(context);
-  showSnackBar(
+    showSnackBar(
       context,
       'Request approved successfully!',
       Colors.green,

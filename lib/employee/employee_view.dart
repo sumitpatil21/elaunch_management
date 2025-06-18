@@ -1,14 +1,17 @@
-import 'package:elaunch_management/employee/employee_bloc.dart';
+
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Department/department_bloc.dart';
-
+import '../Employee/employee_bloc.dart';
+import '../Employee/employee_event.dart';
+import '../Employee/employee_state.dart';
 import '../Service/department_modal.dart';
+
 import '../SuperAdminLogin/admin_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
 import '../SuperAdminLogin/admin_state.dart';
-
 import '../service/employee_modal.dart';
 
 class EmployeeScreen extends StatefulWidget {
@@ -43,12 +46,6 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     context.read<DepartmentBloc>().add(FetchDepartments());
   }
 
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
   void clearAllFilters() {
     context.read<EmployeeBloc>().add(const ResetEmployeeFilters());
     context.read<EmployeeBloc>().add(const ClearSearch());
@@ -59,7 +56,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     final departments = context.read<DepartmentBloc>().state.departments;
     final employeeState = context.read<EmployeeBloc>().state;
     final managers =
-        employeeState.employees.where((emp) => emp.role == 'Manager').toList();
+    employeeState.employees.where((emp) => emp.role == 'Manager').toList();
 
     String tempRoleFilter = employeeState.roleFilter ?? 'All';
     String? tempDepartmentFilter = employeeState.departmentFilter;
@@ -73,205 +70,200 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
       ),
       builder:
           (modalContext) => Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Filter Employees',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                  const SizedBox(height: 16),
-
-                  // Role Filter
                   const Text(
-                    'Role',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: tempRoleFilter,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                    ),
-                    items:
-                        ['All', 'Employee', 'Manager', 'HR']
-                            .map(
-                              (role) => DropdownMenuItem(
-                                value: role,
-                                child: Text(role),
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (value) {
-                      tempRoleFilter = value ?? 'All';
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Department Filter
-                  const Text(
-                    'Department',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: tempDepartmentFilter,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      hintText: 'Select Department',
-                    ),
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: null,
-                        child: Text('All Departments'),
-                      ),
-                      ...departments.map(
-                        (dept) => DropdownMenuItem(
-                          value: dept.id,
-                          child: Text(dept.name),
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      tempDepartmentFilter = value;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    'Manager',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: tempManagerFilter,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      hintText: 'Select Manager',
-                    ),
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: null,
-                        child: Text('All Managers'),
-                      ),
-                      ...managers.map(
-                        (manager) => DropdownMenuItem(
-                          value: manager.id,
-                          child: Text(manager.name),
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      tempManagerFilter = value;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Apply Button
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<EmployeeBloc>().add(
-                        FilterEmployeesByRole(role: tempRoleFilter),
-                      );
-                      context.read<EmployeeBloc>().add(
-                        FilterEmployeesByDepartment(
-                          department: tempDepartmentFilter,
-                        ),
-                      );
-                      context.read<EmployeeBloc>().add(
-                        FilterEmployeesByManager(manager: tempManagerFilter),
-                      );
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Apply Filters',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    'Filter Employees',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 12),
-
-                  // Reset Button
-                  OutlinedButton(
-                    onPressed: () {
-                      context.read<EmployeeBloc>().add(
-                        const ResetEmployeeFilters(),
-                      );
-                      Navigator.pop(context);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      side: const BorderSide(color: Colors.blue),
-                    ),
-                    child: const Text(
-                      'Reset All',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-            ),
+              const Divider(),
+              const SizedBox(height: 16),
+
+              // Role Filter
+              const Text(
+                'Role',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: tempRoleFilter,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+
+                ),
+                items:
+                ['All', 'Employee', 'Manager', 'HR']
+                    .map(
+                      (role) => DropdownMenuItem(
+                    value: role,
+                    child: Text(role),
+                  ),
+                )
+                    .toList(),
+                onChanged: (value) {
+                  tempRoleFilter = value ?? 'All';
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Department Filter
+              const Text(
+                'Department',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: tempDepartmentFilter,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+
+                  hintText: 'Select Department',
+                ),
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('All Departments'),
+                  ),
+                  ...departments.map(
+                        (dept) => DropdownMenuItem(
+                      value: dept.id,
+                      child: Text(dept.name),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  tempDepartmentFilter = value;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              const Text(
+                'Manager',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: tempManagerFilter,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+
+                  hintText: 'Select Manager',
+                ),
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('All Managers'),
+                  ),
+                  ...managers.map(
+                        (manager) => DropdownMenuItem(
+                      value: manager.id,
+                      child: Text(manager.name),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  tempManagerFilter = value;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // Apply Button
+              ElevatedButton(
+                onPressed: () {
+                  context.read<EmployeeBloc>().add(
+                    FilterEmployeesByRole(role: tempRoleFilter),
+                  );
+                  context.read<EmployeeBloc>().add(
+                    FilterEmployeesByDepartment(
+                      department: tempDepartmentFilter,
+                    ),
+                  );
+                  context.read<EmployeeBloc>().add(
+                    FilterEmployeesByManager(manager: tempManagerFilter),
+                  );
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.withOpacity(0.2),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child:  Text(
+                  'Apply Filters',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Reset Button
+              OutlinedButton(
+                onPressed: () {
+                  context.read<EmployeeBloc>().add(
+                    const ResetEmployeeFilters(),
+                  );
+                  Navigator.pop(context);
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  side:  BorderSide(color: Colors.red.withOpacity(0.2)),
+                ),
+                child: const Text(
+                  'Reset All',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -310,7 +302,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                   controller: searchController,
                   onChanged: (value) {
                     context.read<EmployeeBloc>().add(
-                      UpdateSearchQuery(value, state.employees),
+                      UpdateSearchQuery(value),
                     );
                   },
                   decoration: InputDecoration(
@@ -433,54 +425,71 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                 }
 
                 return isWeb
-                    ? webLayout(displayEmployees, context,user)
-                    : mobileLayout(displayEmployees, context,user);
+                    ? webLayout(displayEmployees, context, user)
+                    : mobileLayout(displayEmployees, context, user);
               },
             ),
           ),
         ],
       ),
 
-      floatingActionButton: isAdmin(user)?FloatingActionButton.extended(
-        backgroundColor: Colors.red.withOpacity(0.2),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder:
-                (dialogContext) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider.value(value: context.read<EmployeeBloc>()),
-                    BlocProvider.value(value: context.read<DepartmentBloc>()),
-                    BlocProvider.value(value: context.read<AdminBloc>()),
-                  ],
-                  child: BlocBuilder<AdminBloc, AdminState>(
-                    builder: (context, adminState) {
-                      return EmployeeDialog();
-                    },
-                  ),
-                ),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text("Add Employee"),
-      ):null,
+      floatingActionButton:
+          isAdmin(user)
+              ? FloatingActionButton.extended(
+                backgroundColor: Colors.red.withOpacity(0.2),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (dialogContext) => MultiBlocProvider(
+                          providers: [
+                            BlocProvider.value(
+                              value: context.read<EmployeeBloc>(),
+                            ),
+                            BlocProvider.value(
+                              value: context.read<DepartmentBloc>(),
+                            ),
+                            BlocProvider.value(
+                              value: context.read<AdminBloc>(),
+                            ),
+                          ],
+                          child: BlocBuilder<AdminBloc, AdminState>(
+                            builder: (context, adminState) {
+                              return EmployeeDialog();
+                            },
+                          ),
+                        ),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text("Add Employee"),
+              )
+              : null,
     );
   }
 }
 
-Widget mobileLayout(List<EmployeeModal> employees, BuildContext context,SelectRole user) {
+Widget mobileLayout(
+  List<EmployeeModal> employees,
+  BuildContext context,
+  SelectRole user,
+) {
   return ListView.separated(
     padding: const EdgeInsets.all(16),
     itemCount: employees.length,
     separatorBuilder: (_, __) => const SizedBox(height: 8),
     itemBuilder: (context, index) {
       final employee = employees[index];
-      return employeeCard(employee, false, context,user);
+      return employeeCard(employee, false, context, user);
     },
   );
 }
 
-Widget webLayout(List<EmployeeModal> employees, BuildContext context,SelectRole user) {
+Widget webLayout(
+  List<EmployeeModal> employees,
+  BuildContext context,
+  SelectRole user,
+) {
   return GridView.builder(
     padding: const EdgeInsets.all(24),
     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -492,12 +501,17 @@ Widget webLayout(List<EmployeeModal> employees, BuildContext context,SelectRole 
     itemCount: employees.length,
     itemBuilder: (context, index) {
       final employee = employees[index];
-      return employeeCard(employee, true, context,user);
+      return employeeCard(employee, true, context, user);
     },
   );
 }
 
-Widget employeeCard(EmployeeModal employee, bool isWeb, BuildContext context,SelectRole user) {
+Widget employeeCard(
+  EmployeeModal employee,
+  bool isWeb,
+  BuildContext context,
+  SelectRole user,
+) {
   return Dismissible(
     key: Key(employee.id.toString()),
     background: Container(
@@ -610,26 +624,26 @@ Widget employeeCard(EmployeeModal employee, bool isWeb, BuildContext context,Sel
           ),
         ),
         onTap: () {
-          if(isAdmin(user)) {
+          if (isAdmin(user)) {
             showDialog(
-            context: context,
-            builder:
-                (dialogContext) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider.value(value: context.read<EmployeeBloc>()),
-                    BlocProvider.value(value: context.read<DepartmentBloc>()),
-                    BlocProvider.value(value: context.read<AdminBloc>()),
-                  ],
-                  child: BlocBuilder<AdminBloc, AdminState>(
-                    builder: (context, adminState) {
-                      return EmployeeDialog(
-                        employee: employee,
-                        // args: SelectRole(adminModal: adminState.admin),
-                      );
-                    },
+              context: context,
+              builder:
+                  (dialogContext) => MultiBlocProvider(
+                    providers: [
+                      BlocProvider.value(value: context.read<EmployeeBloc>()),
+                      BlocProvider.value(value: context.read<DepartmentBloc>()),
+                      BlocProvider.value(value: context.read<AdminBloc>()),
+                    ],
+                    child: BlocBuilder<AdminBloc, AdminState>(
+                      builder: (context, adminState) {
+                        return EmployeeDialog(
+                          employee: employee,
+                          // args: SelectRole(adminModal: adminState.admin),
+                        );
+                      },
+                    ),
                   ),
-                ),
-          );
+            );
           }
         },
       ),
@@ -670,46 +684,6 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
     addressController = TextEditingController(text: employee?.address ?? '');
     idController = TextEditingController(text: employee?.id ?? '');
     selectedRole = employee?.role ?? 'Employee';
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    final departments = context.read<DepartmentBloc>().state.departments;
-    final managers =
-        context
-            .read<EmployeeBloc>()
-            .state
-            .employees
-            .where((emp) => emp.role == 'Manager')
-            .toList();
-
-    if (widget.employee != null) {
-      if (widget.employee!.departmentName.isNotEmpty &&
-          departments.isNotEmpty) {
-        try {
-          selectedDepartment = departments.firstWhere(
-            (dept) => dept.name == widget.employee!.departmentName,
-          );
-        } catch (e) {
-          selectedDepartment =
-              departments.isNotEmpty ? departments.first : null;
-        }
-      }
-
-      if (widget.employee!.managerName.isNotEmpty && managers.isNotEmpty) {
-        try {
-          selectedManager = managers.firstWhere(
-            (manager) => manager.name == widget.employee!.managerName,
-          );
-        } catch (e) {
-          selectedManager = null;
-        }
-      }
-    } else {
-      selectedDepartment = departments.isNotEmpty ? departments.first : null;
-    }
   }
 
   @override
@@ -897,8 +871,8 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
             address: addressController.text.trim(),
             departmentId: selectedDepartment?.id ?? "",
             departmentName: selectedDepartment?.name,
-            managerName: selectedManager?.name,
-            managerId: selectedManager?.id,
+            managerName: selectedManager?.name??"",
+            managerId: selectedManager?.id??"",
           ),
         );
       } else {
@@ -916,8 +890,8 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
             address: addressController.text.trim(),
             departmentId: selectedDepartment?.id ?? "",
             departmentName: selectedDepartment?.name,
-            managerId: selectedManager?.id,
-            managerName: selectedManager?.name,
+            managerId: selectedManager?.id??"",
+            managerName: selectedManager?.name??"",
           ),
         );
       }
@@ -935,6 +909,7 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
     super.dispose();
   }
 }
+
 bool isAdmin(SelectRole? user) {
   if (user == null) return false;
   return user.selectedRole == "Admin" && user.adminModal != null;

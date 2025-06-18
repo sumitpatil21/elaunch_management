@@ -1,19 +1,19 @@
-import 'dart:developer';
+import 'dart:async';
 
 import 'package:elaunch_management/System/system_event.dart';
-import 'package:elaunch_management/System/system_state.dart';
 import 'package:elaunch_management/system/system_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:elaunch_management/Service/system_modal.dart';
-import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
-import 'package:elaunch_management/System/system_bloc.dart';
-
 import '../ utils/status_color_utils.dart';
+import '../Employee/employee_bloc.dart';
+import '../Employee/employee_event.dart';
+import '../Service/system_modal.dart';
+import '../SuperAdminLogin/admin_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
-import '../employee/employee_bloc.dart';
-import '../service/employee_modal.dart';
+import '../System/system_bloc.dart';
+
+import '../System/system_state.dart';
 
 class SystemView extends StatefulWidget {
   static String routeName = "/system";
@@ -44,8 +44,11 @@ class SystemView extends StatefulWidget {
 }
 
 class _SystemViewState extends State<SystemView> {
-  final TextEditingController searchController = TextEditingController();
 
+
+
+
+  final TextEditingController searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -82,16 +85,15 @@ class _SystemViewState extends State<SystemView> {
                           context: context,
                           builder:
                               (context) => MultiBlocProvider(
-                            providers: [
-                              BlocProvider.value(value: systemBloc),
-                              BlocProvider.value(value: employeeBloc),
-                            ],
-                            child: RequestDialog(
-                              isWeb: isWeb,
-                              requests: state.requests,
-
-                            ),
-                          ),
+                                providers: [
+                                  BlocProvider.value(value: systemBloc),
+                                  BlocProvider.value(value: employeeBloc),
+                                ],
+                                child: RequestDialog(
+                                  isWeb: isWeb,
+                                  requests: state.requests,
+                                ),
+                              ),
                         );
                       },
                       icon: const Icon(Icons.inbox, color: Colors.yellow),
@@ -112,7 +114,6 @@ class _SystemViewState extends State<SystemView> {
                           ),
                           constraints: const BoxConstraints(
                             minWidth: 20,
-
                             minHeight: 20,
                           ),
                           child: Text(
@@ -136,31 +137,29 @@ class _SystemViewState extends State<SystemView> {
           loginEmployee?.adminModal != null
               ? FloatingActionButton.extended(
                 backgroundColor: Colors.yellow.withOpacity(0.8),
-            onPressed: () {
-              final employeeBloc = context.read<EmployeeBloc>();
-              final systemBloc = context.read<SystemBloc>();
-
-              showDialog(
-                context: context,
-                builder:
-                    (context) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider.value(value: systemBloc),
-                    BlocProvider.value(value: employeeBloc),
-                  ],
-                  child: SystemFormDialog(
-                    adminId: loginEmployee?.adminModal?.id,
-                  ),
-                ),
-              );
-            },
+                onPressed: () {
+                  final employeeBloc = context.read<EmployeeBloc>();
+                  final systemBloc = context.read<SystemBloc>();
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => MultiBlocProvider(
+                          providers: [
+                            BlocProvider.value(value: systemBloc),
+                            BlocProvider.value(value: employeeBloc),
+                          ],
+                          child: SystemFormDialog(
+                            adminId: loginEmployee?.adminModal?.id,
+                          ),
+                        ),
+                  );
+                },
                 label: Text(isMobile ? "" : "Add System"),
                 icon: const Icon(Icons.add),
               )
               : null,
       body: Column(
         children: [
-          // Search Bar - Responsive
           Container(
             padding: EdgeInsets.all(isWeb ? 24.0 : 16.0),
             child: Row(
@@ -182,12 +181,18 @@ class _SystemViewState extends State<SystemView> {
                                 icon: const Icon(Icons.clear),
                                 onPressed: () {
                                   searchController.clear();
-                                  setState(() {});
+                                  context.read<SystemBloc>().add(
+                                    const SearchSystems(searchQuery: ''),
+                                  );
                                 },
                               )
                               : null,
                     ),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (value) {
+                      context.read<SystemBloc>().add(
+                        SearchSystems(searchQuery: value),
+                      );
+                    },
                   ),
                 ),
                 if (isWeb) ...[
@@ -214,9 +219,11 @@ class _SystemViewState extends State<SystemView> {
                             );
                           }).toList(),
                       onChanged: (value) {
-                        setState(() {
-                          selectedStatusFilter = value ?? 'all';
-                        });
+                        selectedStatusFilter = value ?? "all";
+
+                        context.read<SystemBloc>().add(
+                          FilterSystems(statusFilter: value ?? "all"),
+                        );
                       },
                     ),
                   ),
@@ -225,7 +232,6 @@ class _SystemViewState extends State<SystemView> {
             ),
           ),
 
-          // Status Filter Chips - Mobile Only
           if (!isWeb)
             Container(
               height: 60,
@@ -250,9 +256,11 @@ class _SystemViewState extends State<SystemView> {
                       ),
                       selected: isSelected,
                       onSelected: (selected) {
-                        setState(() {
-                          selectedStatusFilter = status;
-                        });
+                        selectedStatusFilter = status;
+
+                        context.read<SystemBloc>().add(
+                          FilterSystems(statusFilter: status),
+                        );
                       },
                       backgroundColor: StatusColorUtils.getStatusColor(status),
                       selectedColor: StatusColorUtils.getStatusColor(status),
@@ -265,21 +273,9 @@ class _SystemViewState extends State<SystemView> {
           Expanded(
             child: BlocBuilder<SystemBloc, SystemState>(
               builder: (context, state) {
-                List<SystemModal> filteredSystems =
-                    state.systems.where((system) {
-                      final matchesSearch = system.systemName
-                          .toLowerCase()
-                          .contains(searchController.text.toLowerCase());
-                      final matchesStatus =
-                          selectedStatusFilter == 'all' ||
-                          system.status == selectedStatusFilter;
-                      return matchesSearch && matchesStatus;
-                    }).toList();
-
-                if (filteredSystems.isEmpty) {
+                if (state.displayedSystems.isEmpty) {
                   return Center(
                     child: Column(
-
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
@@ -301,9 +297,12 @@ class _SystemViewState extends State<SystemView> {
                           TextButton(
                             onPressed: () {
                               searchController.clear();
-                              setState(() {
-                                selectedStatusFilter = 'all';
-                              });
+
+                              selectedStatusFilter = 'all';
+
+                              // context.read<SystemBloc>().add(
+                              //   ClearSearch(),
+                              // );
                             },
                             child: const Text('Clear Filters'),
                           ),
@@ -313,29 +312,22 @@ class _SystemViewState extends State<SystemView> {
                   );
                 }
 
-                  return Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: GridView.builder(
-
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-
-                        crossAxisCount: screenWidth > 1200 ? 3 : 1,
-                        childAspectRatio: 1.5,
-                        crossAxisSpacing: 1,
-                        mainAxisSpacing: 1,
-                      ),
-                      itemCount: filteredSystems.length,
-                      itemBuilder: (context, index) {
-                        final system = filteredSystems[index];
-                        return systemCard(
-                          context,
-                          system,
-                          loginEmployee,
-                          true,
-                        );
-                      },
+                return Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: screenWidth > 1200 ? 3 : 1,
+                      childAspectRatio: 1.5,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
                     ),
-                  );
+                    itemCount: state.displayedSystems.length,
+                    itemBuilder: (context, index) {
+                      final system = state.displayedSystems[index];
+                      return systemCard(context, system, loginEmployee, true);
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -381,7 +373,9 @@ class _SystemViewState extends State<SystemView> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: StatusColorUtils.getStatusColor(system.status ?? 'available'),
+                    color: StatusColorUtils.getStatusColor(
+                      system.status ?? 'available',
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -399,11 +393,7 @@ class _SystemViewState extends State<SystemView> {
             const SizedBox(height: 12),
 
             // System Details
-            detailRow(
-              Icons.memory,
-              "OS",
-              system.operatingSystem ?? 'Unknown',
-            ),
+            detailRow(Icons.memory, "OS", system.operatingSystem ?? 'Unknown'),
             detailRow(
               Icons.info_outline,
               "Version",
@@ -450,7 +440,6 @@ class _SystemViewState extends State<SystemView> {
 
             const Spacer(),
 
-            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -460,11 +449,8 @@ class _SystemViewState extends State<SystemView> {
                     child: ElevatedButton.icon(
                       onPressed:
                           isAlreadyRequested
-                              ? () => cancelRequest(
-                                context,
-                                system,
-                                loginEmployee!,
-                              )
+                              ? () =>
+                                  cancelRequest(context, system, loginEmployee!)
                               : () => submitRequest(
                                 context,
                                 system,
@@ -502,15 +488,15 @@ class _SystemViewState extends State<SystemView> {
                         context: context,
                         builder:
                             (context) => MultiBlocProvider(
-                          providers: [
-                            BlocProvider.value(value: systemBloc),
-                            BlocProvider.value(value: employeeBloc),
-                          ],
-                          child: SystemFormDialog(
-                            system: system,
-                            adminId: loginEmployee?.adminModal?.id,
-                          ),
-                        ),
+                              providers: [
+                                BlocProvider.value(value: systemBloc),
+                                BlocProvider.value(value: employeeBloc),
+                              ],
+                              child: SystemFormDialog(
+                                system: system,
+                                adminId: loginEmployee?.adminModal?.id,
+                              ),
+                            ),
                       );
                     },
                   ),
@@ -554,7 +540,11 @@ class _SystemViewState extends State<SystemView> {
     );
   }
 
-  void submitRequest(BuildContext context, SystemModal system, SelectRole loginEmployee,) {
+  void submitRequest(
+    BuildContext context,
+    SystemModal system,
+    SelectRole loginEmployee,
+  ) {
     context.read<SystemBloc>().add(
       RequestSystem(
         system: SystemModal(
@@ -585,7 +575,11 @@ class _SystemViewState extends State<SystemView> {
     );
   }
 
-  void cancelRequest(BuildContext context, SystemModal system, SelectRole loginEmployee,) {
+  void cancelRequest(
+    BuildContext context,
+    SystemModal system,
+    SelectRole loginEmployee,
+  ) {
     context.read<SystemBloc>().add(
       CancelRequest(
         requestId: loginEmployee.employeeModal!.id ?? "",
@@ -636,5 +630,4 @@ class _SystemViewState extends State<SystemView> {
           ),
     );
   }
-
 }

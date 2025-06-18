@@ -112,6 +112,7 @@ class CancelRequest extends SystemEvent {
   @override
   List<Object> get props => [requestId, systemId];
 }
+
 class LoadStatusColors extends SystemEvent {
   const LoadStatusColors();
 }
@@ -124,4 +125,30 @@ class UpdateStatusColor extends SystemEvent {
 
   @override
   List<Object> get props => [status, color];
+}
+
+class FilterSystems extends SystemEvent {
+  final String statusFilter;
+
+  const FilterSystems({required this.statusFilter});
+
+  @override
+  List<Object> get props => [statusFilter];
+}
+
+class SearchSystems extends SystemEvent {
+  final String searchQuery;
+
+  const SearchSystems({required this.searchQuery});
+
+  @override
+  List<Object> get props => [searchQuery];
+}
+
+
+class ClearSearch extends SystemEvent {
+  const ClearSearch();
+  @override
+  List<Object> get props => [];
+
 }

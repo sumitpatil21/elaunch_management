@@ -1,4 +1,6 @@
 // device_event.dart - Updated Events
+import 'dart:ui';
+
 import 'package:equatable/equatable.dart';
 import '../Service/device_modal.dart';
 
@@ -42,23 +44,42 @@ class DeleteDevice extends DeviceEvent {
 }
 
 
-class UpdateSearchQueryDevice extends DeviceEvent {
-  final String query;
-  final List<TestingDeviceModal> devices;
-  const UpdateSearchQueryDevice(this.query, this.devices);
-
-  @override
-  List<Object?> get props => [query, devices];
+class LoadStatusColors extends DeviceEvent {
+  const LoadStatusColors();
 }
 
-class UpdateStatusFilterDevice extends DeviceEvent {
+class UpdateStatusColor extends DeviceEvent {
   final String status;
-  const UpdateStatusFilterDevice(this.status);
+  final Color color;
+
+  const UpdateStatusColor(this.status, this.color);
 
   @override
-  List<Object?> get props => [status];
+  List<Object> get props => [status, color];
 }
 
-class ClearSearchDevice extends DeviceEvent {
-  const ClearSearchDevice();
+class FilterSystems extends DeviceEvent {
+  final String statusFilter;
+
+  const FilterSystems({required this.statusFilter});
+
+  @override
+  List<Object> get props => [statusFilter];
+}
+
+class SearchSystems extends DeviceEvent {
+  final String searchQuery;
+
+  const SearchSystems({required this.searchQuery});
+
+  @override
+  List<Object> get props => [searchQuery];
+}
+
+
+class ClearSearch extends DeviceEvent {
+  const ClearSearch();
+  @override
+  List<Object> get props => [];
+
 }

@@ -1,4 +1,4 @@
-part of 'employee_bloc.dart';
+import 'package:equatable/equatable.dart';
 
 abstract class EmployeeEvent extends Equatable {
   const EmployeeEvent();
@@ -6,8 +6,6 @@ abstract class EmployeeEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
-
-
 
 class FetchEmployees extends EmployeeEvent {
   final String? role;
@@ -47,7 +45,19 @@ class AddEmployee extends EmployeeEvent {
   });
 
   @override
-  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId, departmentName, managerName, managerId];
+  List<Object?> get props => [
+    id,
+    name,
+    email,
+    password,
+    address,
+    role,
+    adminId,
+    departmentId,
+    departmentName,
+    managerName,
+    managerId,
+  ];
 }
 
 class UpdateEmployee extends EmployeeEvent {
@@ -78,7 +88,19 @@ class UpdateEmployee extends EmployeeEvent {
   });
 
   @override
-  List<Object?> get props => [id, name, email, password, address, role, adminId, departmentId, departmentName, managerName, managerId];
+  List<Object?> get props => [
+    id,
+    name,
+    email,
+    password,
+    address,
+    role,
+    adminId,
+    departmentId,
+    departmentName,
+    managerName,
+    managerId,
+  ];
 }
 
 class DeleteEmployee extends EmployeeEvent {
@@ -111,7 +133,6 @@ class FilterEmployeesByDepartment extends EmployeeEvent {
 class FilterEmployeesByManager extends EmployeeEvent {
   final String? manager;
 
-
   const FilterEmployeesByManager({this.manager});
 
   @override
@@ -126,11 +147,7 @@ class EmployeeLogin extends EmployeeEvent {
   final String? email;
   final String? password;
 
-
-  const EmployeeLogin({
-     this.email,
-     this.password,
-  });
+  const EmployeeLogin({this.email, this.password});
 
   @override
   List<Object?> get props => [email, password];
@@ -139,6 +156,7 @@ class EmployeeLogin extends EmployeeEvent {
 class EmployeeLogout extends EmployeeEvent {
   const EmployeeLogout();
 }
+
 class EmployeeLoginCheck extends EmployeeEvent {
   final bool isLogin;
 
@@ -147,16 +165,16 @@ class EmployeeLoginCheck extends EmployeeEvent {
   @override
   List<Object> get props => [isLogin];
 }
+
+
 class UpdateSearchQuery extends EmployeeEvent {
   final String query;
-  final List<EmployeeModal> employees;
-  const UpdateSearchQuery(this.query, this.employees);
+
+  const UpdateSearchQuery(this.query);
 
   @override
   List<Object?> get props => [query];
 }
-
-
 
 class ClearSearch extends EmployeeEvent {
   const ClearSearch();
