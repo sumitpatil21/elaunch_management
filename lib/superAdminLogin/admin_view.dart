@@ -46,11 +46,17 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
   final registerCompanyNameController = TextEditingController();
   final registerFieldController = TextEditingController();
   final registerPhoneController = TextEditingController();
+  late TabController tabController;
 
   @override
   void initState() {
     super.initState();
-
+    tabController = TabController(length: 2, vsync: this);
+    tabController.addListener(() {
+      context.read<AdminBloc>().add(
+        ChangeTabIndex(tabIndex: tabController.index),
+      );
+    });
   }
 
   bool get isMobile => MediaQuery.of(context).size.width < 600;
@@ -72,6 +78,9 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
                   selectedRole: "Admin",
                 ),
               );
+            }
+            if (tabController.index != state.currentTabIndex) {
+              tabController.animateTo(state.currentTabIndex);
             }
           },
         ),

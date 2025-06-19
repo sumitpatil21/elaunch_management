@@ -101,5 +101,10 @@ class ChangeRole extends AdminEvent {
   List<Object> get props => [role];
 }
 
-
+class ChangeTabIndex extends AdminEvent {
+  final int tabIndex;
+  const ChangeTabIndex({required this.tabIndex});
+  @override
+  List<Object> get props => [tabIndex];
+}
 
