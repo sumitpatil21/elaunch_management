@@ -1,14 +1,17 @@
+import 'package:elaunch_management/Employee/employee_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:elaunch_management/Service/system_modal.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
 import 'package:elaunch_management/System/system_event.dart';
-import 'package:elaunch_management/employee/employee_bloc.dart';
+
 
 
 import '../ utils/status_color_utils.dart';
 
-import '../employee/employee_event.dart';
+import '../Employee/employee_bloc.dart';
+
+import '../Employee/employee_event.dart';
 import '../service/employee_modal.dart';
 
 
@@ -565,7 +568,7 @@ class _SystemFormDialogState extends State<SystemFormDialog> {
                 const SizedBox(height: 16),
 
                 // Employee Assignment Dropdown
-                BlocBuilder<EmployeeBloc, dynamic>(
+                BlocBuilder<EmployeeBloc, EmployeeState>(
                   builder: (context, employeeState) {
                     return DropdownButtonFormField<EmployeeModal?>(
                       value: _selectedEmployee,

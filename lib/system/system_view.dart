@@ -44,10 +44,6 @@ class SystemView extends StatefulWidget {
 }
 
 class _SystemViewState extends State<SystemView> {
-
-
-
-
   final TextEditingController searchController = TextEditingController();
 
   @override

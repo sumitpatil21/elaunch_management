@@ -1,4 +1,3 @@
-
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_event.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
@@ -14,12 +13,14 @@ import '../Employee/employee_state.dart';
 import '../Leave/leave_bloc.dart';
 import '../Leave/leave_event.dart';
 
+import '../Service/firebase_database.dart';
 import '../SuperAdminLogin/admin_state.dart';
 
 import '../System/system_event.dart';
 
+import '../employee_chat/chat_bloc.dart';
+import '../service/firebase_notifications.dart';
 import 'dashboard_widget.dart';
-
 
 class DashboardView extends StatefulWidget {
   static String routeName = "/Dashboard";
@@ -35,8 +36,11 @@ class DashboardView extends StatefulWidget {
         ),
         BlocProvider(create: (context) => SystemBloc()..add(FetchSystem())),
         BlocProvider(create: (context) => DeviceBloc()..add(FetchDevice())),
-        BlocProvider(create: (context) => EmployeeBloc()..add(FetchEmployees())),
+        BlocProvider(
+          create: (context) => EmployeeBloc()..add(FetchEmployees()),
+        ),
         BlocProvider(create: (context) => LeaveBloc()..add(FetchLeaves())),
+        BlocProvider(create: (context) => ChatBloc(FirebaseDbHelper.firebase)),
       ],
       child: const DashboardView(),
     );
@@ -59,6 +63,7 @@ class _DashboardViewState extends State<DashboardView> {
     context.read<SystemBloc>().add(FetchSystem());
     context.read<DeviceBloc>().add(FetchDevice());
     context.read<LeaveBloc>().add(FetchLeaves());
+    context.read<AdminBloc>().add(AdminFetch());
   }
 
   void _refreshData() {
@@ -80,35 +85,46 @@ class _DashboardViewState extends State<DashboardView> {
         return BlocBuilder<AdminBloc, AdminState>(
           builder: (context, adminState) {
             return Scaffold(
-              appBar: _buildAppBar(context, user),
+              appBar: buildAppBar(context, user),
               drawer: isMobile ? DashboardWidgets.drawer(context, user) : null,
               body: Row(
-                  children: [
+                children: [
                   if (!isMobile)
-              SizedBox(
-              width: 240,
-              child: DashboardWidgets.drawer(context, user),
-            ),
-            Expanded(
-            child: SingleChildScrollView(
-            child: Padding(
-            padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
-            child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+                    SizedBox(
+                      width: 240,
+                      child: DashboardWidgets.drawer(context, user),
+                    ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
 
-
-            children: [
-            DashboardWidgets.welcomeSection(context, user, isMobile),
-            DashboardWidgets.managementSection(context, user, isMobile),
-            const SizedBox(height: 24),
-            DashboardWidgets.overviewSection(context, user, isMobile),
-            ],
-            ),
-            ),
-            ),
-            ),
-            ],
-            ),
+                          children: [
+                            DashboardWidgets.welcomeSection(
+                              context,
+                              user,
+                              isMobile,
+                            ),
+                            DashboardWidgets.managementSection(
+                              context,
+                              user,
+                              isMobile,
+                            ),
+                            const SizedBox(height: 24),
+                            DashboardWidgets.overviewSection(
+                              context,
+                              user,
+                              isMobile,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -116,7 +132,7 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  AppBar _buildAppBar(BuildContext context, SelectRole user) {
+  AppBar buildAppBar(BuildContext context, SelectRole user) {
     return AppBar(
       backgroundColor: Theme.of(context).primaryColor,
       title: const Text(

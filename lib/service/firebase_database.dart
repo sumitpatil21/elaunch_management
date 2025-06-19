@@ -5,6 +5,8 @@ import 'package:elaunch_management/Service/system_modal.dart';
 
 import '../service/employee_modal.dart';
 import 'admin_modal.dart';
+import 'chart_room.dart';
+import 'chat_message.dart';
 import 'department_modal.dart';
 
 import 'leave_modal.dart';
@@ -20,6 +22,8 @@ class FirebaseDbHelper {
   CollectionReference get systems => firestore.collection('systems');
   CollectionReference get devices => firestore.collection('devices');
   CollectionReference get leaves => firestore.collection('leaves');
+  CollectionReference get chatMessages => firestore.collection('chat_messages');
+  CollectionReference get chatRooms => firestore.collection('chat_rooms');
 
   Future<void> createAdmin(AdminModal admin) async {
     final doc = await admins.add(admin.toMap());
@@ -58,8 +62,6 @@ class FirebaseDbHelper {
   }
 
   Future<void> createDepartment(DepartmentModal department) async {
-
-
     final docRef = departments.doc();
     await docRef.set({
       ...department.toJson(),
@@ -82,12 +84,10 @@ class FirebaseDbHelper {
       return DepartmentModal.fromJson({
         ...data,
         'id': doc.id,
-       // 'id_admin': (data['adminRef'] as DocumentReference).id,
+        // 'id_admin': (data['adminRef'] as DocumentReference).id,
       });
     }).toList();
   }
-
-
 
   Future<void> updateDepartment(DepartmentModal department) async {
     await departments.doc(department.id).update({
@@ -125,8 +125,6 @@ class FirebaseDbHelper {
     });
   }
 
-
-
   Future<List<EmployeeModal>> getEmployees({
     String? role,
     String? departmentId,
@@ -155,8 +153,16 @@ class FirebaseDbHelper {
     }).toList();
   }
 
-  Future<List<EmployeeModal>> getAllEmployees() async {
-    return getEmployees();
+  Future<List<EmployeeModal>> getEmployeeByEmail(String email) async {
+    final query = await employees.where('email', isEqualTo: email).get();
+    return query.docs
+        .map(
+          (doc) => EmployeeModal.fromJson({
+            ...doc.data() as Map<String, dynamic>,
+            'id': doc.id,
+          }),
+        )
+        .toList();
   }
 
   Future<void> updateEmployee(EmployeeModal employee) async {
@@ -329,6 +335,7 @@ class FirebaseDbHelper {
       });
     }).toList();
   }
+
   Future<List<TestingDeviceModal>> getAllDevices() async {
     return getDevices();
   }
@@ -347,29 +354,22 @@ class FirebaseDbHelper {
   }
 
   Future<void> approveDeviceRequest(TestingDeviceModal system) async {
-    await devices.doc(system.id).update(
-      system.toJson(),
-    );
+    await devices.doc(system.id).update(system.toJson());
   }
 
   Future<void> rejectDeviceRequest(TestingDeviceModal system) async {
-    await devices.doc(system.id).update(
-      system.toJson(),
-    );
+    await devices.doc(system.id).update(system.toJson());
   }
 
   Future<void> cancelDeviceRequest(String systemId, String requestId) async {
-    await devices.doc(systemId).update(
-      {
-        'isRequested': false,
-        'request_status': 'cancelled',
-        'requestId': null,
-        'requested_by_name': null,
-        'requestedAt': null,
-        'cancelledAt': FieldValue.serverTimestamp(),
-      },
-
-    );
+    await devices.doc(systemId).update({
+      'isRequested': false,
+      'request_status': 'cancelled',
+      'requestId': null,
+      'requested_by_name': null,
+      'requestedAt': null,
+      'cancelledAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<String> createLeaves(LeaveModal leave) async {
@@ -440,4 +440,89 @@ class FirebaseDbHelper {
     }
     return null;
   }
+
+
+
+  Future<String> sendMessage(ChatMessage message) async {
+    final docRef = chatMessages.doc();
+    await docRef.set({
+      ...message.toMap(),
+      'id': docRef.id,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Update chat room
+    final roomId = _generateChatRoomId(message.senderId, message.receiverId);
+    await chatRooms.doc(roomId).set({
+      'participantIds': [message.senderId, message.receiverId],
+      'lastMessage': message.content,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastMessageSenderId': message.senderId,
+    }, SetOptions(merge: true));
+
+    return docRef.id;
+  }
+
+  String _generateChatRoomId(String id1, String id2) {
+    final ids = [id1, id2]..sort();
+    return '${ids[0]}_${ids[1]}';
+  }
+
+  Future<EmployeeModal?> getEmployeeById(String id) async {
+    try {
+      final doc = await firestore.collection('employees').doc(id).get();
+      if (doc.exists) {
+        return EmployeeModal.fromJson(doc.data()!);
+      }
+      return null;
+    } catch (e) {
+      log('Error getting employee by ID: $e');
+      return null;
+    }
+  }
+
+  // Create or update employee FCM token
+  Future<void> updateEmployeeFCMToken(String userId, String token) async {
+    try {
+      await firestore.collection('employees').doc(userId).update({
+        'fcmToken': token,
+      });
+    } catch (e) {
+      log('Error updating FCM token: $e');
+    }
+  }
+
+  Stream<List<ChatMessage>> getChatMessages(String userId, String otherUserId) {
+    final roomId = _generateChatRoomId(userId, otherUserId);
+    return chatMessages
+        .where('roomId', isEqualTo: roomId)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+        .map((doc) => ChatMessage.fromMap(doc.data() as Map<String, dynamic>))
+        .toList());
+  }
+
+  Stream<List<ChatRoom>> getChatRooms(String userId) {
+    return chatRooms
+        .where('participantIds', arrayContains: userId)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+        .map((doc) => ChatRoom.fromMap(doc.data() as Map<String, dynamic>))
+        .toList());
+  }
+
+  Future<void> markMessagesAsRead(String roomId, String userId) async {
+    final messages = await chatMessages
+        .where('roomId', isEqualTo: roomId)
+        .where('receiverId', isEqualTo: userId)
+        .where('isRead', isEqualTo: false)
+        .get();
+
+    for (final doc in messages.docs) {
+      await doc.reference.update({'isRead': true});
+    }
+  }
+
 }

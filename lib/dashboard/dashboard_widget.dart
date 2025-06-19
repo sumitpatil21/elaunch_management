@@ -1,3 +1,6 @@
+import 'package:elaunch_management/employee_chat/chat_bloc.dart';
+import 'package:elaunch_management/employee_chat/chat_state.dart';
+import 'package:elaunch_management/employee_chat/chat_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,7 +30,7 @@ class DashboardWidgets {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Text(
-        "Welcome ${_userRole(user)}, ${_userName(user)} 👋",
+        "Welcome ${userRole(user)}, ${userName(user)} 👋",
         style: TextStyle(
           fontSize: isMobile ? 20 : 24,
           fontWeight: FontWeight.bold,
@@ -98,7 +101,7 @@ class DashboardWidgets {
           ),
         ),
         if (isMobile)
-          _mobileOverview(context, user)
+          mobileOverview(context, user)
         else
           _desktopOverview(context, user),
       ],
@@ -202,6 +205,25 @@ class DashboardWidgets {
                   ),
             ),
       ),
+      ManagementCardData(
+        title: 'Chat',
+        icon: Icons.leave_bags_at_home_outlined,
+        color: Color(0xff1a2a4d),
+        route: ChatScreen.routeName,
+        selectRole: user,
+        builder:
+            (context, state) => BlocBuilder<ChatBloc, ChatState>(
+              builder:
+                  (context, state) => Text(
+                    '${state.messages?.length}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+            ),
+      ),
     ];
 
     return cards.map((cardData) => hoverCard(context, cardData, user)).toList();
@@ -231,9 +253,10 @@ class DashboardWidgets {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: cardData.color.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    color: cardData.color.withOpacity(0.2),
+                    blurRadius: 50,
+                    spreadRadius: 10,
+                    offset: const   Offset(1, 4),
                   ),
                 ],
               ),
@@ -260,10 +283,10 @@ class DashboardWidgets {
     );
   }
 
-  static Widget _mobileOverview(BuildContext context, SelectRole user) {
+  static Widget mobileOverview(BuildContext context, SelectRole user) {
     return Column(
       children: [
-        _overviewCard(
+        overviewCard(
           context,
           'Department Overview',
 
@@ -314,7 +337,7 @@ class DashboardWidgets {
           ),
         ),
         const SizedBox(height: 16),
-        _overviewCard(
+        overviewCard(
           context,
           'Employee Overview',
           Colors.red,
@@ -400,7 +423,7 @@ class DashboardWidgets {
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
       children: [
-        _fullOverviewCard(
+        fullOverviewCard(
           context,
           'Department Overview',
           Colors.blue,
@@ -430,7 +453,7 @@ class DashboardWidgets {
             },
           ),
         ),
-        _fullOverviewCard(
+        fullOverviewCard(
           context,
           'Employee Overview',
           Colors.red,
@@ -461,7 +484,7 @@ class DashboardWidgets {
             },
           ),
         ),
-        _fullOverviewCard(
+        fullOverviewCard(
           context,
           'System Overview',
           Colors.orange,
@@ -491,7 +514,7 @@ class DashboardWidgets {
             },
           ),
         ),
-        _fullOverviewCard(
+        fullOverviewCard(
           context,
           'Device Overview',
           Colors.purple,
@@ -526,7 +549,7 @@ class DashboardWidgets {
     );
   }
 
-  static Widget _overviewCard(
+  static Widget overviewCard(
     BuildContext context,
     String title,
     Color color,
@@ -560,7 +583,7 @@ class DashboardWidgets {
     );
   }
 
-  static Widget _fullOverviewCard(
+  static Widget fullOverviewCard(
     BuildContext context,
     String title,
     Color color,
@@ -669,7 +692,7 @@ class DashboardWidgets {
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: Text(
-                _userInitial(user),
+                userInitial(user),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -678,7 +701,7 @@ class DashboardWidgets {
               ),
             ),
             accountName: Text(
-              _userName(user),
+              userName(user),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             accountEmail: Text(_userEmail(user)),
@@ -705,7 +728,7 @@ class DashboardWidgets {
   }
 
   // Helper methods
-  static String _userInitial(SelectRole user) {
+  static String userInitial(SelectRole user) {
     if (user.employeeModal != null) {
       return user.employeeModal!.name.isNotEmpty
           ? user.employeeModal!.name[0].toUpperCase()
@@ -718,16 +741,16 @@ class DashboardWidgets {
     return 'U';
   }
 
-  static String _userName(SelectRole user) {
+  static String userName(SelectRole user) {
     if (user.employeeModal != null) {
-      return user.employeeModal!.name;
+      return user.employeeModal?.name??"user";
     } else if (user.adminModal != null) {
-      return user.adminModal!.name;
+      return user.adminModal?.name??"user";
     }
     return 'User';
   }
 
-  static String _userRole(SelectRole user) {
+  static String userRole(SelectRole user) {
     if (user.employeeModal != null) {
       return 'Employee';
     } else if (user.adminModal != null) {

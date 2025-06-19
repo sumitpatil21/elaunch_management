@@ -8,7 +8,6 @@ import '../service/employee_modal.dart';
 import 'employee_event.dart';
 import 'employee_state.dart';
 
-
 class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   static const String loginKey = 'is_login';
   static const String roleKey = 'user_role';
@@ -39,18 +38,25 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   ) async {
     emit(state.copyWith(isLoading: true));
 
+    log('Employee login attempt with email: ${event.email}');
 
-      log('Employee login attempt with email: ${event.email}');
+    await AuthServices.authServices.signInWithEmailAndPassword(
+      email: event.email,
+      password: event.password,
+    );
 
-      await AuthServices.authServices.signInWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
+    var currentUser = AuthServices.authServices.getCurrentUser();
+
+    if (currentUser != null) {
+      final employees = await FirebaseDbHelper.firebase.getEmployeeByEmail(
+        event.email ?? "",
       );
 
-      var currentUser = AuthServices.authServices.getCurrentUser();
       EmployeeModal? employeeModal;
 
-      if (currentUser != null) {
+      if (employees.isNotEmpty) {
+        employeeModal = employees.first;
+      } else {
         employeeModal = EmployeeModal(
           id: currentUser.uid,
           name: currentUser.displayName ?? '',
@@ -64,25 +70,20 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
           managerName: '',
           managerId: '',
         );
-
-        await saveLogin(true, 'Employee', currentUser.uid);
-
-        emit(
-          state.copyWith(
-            isLogin: true,
-            isLoading: false,
-
-          ),
-        );
-      } else {
-        emit(
-          state.copyWith(
-            isLoading: false,
-
-          ),
-        );
       }
 
+      await saveLogin(true, 'Employee', currentUser.uid);
+
+      emit(
+        state.copyWith(
+          isLogin: true,
+          isLoading: false,
+          loggedInEmployee: employeeModal,
+        ),
+      );
+    } else {
+      emit(state.copyWith(isLoading: false, isLogin: false));
+    }
   }
 
   Future<void> employeeLoginCheck(
@@ -103,25 +104,35 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
       var currentUser = AuthServices.authServices.getCurrentUser();
       if (currentUser != null) {
-        final employeeModal = EmployeeModal(
-          id: currentUser.uid,
-          name: currentUser.displayName ?? '',
-          email: currentUser.email ?? '',
-          password: '',
-          address: '',
-          role: 'Employee',
-          adminId: '',
-          departmentId: '',
-          departmentName: '',
-          managerName: '',
-          managerId: '',
+        final employees = await FirebaseDbHelper.firebase.getEmployeeByEmail(
+          currentUser.email!,
         );
 
-        emit(state.copyWith(loggedInEmployee: employeeModal, isLogin: true));
+        if (employees.isNotEmpty) {
+          final employeeModal = employees.first;
+          emit(state.copyWith(loggedInEmployee: employeeModal, isLogin: true));
+        } else {
+          final employeeModal = EmployeeModal(
+            id: currentUser.uid,
+            name: currentUser.displayName ?? '',
+            email: currentUser.email ?? '',
+            password: '',
+            address: '',
+            role: 'Employee',
+            adminId: '',
+            departmentId: '',
+            departmentName: '',
+            managerName: '',
+            managerId: '',
+          );
+          emit(state.copyWith(loggedInEmployee: employeeModal, isLogin: true));
+        }
+      } else {
+        await clearLogin();
+        add(EmployeeLoginCheck(isLogin: false));
       }
     }
   }
-
 
   Future<void> saveLogin(bool isLogin, String role, String? userId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -144,16 +155,8 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     Emitter<EmployeeState> emit,
   ) async {
     await AuthServices.authServices.signOut();
-    emit(
-      state.copyWith(
-        loggedInEmployee: null,
-
-
-      ),
-    );
+    emit(state.copyWith(loggedInEmployee: null));
   }
-
-
 
   Future<void> insertEmployeeData(
     AddEmployee event,
@@ -184,12 +187,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
     add(FetchEmployees(role: event.role));
 
-    emit(
-      state.copyWith(
-        isLoading: false,
-
-      ),
-    );
+    emit(state.copyWith(isLoading: false));
   }
 
   Future<void> updateEmployeeData(
@@ -213,52 +211,49 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     await FirebaseDbHelper.firebase.updateEmployee(updated);
     add(FetchEmployees(role: event.role));
 
-    emit(
-      state.copyWith(
-        isLoading: false,
-
-      ),
-    );
+    emit(state.copyWith(isLoading: false));
   }
-
-
 
   void applyAllFilters(Emitter<EmployeeState> emit) {
     List<EmployeeModal> filtered = List.from(state.employees);
-
 
     if (state.employees != null) {
       filtered = filtered.where((e) => e.role == state.roleFilter).toList();
     }
 
-
     if (state.departmentFilter != null) {
-      filtered = filtered.where((e) => e.departmentId == state.departmentFilter).toList();
+      filtered =
+          filtered
+              .where((e) => e.departmentId == state.departmentFilter)
+              .toList();
     }
-
 
     if (state.managerFilter != null) {
-      filtered = filtered.where((e) => e.managerId == state.managerFilter).toList();
+      filtered =
+          filtered.where((e) => e.managerId == state.managerFilter).toList();
     }
-
 
     if (state.searchQuery.isNotEmpty) {
       final query = state.searchQuery.toLowerCase();
-      filtered = filtered.where((e) =>
-      e.name.toLowerCase().contains(query) ||
-          e.email.toLowerCase().contains(query) ||
-          e.role.toLowerCase().contains(query) ||
-          e.id.toLowerCase().contains(query)
-      ).toList();
+      filtered =
+          filtered
+              .where(
+                (e) =>
+                    e.name.toLowerCase().contains(query) ||
+                    e.email.toLowerCase().contains(query) ||
+                    e.role.toLowerCase().contains(query) ||
+                    e.id.toLowerCase().contains(query),
+              )
+              .toList();
     }
 
     emit(state.copyWith(filteredEmployees: filtered));
   }
 
   Future<void> fetchEmployeesData(
-      FetchEmployees event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    FetchEmployees event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true));
 
     final employees = await FirebaseDbHelper.firebase.getEmployees(
@@ -268,74 +263,79 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
     log("Employee data ->>>>>: $employees");
 
-    emit(state.copyWith(
-      employees: employees,
-      filteredEmployees: employees,
-      isLoading: false,
-    ));
+    emit(
+      state.copyWith(
+        employees: employees,
+        filteredEmployees: employees,
+        isLoading: false,
+      ),
+    );
   }
 
   Future<void> deleteEmployeeData(
-      DeleteEmployee event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    DeleteEmployee event,
+    Emitter<EmployeeState> emit,
+  ) async {
     await FirebaseDbHelper.firebase.deleteEmployee(event.id.toString());
 
-    final updatedEmployees = state.employees.where((e) => e.id != event.id.toString()).toList();
+    final updatedEmployees =
+        state.employees.where((e) => e.id != event.id.toString()).toList();
 
     emit(state.copyWith(employees: updatedEmployees));
     applyAllFilters(emit);
   }
 
   Future<void> filterRole(
-      FilterEmployeesByRole event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    FilterEmployeesByRole event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(roleFilter: event.role == 'All' ? null : event.role));
     applyAllFilters(emit);
   }
 
   Future<void> filterDepartment(
-      FilterEmployeesByDepartment event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    FilterEmployeesByDepartment event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(departmentFilter: event.department));
     applyAllFilters(emit);
   }
 
   Future<void> filterManager(
-      FilterEmployeesByManager event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    FilterEmployeesByManager event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(managerFilter: event.manager));
     applyAllFilters(emit);
   }
 
   Future<void> resetFilters(
-      ResetEmployeeFilters event,
-      Emitter<EmployeeState> emit,
-      ) async {
-    emit(state.copyWith(
-      roleFilter: null,
-      departmentFilter: null,
-      managerFilter: null,
-      searchQuery: '',
-      filteredEmployees: state.employees,
-    ));
+    ResetEmployeeFilters event,
+    Emitter<EmployeeState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        roleFilter: null,
+        departmentFilter: null,
+        managerFilter: null,
+        searchQuery: '',
+        filteredEmployees: state.employees,
+      ),
+    );
   }
 
   Future<void> updateSearchQuery(
-      UpdateSearchQuery event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    UpdateSearchQuery event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(searchQuery: event.query));
     applyAllFilters(emit);
   }
 
   Future<void> clearSearch(
-      ClearSearch event,
-      Emitter<EmployeeState> emit,
-      ) async {
+    ClearSearch event,
+    Emitter<EmployeeState> emit,
+  ) async {
     emit(state.copyWith(searchQuery: ''));
     applyAllFilters(emit);
   }

@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'Device_Testing/device_view.dart';
 import 'Leave/leave_view.dart';
 import 'System/system_view.dart';
+import 'employee_chat/chat_view.dart';
 import 'firebase_options.dart';
 import 'package:elaunch_management/Dashboard/splaceScreen.dart';
 import 'package:elaunch_management/Department/department_view.dart';
@@ -16,6 +17,7 @@ import 'Employee/employee_view.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MyApp());
 }
 
@@ -43,6 +45,7 @@ class MyApp extends StatelessWidget {
     SystemView.routeName: SystemView.builder  ,
     DeviceView.routeName: DeviceView.builder,
     LeaveView.routeName: LeaveView.builder,
+    ChatScreen.routeName: ChatScreen.builder,
 
   };
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,28 +54,37 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void checkLoginStatus() {
-    final adminBloc = context.read<AdminBloc>().state;
-    final employeeBloc = context.read<EmployeeBloc>().state;
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (!mounted) return;
 
-    if (adminBloc.isLogin && adminBloc.adminModal != null) {
-      Navigator.of(context).pushReplacementNamed(
-        DashboardView.routeName,
-        arguments: SelectRole(
-          adminModal: adminBloc.adminModal!,
-          selectedRole: "Admin",
-        ),
+      final adminBloc = context.read<AdminBloc>().state;
+      final employeeBloc = context.read<EmployeeBloc>().state;
+
+      log(
+        'Admin login status: ${adminBloc.isLogin}, Employee login status: ${employeeBloc.isLogin}',
       );
-    } else if (employeeBloc.isLogin && employeeBloc.loggedInEmployee != null) {
-      Navigator.of(context).pushReplacementNamed(
-        DashboardView.routeName,
-        arguments: SelectRole(
-          employeeModal: employeeBloc.loggedInEmployee!,
-          selectedRole: "Employee",
-        ),
-      );
-    } else {
-      Navigator.of(context).pushReplacementNamed(AdminView.routeName);
-    }
+
+      if (adminBloc.isLogin && adminBloc.adminModal != null) {
+        Navigator.of(context).pushReplacementNamed(
+          DashboardView.routeName,
+          arguments: SelectRole(
+            adminModal: adminBloc.adminModal!,
+            selectedRole: "Admin",
+          ),
+        );
+      } else if (employeeBloc.isLogin &&
+          employeeBloc.loggedInEmployee != null) {
+        Navigator.of(context).pushReplacementNamed(
+          DashboardView.routeName,
+          arguments: SelectRole(
+            employeeModal: employeeBloc.loggedInEmployee!,
+            selectedRole: "Employee",
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacementNamed(AdminView.routeName);
+      }
+    });
   }
 
   @override
