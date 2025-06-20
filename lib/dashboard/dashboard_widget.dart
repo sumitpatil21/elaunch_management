@@ -207,7 +207,7 @@ class DashboardWidgets {
       ),
       ManagementCardData(
         title: 'Chat',
-        icon: Icons.leave_bags_at_home_outlined,
+        icon: Icons.chat_bubble_outline_rounded,
         color: Color(0xff1a2a4d),
         route: ChatScreen.routeName,
         selectRole: user,
@@ -215,7 +215,7 @@ class DashboardWidgets {
             (context, state) => BlocBuilder<ChatBloc, ChatState>(
               builder:
                   (context, state) => Text(
-                    '${state.messages?.length}',
+                    '${state.messages.length}',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,

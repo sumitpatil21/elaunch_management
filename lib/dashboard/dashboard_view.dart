@@ -1,6 +1,7 @@
 import 'package:elaunch_management/SuperAdminLogin/admin_bloc.dart';
 import 'package:elaunch_management/SuperAdminLogin/admin_event.dart';
 import 'package:elaunch_management/System/system_bloc.dart';
+import 'package:elaunch_management/service/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,14 +13,12 @@ import '../Employee/employee_event.dart';
 import '../Employee/employee_state.dart';
 import '../Leave/leave_bloc.dart';
 import '../Leave/leave_event.dart';
-
-import '../Service/firebase_database.dart';
 import '../SuperAdminLogin/admin_state.dart';
 
 import '../System/system_event.dart';
 
 import '../employee_chat/chat_bloc.dart';
-import '../service/firebase_notifications.dart';
+
 import 'dashboard_widget.dart';
 
 class DashboardView extends StatefulWidget {
@@ -40,7 +39,7 @@ class DashboardView extends StatefulWidget {
           create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
         BlocProvider(create: (context) => LeaveBloc()..add(FetchLeaves())),
-        BlocProvider(create: (context) => ChatBloc(FirebaseDbHelper.firebase)),
+        BlocProvider(create: (context) => ChatBloc(firebaseDbHelper: FirebaseDbHelper.firebase)),
       ],
       child: const DashboardView(),
     );

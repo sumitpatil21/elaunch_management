@@ -61,10 +61,10 @@ class FirebaseMessagingService {
     }
 
     // Get and save FCM token
-    await _updateFCMToken();
-
-    // Listen for token refresh
-    _firebaseMessaging.onTokenRefresh.listen(_onTokenRefresh);
+    // await _updateFCMToken();
+    //
+    // // Listen for token refresh
+    // _firebaseMessaging.onTokenRefresh.listen(_onTokenRefresh);
 
     // Subscribe to general topic
     await _firebaseMessaging.subscribeToTopic('all_users');
@@ -188,35 +188,35 @@ class FirebaseMessagingService {
     }
   }
 
-  Future<void> _updateFCMToken() async {
-    try {
-      String? token = await getToken();
-      if (token != null) {
-        log('FCM Token: $token');
+  // Future<void> _updateFCMToken() async {
+  //   try {
+  //     String? token = await getToken();
+  //     if (token != null) {
+  //       log('FCM Token: $token');
+  //
+  //       // Save token to Firestore if user is authenticated
+  //       final currentUser = FirebaseAuth.instance.currentUser;
+  //       if (currentUser != null) {
+  //         await FirebaseDbHelper.firebase.updateEmployeeFCMToken(currentUser.uid, token);
+  //       }
+  //     }
+  //   } catch (e) {
+  //     log('Error updating FCM token: $e');
+  //   }
+  // }
 
-        // Save token to Firestore if user is authenticated
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser != null) {
-          await FirebaseDbHelper.firebase.updateEmployeeFCMToken(currentUser.uid, token);
-        }
-      }
-    } catch (e) {
-      log('Error updating FCM token: $e');
-    }
-  }
-
-  Future<void> _onTokenRefresh(String token) async {
-    log('FCM Token refreshed: $token');
-
-    try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        await FirebaseDbHelper.firebase.updateEmployeeFCMToken(currentUser.uid, token);
-      }
-    } catch (e) {
-      log('Error updating refreshed FCM token: $e');
-    }
-  }
+  // Future<void> _onTokenRefresh(String token) async {
+  //   log('FCM Token refreshed: $token');
+  //
+  //   try {
+  //     final currentUser = FirebaseAuth.instance.currentUser;
+  //     if (currentUser != null) {
+  //       await FirebaseDbHelper.firebase.updateEmployeeFCMToken(currentUser.uid, token);
+  //     }
+  //   } catch (e) {
+  //     log('Error updating refreshed FCM token: $e');
+  //   }
+  // }
 
   Future<void> subscribeToTopic(String topic) async {
     try {

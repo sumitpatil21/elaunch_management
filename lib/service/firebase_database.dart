@@ -24,6 +24,7 @@ class FirebaseDbHelper {
   CollectionReference get leaves => firestore.collection('leaves');
   CollectionReference get chatMessages => firestore.collection('chat_messages');
   CollectionReference get chatRooms => firestore.collection('chat_rooms');
+  CollectionReference get users => firestore.collection('users');
 
   Future<void> createAdmin(AdminModal admin) async {
     final doc = await admins.add(admin.toMap());
@@ -441,88 +442,179 @@ class FirebaseDbHelper {
     return null;
   }
 
+  // Collection references
 
+  // Create or get chat room
+  Future<String> createChatRoom(
+    String currentUserId,
+    String otherUserId,
+  ) async {
+    final roomId = _generateRoomId(currentUserId, otherUserId);
+    final participants = [currentUserId, otherUserId]..sort();
 
-  Future<String> sendMessage(ChatMessage message) async {
-    final docRef = chatMessages.doc();
-    await docRef.set({
-      ...message.toMap(),
-      'id': docRef.id,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    // Update chat room
-    final roomId = _generateChatRoomId(message.senderId, message.receiverId);
     await chatRooms.doc(roomId).set({
-      'participantIds': [message.senderId, message.receiverId],
-      'lastMessage': message.content,
+      'participants': participants,
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastMessage': '',
       'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastMessageSenderId': message.senderId,
+      'lastMessageSenderId': '',
+      'unreadCount': {currentUserId: 0, otherUserId: 0},
     }, SetOptions(merge: true));
 
-    return docRef.id;
+    return roomId;
   }
 
-  String _generateChatRoomId(String id1, String id2) {
+  // Generate consistent room ID
+  String _generateRoomId(String id1, String id2) {
     final ids = [id1, id2]..sort();
     return '${ids[0]}_${ids[1]}';
   }
 
-  Future<EmployeeModal?> getEmployeeById(String id) async {
-    try {
-      final doc = await firestore.collection('employees').doc(id).get();
-      if (doc.exists) {
-        return EmployeeModal.fromJson(doc.data()!);
-      }
-      return null;
-    } catch (e) {
-      log('Error getting employee by ID: $e');
-      return null;
-    }
+  // Send text message
+  Future<void> sendMessage(ChatMessage message) async {
+    final roomId = _generateRoomId(message.senderId, message.receiverId);
+    final messageRef = chatMessages.doc();
+
+    // Update room last message info
+    await chatRooms.doc(roomId).update({
+      'lastMessage': message.content,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastMessageSenderId': message.senderId,
+      'unreadCount.${message.receiverId}': FieldValue.increment(1),
+    });
+
+    // Add message
+    await messageRef.set({
+      'id': messageRef.id,
+      'roomId': roomId,
+      'senderId': message.senderId,
+      'receiverId': message.receiverId,
+      'content': message.content,
+      'timestamp': FieldValue.serverTimestamp(),
+      'status': 'sent',
+      'isRead': false,
+    });
   }
 
-  // Create or update employee FCM token
-  Future<void> updateEmployeeFCMToken(String userId, String token) async {
-    try {
-      await firestore.collection('employees').doc(userId).update({
-        'fcmToken': token,
-      });
-    } catch (e) {
-      log('Error updating FCM token: $e');
-    }
+  // Get stream of chat rooms for a user
+  Stream<List<ChatRoom>> getChatRooms(String userId) {
+    return chatRooms
+        .where('participants', arrayContains: userId)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map(
+                    (doc) =>
+                        ChatRoom.fromMap(doc.data() as Map<String, dynamic>),
+                  )
+                  .toList(),
+        );
   }
 
-  Stream<List<ChatMessage>> getChatMessages(String userId, String otherUserId) {
-    final roomId = _generateChatRoomId(userId, otherUserId);
+  // Get stream of messages for a room
+  Stream<List<ChatMessage>> getChatMessages(String roomId) {
     return chatMessages
         .where('roomId', isEqualTo: roomId)
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-        .map((doc) => ChatMessage.fromMap(doc.data() as Map<String, dynamic>))
-        .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map(
+                    (doc) =>
+                        ChatMessage.fromMap(doc.data() as Map<String, dynamic>),
+                  )
+                  .toList(),
+        );
   }
 
-  Stream<List<ChatRoom>> getChatRooms(String userId) {
-    return chatRooms
-        .where('participantIds', arrayContains: userId)
-        .orderBy('lastMessageTime', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-        .map((doc) => ChatRoom.fromMap(doc.data() as Map<String, dynamic>))
-        .toList());
-  }
-
+  // Mark messages as read
   Future<void> markMessagesAsRead(String roomId, String userId) async {
-    final messages = await chatMessages
-        .where('roomId', isEqualTo: roomId)
-        .where('receiverId', isEqualTo: userId)
-        .where('isRead', isEqualTo: false)
-        .get();
+    final unreadMessages =
+        await chatMessages
+            .where('roomId', isEqualTo: roomId)
+            .where('receiverId', isEqualTo: userId)
+            .where('isRead', isEqualTo: false)
+            .get();
 
-    for (final doc in messages.docs) {
-      await doc.reference.update({'isRead': true});
+    final batch = firestore.batch();
+    for (final doc in unreadMessages.docs) {
+      batch.update(doc.reference, {'isRead': true});
     }
+
+    // Reset unread count
+    batch.update(chatRooms.doc(roomId), {'unreadCount.$userId': 0});
+
+    await batch.commit();
   }
 
+  // Update message status
+  Future<void> updateMessageStatus(
+    String messageId,
+    MessageStatus status,
+  ) async {
+    await chatMessages.doc(messageId).update({
+      'status': status.toString().split('.').last,
+    });
+  }
+
+  Future<void> deleteMessage(String messageId, String roomId) async {
+    await chatMessages.doc(messageId).delete();
+    // You might want to update last message in room if this was the last one
+  }
+
+  // Get user contacts
+  Stream<List<UserContact>> getUserContacts(String userId) {
+    return users.snapshots().map(
+      (snapshot) =>
+          snapshot.docs
+              .where((doc) => doc.id != userId)
+              .map(
+                (doc) =>
+                    UserContact.fromMap(doc.data() as Map<String, dynamic>),
+              )
+              .toList(),
+    );
+  }
+
+  Future<void> startTyping(String roomId, String userId) async {
+    await chatRooms.doc(roomId).update({
+      'typing.$userId': true,
+      'typingLastUpdated': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> stopTyping(String roomId, String userId) async {
+    await chatRooms.doc(roomId).update({
+      'typing.$userId': false,
+      'typingLastUpdated': FieldValue.serverTimestamp(),
+    });
+  }
+
+
+  Future<void> updateOnlineStatus(String userId, bool isOnline) async {
+    await users.doc(userId).update({
+      'isOnline': isOnline,
+      'lastSeen': isOnline ? null : FieldValue.serverTimestamp(),
+    });
+  }
+
+
+  Future<UserContact?> getEmployeeById(String id) async {
+    final doc = await employees.doc(id).get();
+    if (doc.exists) {
+      return UserContact.fromMap(doc.data() as Map<String, dynamic>);
+    }
+    return null;
+  }
+
+
+  Future<void> updateFCMToken(String userId, String token) async {
+    await users.doc(userId).update({
+      'fcmToken': token,
+      'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 }
