@@ -280,6 +280,8 @@ class NotificationHandler {
       String senderName,
       ) {
     // Implementation depends on your navigation structure
+
+
     // This is a placeholder - customize based on your app's navigation
     log('Should navigate to chat with $senderName ($senderId)');
 

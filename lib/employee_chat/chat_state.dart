@@ -1,10 +1,7 @@
-
 import 'package:equatable/equatable.dart';
-
 
 import '../service/chart_room.dart';
 import '../service/chat_message.dart';
-
 
 enum ChatStatus { initial, loading, success, failure }
 

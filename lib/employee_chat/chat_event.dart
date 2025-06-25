@@ -36,7 +36,7 @@ class CreateChatRoom extends ChatEvent {
   final String currentUserId;
   final String otherUserId;
 
-  const CreateChatRoom(this.currentUserId, this.otherUserId);
+  const CreateChatRoom({required this.currentUserId, required this.otherUserId});
 
   @override
   List<Object> get props => [currentUserId, otherUserId];

@@ -1,10 +1,12 @@
-import 'package:elaunch_management/service/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../Service/chart_room.dart';
+import '../Employee/employee_bloc.dart';
+import '../Employee/employee_event.dart';
+import '../Employee/employee_state.dart';
 import '../SuperAdminLogin/admin_event.dart';
 import '../service/chat_message.dart';
+import '../service/employee_modal.dart';
+import '../service/firebase_database.dart';
 import 'chat_bloc.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
@@ -12,15 +14,23 @@ import 'chat_state.dart';
 class ChatScreen extends StatefulWidget {
   static const routeName = '/chat';
 
-
   const ChatScreen({super.key});
 
   static Widget builder(BuildContext context) {
-    SelectRole user = ModalRoute.of(context)!.settings.arguments as SelectRole;
-    return BlocProvider(
-      create:
-          (context) => ChatBloc(firebaseDbHelper: FirebaseDbHelper.firebase),
-      child: ChatScreen(),
+    final selectRole = ModalRoute.of(context)!.settings.arguments as SelectRole;
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create:
+              (context) =>
+                  ChatBloc(firebaseDbHelper: FirebaseDbHelper.firebase)
+                    ..add(LoadChatRooms(selectRole.employeeModal?.id ?? "")),
+        ),
+        BlocProvider(
+          create: (context) => EmployeeBloc()..add(FetchEmployees()),
+        ),
+      ],
+      child: const ChatScreen(),
     );
   }
 
@@ -36,8 +46,6 @@ class _ChatScreenState extends State<ChatScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-
   }
 
   @override
@@ -49,161 +57,260 @@ class _ChatScreenState extends State<ChatScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xff1a2a4d),
       appBar: AppBar(
-        title: const Text('Chats'),
+        backgroundColor: const Color(0xff1a2a4d),
+        title: const Text(
+          'Message',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.chat), text: 'Messages'),
-            Tab(icon: Icon(Icons.contacts), text: 'Contacts'),
-          ],
+          indicatorColor: const Color(0xFF00A884),
+          indicatorWeight: 3,
+          labelColor: const Color(0xFF00A884),
+          unselectedLabelColor: Colors.white70,
+          tabs: const [Tab(text: 'CHATS'), Tab(text: 'CONTACTS')],
         ),
       ),
-      body: Center(),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [ChatRoomsList(), ContactsList()],
+      ),
     );
   }
 }
 
 class ChatRoomsList extends StatelessWidget {
-  final String userId;
-
-  const ChatRoomsList({super.key, required this.userId});
+  const ChatRoomsList({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final selectRole = ModalRoute.of(context)!.settings.arguments as SelectRole;
+
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
         if (state.isLoadingRooms) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state.chatRooms.isEmpty) {
-          return const Center(child: Text('No chats yet'));
-        }
+        return Container(
+          color: const Color(0xFF111B21),
+          child: ListView.builder(
+            itemCount: state.chatRooms.length,
+            itemBuilder: (context, index) {
+              final room = state.chatRooms[index];
+              final otherUserId = room.participantIds.firstWhere(
+                (id) => id != selectRole.employeeModal?.id,
+                orElse: () => '',
+              );
 
-        return ListView.builder(
-          itemCount: state.chatRooms.length,
-          itemBuilder: (context, index) {
-            final room = state.chatRooms[index];
-            final otherUserId = room.participantIds.firstWhere(
-              (id) => id != userId,
-              orElse: () => '',
-            );
-            final contact = state.getRoomById(otherUserId);
-            return null;
-
-            // return ChatRoomListItem(
-            //   /*room: room.id,
-            //   contact: contact,
-            //   currentUserId: userId,
-            //   unreadCount: room.unreadCount,*/
-            // );
-          },
-        );
-      },
-    );
-  }
-}
-
-class ChatRoomListItem extends StatelessWidget {
-  final ChatRoom room;
-  final UserContact? contact;
-  final String currentUserId;
-  final int unreadCount;
-
-  const ChatRoomListItem({
-    Key? key,
-    required this.room,
-    required this.contact,
-    required this.currentUserId,
-    required this.unreadCount,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage:
-            contact?.profileImage != null
-                ? NetworkImage(contact!.profileImage!)
-                : null,
-        child:
-            contact?.profileImage == null
-                ? Text(
-                  contact?.name.isNotEmpty == true ? contact!.name[0] : '?',
-                )
-                : null,
-      ),
-      title: Text(contact?.name ?? 'Unknown'),
-      subtitle: Row(
-        children: [
-          if (room.lastMessageSenderId == currentUserId)
-            const Text('You: ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(
-            child: Text(
-              room.lastMessage as String,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            room.lastMessageTime != null
-                ? _formatTime(room.lastMessageTime!)
-                : '',
-            style: const TextStyle(fontSize: 12),
-          ),
-          if (unreadCount > 0)
-            CircleAvatar(
-              radius: 10,
-              backgroundColor: Colors.blue,
-              child: Text(
-                '$unreadCount',
-                style: const TextStyle(fontSize: 10, color: Colors.white),
-              ),
-            ),
-        ],
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => ChatDetailScreen(
-                  roomId: room.id,
-                  currentUserId: currentUserId,
-                  otherUser: contact,
-                ),
+              return FutureBuilder<EmployeeModal?>(
+                future: FirebaseDbHelper.firebase.getEmployeeById(otherUserId),
+                builder: (context, snapshot) {
+                  final employee = snapshot.data;
+                  return ChatRoomListItem(
+                    name: employee?.name ?? 'Unknown',
+                    lastMessage: room.lastMessage ?? "",
+                    time: _formatTime(room.lastMessageTime?.toDate()),
+                    unreadCount: 0,
+                    isOnline: false,
+                    // In ChatRoomsList:
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) {
+                            // Use the parent context to get the bloc
+                            final parentContext = context;
+                            return MultiBlocProvider(
+                              providers: [
+                                BlocProvider(
+                                  create:
+                                      (context) =>
+                                  ChatBloc(firebaseDbHelper: FirebaseDbHelper.firebase)
+                                    ..add(LoadChatRooms(selectRole.employeeModal?.id ?? "")),
+                                ),
+                                BlocProvider(
+                                  create: (context) => EmployeeBloc()..add(FetchEmployees()),
+                                ),
+                              ],
+                              child: ChatDetailScreen(
+                                name: employee?.name ?? 'Unknown',
+                                isOnline: false,
+                                roomId: room.id,
+                                otherUserId: otherUserId,
+                                employeeModal: selectRole.employeeModal,
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
           ),
         );
       },
     );
   }
 
-  String _formatTime(DateTime time) {
+  String _formatTime(DateTime? time) {
+    if (time == null) return '';
     final now = DateTime.now();
-    if (now.difference(time).inDays < 1) {
-      return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+    final difference = now.difference(time);
+
+    if (difference.inDays > 7) {
+      return '${time.day}/${time.month}/${time.year}';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
     } else {
-      return '${time.month}/${time.day}';
+      return 'Just now';
     }
   }
 }
 
+class ChatRoomListItem extends StatelessWidget {
+  final String name;
+  final String lastMessage;
+  final String time;
+  final int unreadCount;
+  final bool isOnline;
+  final VoidCallback onTap;
+
+  const ChatRoomListItem({
+    super.key,
+    required this.name,
+    required this.lastMessage,
+    required this.time,
+    required this.unreadCount,
+    required this.isOnline,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Color(0xFF2A3942), width: 0.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: const Color(0xFF2A3942),
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        time,
+                        style: TextStyle(
+                          color:
+                              unreadCount > 0
+                                  ? const Color(0xFF00A884)
+                                  : Colors.white54,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          lastMessage,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (unreadCount > 0)
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF00A884),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : '$unreadCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ChatDetailScreen extends StatefulWidget {
+  final String name;
+  final bool isOnline;
   final String roomId;
-  final String currentUserId;
-  final UserContact? otherUser;
+  final String otherUserId;
+  final EmployeeModal? employeeModal;
 
   const ChatDetailScreen({
-    Key? key,
+    super.key,
+    required this.name,
+    required this.isOnline,
     required this.roomId,
-    required this.currentUserId,
-    required this.otherUser,
-  }) : super(key: key);
+    required this.otherUserId,
+    required this.employeeModal,
+  });
 
   @override
   _ChatDetailScreenState createState() => _ChatDetailScreenState();
@@ -217,10 +324,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void initState() {
     super.initState();
     context.read<ChatBloc>().add(
-      LoadChatMessages(userId: '', otherUserId: '', roomId: ''),
-    );
-    context.read<ChatBloc>().add(
-      MarkMessagesAsRead(widget.roomId, widget.currentUserId),
+      LoadChatMessages(
+        roomId: widget.roomId,
+        userId: widget.employeeModal?.id ?? "",
+        otherUserId: '',
+      ),
     );
   }
 
@@ -234,269 +342,170 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0B141A),
       appBar: AppBar(
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundImage:
-                  widget.otherUser?.profileImage != null
-                      ? NetworkImage(widget.otherUser!.profileImage!)
-                      : null,
-              child:
-                  widget.otherUser?.profileImage == null
-                      ? Text(
-                        widget.otherUser?.name.isNotEmpty == true
-                            ? widget.otherUser!.name[0]
-                            : '?',
-                      )
-                      : null,
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(widget.otherUser?.name ?? 'Unknown'),
-                BlocBuilder<ChatBloc, ChatState>(
-                  builder: (context, state) {
-                    final isTyping = state.isUserTyping(
-                      widget.roomId,
-                      widget.otherUser?.id ?? '',
-                    );
-                    final isOnline = state.isUserOnline(
-                      widget.otherUser?.id ?? '',
-                    );
-
-                    return Text(
-                      isTyping
-                          ? 'typing...'
-                          : isOnline
-                          ? 'online'
-                          : 'last seen ${_formatLastSeen(state.onlineUsers.toString() as DateTime?)}',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
+        backgroundColor: const Color(0xFF202C33),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
+        title: Text(widget.name, style: const TextStyle(color: Colors.white)),
       ),
       body: Column(
         children: [
-          // Expanded(
-          //   child: BlocBuilder<ChatBloc, ChatState>(
-          //     // builder: (context, state) {
-          //     //   if (state.isLoadingMessages) {
-          //     //     return const Center(child: CircularProgressIndicator());
-          //     //   }
-          //     //
-          //     //   final messages = state.chatRooms;
-          //     //
-          //     //   WidgetsBinding.instance.addPostFrameCallback((_) {
-          //     //     if (_scrollController.hasClients) {
-          //     //       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-          //     //     }
-          //     //   });
-          //     //
-          //     //   // return ListView.builder(
-          //     //   //   controller: _scrollController,
-          //     //   //   itemCount: messages.length,
-          //     //   //   itemBuilder: (context, index) {
-          //     //   //     return MessageBubble(
-          //     //   //       message: messages[index],
-          //     //   //       isMe: messages[index].senderId == widget.currentUserId,
-          //     //   //     );
-          //     //   //   },
-          //     //   // );
-          //     // },
-          //   ),
-          // ),
+          Expanded(
+            child: BlocBuilder<ChatBloc, ChatState>(
+              builder: (context, state) {
+                final messages = state.getMessagesForRoom(widget.roomId);
+
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients) {
+                    _scrollController.jumpTo(
+                      _scrollController.position.minScrollExtent,
+                    );
+                  }
+                });
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  reverse: true,
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    return MessageBubble(
+                      message: message.content,
+                      time: _formatTime(message.timestamp),
+                      isMe: message.senderId == widget.employeeModal?.id,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
           _buildMessageInput(),
         ],
       ),
     );
   }
 
-  Widget _buildMessageInput() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
+  String _formatTime(DateTime time) {
+    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+  }
 
+  Widget _buildMessageInput() {
+    return Container(
+      color: const Color(0xFF202C33),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
         children: [
-          IconButton(icon: const Icon(Icons.attach_file), onPressed: () => ()),
           Expanded(
             child: TextField(
               controller: _messageController,
+              style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(),
+                hintText: 'Type a message',
+                hintStyle: TextStyle(color: Colors.white54),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(25)),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Color(0xFF2A3942),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
-              onChanged: (text) {
-                if (text.isNotEmpty) {
-                  context.read<ChatBloc>().add(
-                    StartTyping(widget.roomId, widget.currentUserId),
-                  );
-                } else {
-                  context.read<ChatBloc>().add(
-                    StopTyping(widget.roomId, widget.currentUserId),
-                  );
-                }
-              },
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.send),
+          const SizedBox(width: 8),
+          FloatingActionButton(
+            mini: true,
+            backgroundColor: const Color(0xFF00A884),
             onPressed: () {
               if (_messageController.text.trim().isNotEmpty) {
                 final message = ChatMessage(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  senderId: widget.currentUserId,
-                  senderName:
-                      'You', // This should be replaced with actual user name
-                  receiverId: widget.otherUser?.id ?? '',
+                  id: '',
+                  senderId: widget.employeeModal?.id ?? "",
+                  senderName: widget.employeeModal?.name ?? "",
+                  receiverId: widget.otherUserId,
                   content: _messageController.text,
                   timestamp: DateTime.now(),
                   roomId: widget.roomId,
+                  isRead: false,
+                  status: MessageStatus.sent,
                 );
 
                 context.read<ChatBloc>().add(SendMessage(message));
                 _messageController.clear();
               }
             },
+            child: const Icon(Icons.send, color: Colors.white, size: 20),
           ),
         ],
       ),
     );
   }
-
-  // void _showAttachmentOptions() {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     builder: (context) {
-  //       return SafeArea(
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             ListTile(
-  //               leading: const Icon(Icons.image),
-  //               title: const Text('Image'),
-  //               onTap: () {
-  //                 Navigator.pop(context);
-  //                 _pickAndSendMedia(MessageType.image);
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: const Icon(Icons.videocam),
-  //               title: const Text('Video'),
-  //               onTap: () {
-  //                 Navigator.pop(context);
-  //                 _pickAndSendMedia(MessageType.video);
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: const Icon(Icons.insert_drive_file),
-  //               title: const Text('Document'),
-  //               onTap: () {
-  //                 Navigator.pop(context);
-  //                 _pickAndSendMedia(MessageType.document);
-  //               },
-  //             ),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-  //
-  // void _pickAndSendMedia(MessageType type) async {
-  //   // Implement file picking logic
-  //   // For example using image_picker or file_picker packages
-  //   // Then send the file using SendMediaMessage event
-  // }
-
-  String _formatLastSeen(DateTime? lastSeen) {
-    if (lastSeen == null) return 'unknown';
-
-    final now = DateTime.now();
-    final difference = now.difference(lastSeen);
-
-    if (difference.inSeconds < 60) return 'just now';
-    if (difference.inMinutes < 60) return '${difference.inMinutes} min ago';
-    if (difference.inHours < 24) return '${difference.inHours} hours ago';
-    return '${difference.inDays} days ago';
-  }
 }
 
 class MessageBubble extends StatelessWidget {
-  final ChatMessage message;
+  final String message;
+  final String time;
   final bool isMe;
+  final bool isRead;
 
-  const MessageBubble({super.key, required this.message, required this.isMe});
+  const MessageBubble({
+    super.key,
+    required this.message,
+    required this.time,
+    required this.isMe,
+    this.isRead = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: const EdgeInsets.all(12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
+        margin: EdgeInsets.only(
+          left: isMe ? 64 : 8,
+          right: isMe ? 8 : 64,
+          top: 4,
+          bottom: 4,
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isMe ? Theme.of(context).primaryColor : Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
+          color: isMe ? const Color(0xFF005C4B) : const Color(0xFF202C33),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(isMe ? 18 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 18),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // if (!isMe)
-            //   Text(
-            //     message.senderName,
-            //     style: TextStyle(
-            //       fontWeight: FontWeight.bold,
-            //       color: isMe ? Colors.white : Colors.black,
-            //     ),
-            //   ),
-            // if (message.type == MessageType.text)
-            //   Text(
-            //     message.content,
-            //     style: TextStyle(color: isMe ? Colors.white : Colors.black),
-            //   ),
-            // if (message.type == MessageType.image)
-            //   GestureDetector(
-            //     onTap: () {
-            //       // Show image in full screen
-            //     },
-            //     child: ClipRRect(
-            //       borderRadius: BorderRadius.circular(8),
-            //       child: Image.network(
-            //         message.attachmentUrl!,
-            //         width: double.infinity,
-            //         height: 200,
-            //         fit: BoxFit.cover,
-            //       ),
-            //     ),
-            //   ),
+            Text(
+              message,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
             const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isMe ? Colors.white70 : Colors.black54,
-                  ),
+                  time,
+                  style: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
-                const SizedBox(width: 4),
-                if (isMe)
+                if (isMe) ...[
+                  const SizedBox(width: 4),
                   Icon(
-                    _getStatusIcon(message.status),
-                    size: 12,
-                    color: isMe ? Colors.white70 : Colors.black54,
+                    isRead ? Icons.done_all : Icons.done,
+                    size: 16,
+                    color: isRead ? const Color(0xFF4FC3F7) : Colors.white60,
                   ),
+                ],
               ],
             ),
           ],
@@ -504,125 +513,72 @@ class MessageBubble extends StatelessWidget {
       ),
     );
   }
-
-  IconData _getStatusIcon(MessageStatus status) {
-    switch (status) {
-      case MessageStatus.sending:
-        return Icons.access_time;
-      case MessageStatus.sent:
-        return Icons.check;
-      case MessageStatus.delivered:
-        return Icons.done_all;
-      case MessageStatus.read:
-        return Icons.done_all;
-      case MessageStatus.failed:
-        return Icons.error_outline;
-      }
-  }
 }
 
 class ContactsList extends StatelessWidget {
-  final String userId;
-
-  const ContactsList({Key? key, required this.userId}) : super(key: key);
+  const ContactsList({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextField(
-            decoration: const InputDecoration(
-              hintText: 'Search contacts...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (query) {
-              context.read<ChatBloc>().add(SearchContacts(query));
-            },
-          ),
-        ),
-        Expanded(
-          child: BlocBuilder<ChatBloc, ChatState>(
-            builder: (context, state) {
-              if (state.isLoadingContacts) {
-                return const Center(child: CircularProgressIndicator());
+    final selectRole = ModalRoute.of(context)!.settings.arguments as SelectRole;
+
+    return BlocBuilder<EmployeeBloc, EmployeeState>(
+      builder: (context, state) {
+        return Container(
+          color: const Color(0xFF111B21),
+          child: ListView.builder(
+            itemCount: state.employees.length,
+            itemBuilder: (context, index) {
+              final employee = state.employees[index];
+              if (employee.id == selectRole.employeeModal?.id) {
+                return const SizedBox(); // Skip current user
               }
 
-              if (state.filteredContacts.isEmpty) {
-                return const Center(child: Text('No contacts found'));
-              }
+              return ListTile(
+                leading: CircleAvatar(child: Text(employee.name[0])),
+                title: Text(
+                  employee.name,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                subtitle: Text(
+                  employee.departmentName ?? '',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                onTap: () {
+                  context.read<ChatBloc>().add(
+                    CreateChatRoom(
+                      currentUserId: selectRole.employeeModal?.id ?? "",
+                      otherUserId: employee.id,
+                    ),
+                  );
 
-              return ListView.builder(
-                itemCount: state.filteredContacts.length,
-                itemBuilder: (context, index) {
-                  final contact = state.filteredContacts[index];
-                  return ContactListItem(
-                    contact: contact,
-                    currentUserId: userId,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => ChatDetailScreen(
+                            name: employee.name,
+                            isOnline: false,
+                            roomId: _generateRoomId(
+                              selectRole.employeeModal?.id ?? "",
+                              employee.id,
+                            ),
+                            otherUserId: employee.id,
+                            employeeModal: selectRole.employeeModal,
+                          ),
+                    ),
                   );
                 },
               );
             },
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class ContactListItem extends StatelessWidget {
-  final UserContact contact;
-  final String currentUserId;
-
-  const ContactListItem({
-    Key? key,
-    required this.contact,
-    required this.currentUserId,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage:
-            contact.profileImage != null
-                ? NetworkImage(contact.profileImage!)
-                : null,
-        child:
-            contact.profileImage == null
-                ? Text(contact.name.isNotEmpty ? contact.name[0] : '?')
-                : null,
-      ),
-      title: Text(contact.name),
-      subtitle: BlocBuilder<ChatBloc, ChatState>(
-        builder: (context, state) {
-          return Text(state.isUserOnline(contact.id) ? 'online' : 'last seen');
-        },
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.chat),
-        onPressed: () {
-          context.read<ChatBloc>().add(
-            CreateChatRoom(currentUserId, contact.id),
-          );
-          // Navigate to chat detail screen after room is created
-          // This should be handled with a listener in the BLoC
-        },
-      ),
+        );
+      },
     );
   }
 
-  String _formatLastSeen(DateTime? lastSeen) {
-    if (lastSeen == null) return 'unknown';
-
-    final now = DateTime.now();
-    final difference = now.difference(lastSeen);
-
-    if (difference.inSeconds < 60) return 'just now';
-    if (difference.inMinutes < 60) return '${difference.inMinutes} min ago';
-    if (difference.inHours < 24) return '${difference.inHours} hours ago';
-    return '${difference.inDays} days ago';
+  String _generateRoomId(String id1, String id2) {
+    final ids = [id1, id2]..sort();
+    return '${ids[0]}_${ids[1]}';
   }
 }

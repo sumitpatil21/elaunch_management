@@ -215,7 +215,7 @@ class DashboardWidgets {
             (context, state) => BlocBuilder<ChatBloc, ChatState>(
               builder:
                   (context, state) => Text(
-                    '${state.messages.length}',
+                    '0',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
