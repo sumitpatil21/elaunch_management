@@ -134,6 +134,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     }
   }
 
+
   Future<void> saveLogin(bool isLogin, String role, String? userId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(loginKey, isLogin);

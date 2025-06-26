@@ -10,7 +10,7 @@ class ChatMessage {
   final String senderName;
   final String receiverId;
   final String content;
-  final DateTime timestamp;
+  final Timestamp timestamp;
   final bool isRead;
 
   final MessageStatus status;
@@ -39,7 +39,7 @@ class ChatMessage {
     String? senderName,
     String? receiverId,
     String? content,
-    DateTime? timestamp,
+    Timestamp? timestamp,
     bool? isRead,
     String? type,
     MessageStatus? status,
@@ -70,7 +70,7 @@ class ChatMessage {
       'senderName': senderName,
       'receiverId': receiverId,
       'content': content,
-      'timestamp': timestamp.toIso8601String(),
+      'timestamp': timestamp,
       'isRead': isRead,
 
       'status': status.name,
@@ -87,7 +87,7 @@ class ChatMessage {
       senderName: map['senderName'] ?? '',
       receiverId: map['receiverId'] ?? '',
       content: map['content'] ?? '',
-      timestamp: DateTime.parse(map['timestamp']),
+      timestamp: map['timestamp'],
       isRead: map['isRead'] ?? false,
       status: MessageStatus.values.firstWhere(
         (e) => e.name == map['status'],
@@ -111,7 +111,7 @@ class ChatMessage {
       senderName: data['senderName'] ?? '',
       receiverId: data['receiverId'] ?? '',
       content: data['content'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp: data['timestamp'],
       isRead: data['isRead'] ?? false,
       status: MessageStatus.values.firstWhere(
         (e) => e.name == data['status'],

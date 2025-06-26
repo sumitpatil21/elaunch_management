@@ -8,6 +8,7 @@ enum ChatStatus { initial, loading, success, failure }
 class ChatState extends Equatable {
   final ChatStatus status;
   final String? errorMessage;
+  final Map<String, List<ChatMessage>> messagesByRoom;
 
   // Chat Rooms
   final List<ChatRoom> chatRooms;
@@ -32,6 +33,7 @@ class ChatState extends Equatable {
   const ChatState({
     this.status = ChatStatus.initial,
     this.errorMessage,
+    this.messagesByRoom = const {},
     this.chatRooms = const [],
     this.isLoadingRooms = false,
     this.messages = const [],
@@ -50,6 +52,7 @@ class ChatState extends Equatable {
   List<Object?> get props => [
     status,
     errorMessage,
+    messagesByRoom,
     chatRooms,
     isLoadingRooms,
     messages,
@@ -67,6 +70,7 @@ class ChatState extends Equatable {
   ChatState copyWith({
     ChatStatus? status,
     String? errorMessage,
+    Map<String, List<ChatMessage>>? messagesByRoom,
     List<ChatRoom>? chatRooms,
     bool? isLoadingRooms,
     List<ChatMessage>? messages,
@@ -83,6 +87,7 @@ class ChatState extends Equatable {
     return ChatState(
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
+      messagesByRoom: messagesByRoom ?? this.messagesByRoom,
       chatRooms: chatRooms ?? this.chatRooms,
       isLoadingRooms: isLoadingRooms ?? this.isLoadingRooms,
       messages: messages ?? this.messages,

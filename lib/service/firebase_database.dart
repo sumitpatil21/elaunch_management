@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:elaunch_management/Service/device_modal.dart';
@@ -8,7 +9,6 @@ import 'admin_modal.dart';
 import 'chart_room.dart';
 import 'chat_message.dart';
 import 'department_modal.dart';
-
 import 'leave_modal.dart';
 
 class FirebaseDbHelper {
@@ -26,6 +26,7 @@ class FirebaseDbHelper {
   CollectionReference get chatRooms => firestore.collection('chat_rooms');
   CollectionReference get users => firestore.collection('users');
 
+  // Existing admin methods...
   Future<void> createAdmin(AdminModal admin) async {
     final doc = await admins.add(admin.toMap());
     log("Admin created with ID: ${doc.id}");
@@ -43,10 +44,10 @@ class FirebaseDbHelper {
     return query.docs
         .map(
           (doc) => AdminModal.fromJson({
-            ...doc.data() as Map<String, dynamic>,
-            'id': doc.id,
-          }),
-        )
+        ...doc.data() as Map<String, dynamic>,
+        'id': doc.id,
+      }),
+    )
         .toList();
   }
 
@@ -55,13 +56,14 @@ class FirebaseDbHelper {
     return snapshot.docs
         .map(
           (doc) => AdminModal.fromJson({
-            ...doc.data() as Map<String, dynamic>,
-            'id': doc.id,
-          }),
-        )
+        ...doc.data() as Map<String, dynamic>,
+        'id': doc.id,
+      }),
+    )
         .toList();
   }
 
+  // Department methods...
   Future<void> createDepartment(DepartmentModal department) async {
     final docRef = departments.doc();
     await docRef.set({
@@ -85,7 +87,6 @@ class FirebaseDbHelper {
       return DepartmentModal.fromJson({
         ...data,
         'id': doc.id,
-        // 'id_admin': (data['adminRef'] as DocumentReference).id,
       });
     }).toList();
   }
@@ -100,8 +101,8 @@ class FirebaseDbHelper {
   Future<void> deleteDepartment(String id) async {
     final hasEmployees =
         (await employees
-                .where('departmentRef', isEqualTo: departments.doc(id))
-                .get())
+            .where('departmentRef', isEqualTo: departments.doc(id))
+            .get())
             .docs
             .isNotEmpty;
 
@@ -111,6 +112,7 @@ class FirebaseDbHelper {
     await departments.doc(id).delete();
   }
 
+  // Employee methods...
   Future<void> createEmployee(EmployeeModal employee) async {
     if (!(await departments.doc(employee.departmentId).get()).exists) {
       throw Exception('department does not exist');
@@ -121,7 +123,6 @@ class FirebaseDbHelper {
       ...employee.toJson(),
       'id': docRef.id,
       'departmentRef': departments.doc(employee.departmentId),
-      // 'adminRef': admins.doc(employee.adminId),
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -159,10 +160,10 @@ class FirebaseDbHelper {
     return query.docs
         .map(
           (doc) => EmployeeModal.fromJson({
-            ...doc.data() as Map<String, dynamic>,
-            'id': doc.id,
-          }),
-        )
+        ...doc.data() as Map<String, dynamic>,
+        'id': doc.id,
+      }),
+    )
         .toList();
   }
 
@@ -171,7 +172,6 @@ class FirebaseDbHelper {
     await employees.doc(employee.id).update({
       ...employee.toJson(),
       'departmentRef': departments.doc(employee.departmentId.toString()),
-      // 'adminRef': admins.doc(employee.adminId.toString()),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -180,6 +180,15 @@ class FirebaseDbHelper {
     await employees.doc(id).delete();
   }
 
+  Future<EmployeeModal?> getEmployeeById(String id) async {
+    final doc = await employees.doc(id).get();
+    if (doc.exists) {
+      return EmployeeModal.fromJson(doc.data() as Map<String, dynamic>);
+    }
+    return null;
+  }
+
+  // FIXED CHAT METHODS
   Future<String> createChatRoom(
       String currentUserId,
       String otherUserId,
@@ -187,14 +196,24 @@ class FirebaseDbHelper {
     final roomId = _generateRoomId(currentUserId, otherUserId);
     final participants = [currentUserId, otherUserId]..sort();
 
-    await chatRooms.doc(roomId).set({
-      'participants': participants,
-      'createdAt': FieldValue.serverTimestamp(),
-      'lastMessage': '',
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastMessageSenderId': '',
-      'unreadCount': {currentUserId: 0, otherUserId: 0},
-    }, SetOptions(merge: true));
+    // Check if room already exists
+    final existingRoom = await chatRooms.doc(roomId).get();
+
+    if (!existingRoom.exists) {
+      await chatRooms.doc(roomId).set({
+        'id': roomId,
+        'participants': participants,
+        'participantIds': participants, // Add this for easier querying
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageSenderId': '',
+        'unreadCount': {
+          currentUserId: 0,
+          otherUserId: 0
+        },
+      });
+    }
 
     return roomId;
   }
@@ -205,40 +224,107 @@ class FirebaseDbHelper {
   }
 
   Future<void> sendMessage(ChatMessage message) async {
-    final messageRef = chatMessages.doc();
+    try {
+      // Generate unique message ID
+      final messageRef = chatMessages.doc();
+      final messageId = messageRef.id;
 
-    await chatRooms.doc(message.roomId).update({
-      'lastMessage': message.content,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastMessageSenderId': message.senderId,
-      'unreadCount.${message.receiverId}': FieldValue.increment(1),
-    });
+      // Create the message document
+      final messageData = {
+        'id': messageId,
+        'roomId': message.roomId,
+        'senderId': message.senderId,
+        'senderName': message.senderName,
+        'receiverId': message.receiverId,
+        'content': message.content,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': MessageStatus.sent.toString().split('.').last,
+        'isRead': false,
+      };
 
-    await messageRef.set({
-      'id': messageRef.id,
-      'roomId': message.roomId,
-      'senderId': message.senderId,
-      'receiverId': message.receiverId,
-      'content': message.content,
-      'timestamp': FieldValue.serverTimestamp(),
-      'status': 'sent',
-      'isRead': false,
-    });
+      // Use batch write for consistency
+      final batch = firestore.batch();
+
+      // Add message
+      batch.set(messageRef, messageData);
+
+      // Update chat room
+      batch.update(chatRooms.doc(message.roomId), {
+        'lastMessage': message.content,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageSenderId': message.senderId,
+        'unreadCount.${message.receiverId}': FieldValue.increment(1),
+      });
+
+
+    await batch.commit();
+
+    log('Message sent successfully: $messageId');
+
+    // Send push notification to receiver
+    await _sendPushNotification(message);
+
+    } catch (e) {
+    log('Error sending message: $e');
+    throw Exception('Failed to send message: $e');
+    }
+  }
+
+  Future<void> _sendPushNotification(ChatMessage message) async {
+    try {
+      // Get receiver's FCM token
+      final receiverDoc = await employees.doc(message.receiverId).get();
+
+      if (receiverDoc.exists) {
+        final receiverData = receiverDoc.data() as Map<String, dynamic>;
+        final fcmToken = receiverData['fcmToken'] as String?;
+
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          // Here you would call your cloud function or use Firebase Admin SDK
+          // For now, we'll just log it
+          log('Should send notification to token: $fcmToken');
+          log('Message: ${message.content}');
+          log('From: ${message.senderName}');
+
+          // You can implement this by calling a cloud function:
+          /*
+          await FirebaseFunctions.instance
+              .httpsCallable('sendChatNotification')
+              .call({
+            'token': fcmToken,
+            'title': 'New message from ${message.senderName}',
+            'body': message.content,
+            'data': {
+              'type': 'chat',
+              'roomId': message.roomId,
+              'senderId': message.senderId,
+              'senderName': message.senderName,
+            }
+          });
+          */
+        }
+      }
+    } catch (e) {
+      log('Error sending push notification: $e');
+      // Don't throw here as message was already sent successfully
+    }
   }
 
   Stream<List<ChatRoom>> getChatRooms(String userId) {
     return chatRooms
-        .where('participants', arrayContains: userId)
+        .where('participantIds', arrayContains: userId)
         .orderBy('lastMessageTime', descending: true)
         .snapshots()
         .map(
-          (snapshot) =>
-          snapshot.docs
-              .map(
-                (doc) =>
-                ChatRoom.fromMap(doc.data() as Map<String, dynamic>),
-          )
-              .toList(),
+          (snapshot) => snapshot.docs
+          .map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return ChatRoom.fromMap({
+          ...data,
+          'id': doc.id,
+        });
+      })
+          .toList(),
     );
   }
 
@@ -248,201 +334,163 @@ class FirebaseDbHelper {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map(
-          (snapshot) =>
-          snapshot.docs
-              .map(
-                (doc) =>
-                ChatMessage.fromMap(doc.data() as Map<String, dynamic>),
-          )
-              .toList(),
+          (snapshot) => snapshot.docs
+          .map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return ChatMessage.fromMap({
+          ...data,
+          'id': doc.id,
+        });
+      })
+          .toList(),
     );
   }
 
   Future<void> markMessagesAsRead(String roomId, String userId) async {
-    final unreadMessages =
-    await chatMessages
-        .where('roomId', isEqualTo: roomId)
-        .where('receiverId', isEqualTo: userId)
-        .where('isRead', isEqualTo: false)
-        .get();
+    try {
+      final unreadMessages = await chatMessages
+          .where('roomId', isEqualTo: roomId)
+          .where('receiverId', isEqualTo: userId)
+          .where('isRead', isEqualTo: false)
+          .get();
 
-    final batch = firestore.batch();
-    for (final doc in unreadMessages.docs) {
-      batch.update(doc.reference, {'isRead': true});
+      if (unreadMessages.docs.isNotEmpty) {
+        final batch = firestore.batch();
+
+        for (final doc in unreadMessages.docs) {
+          batch.update(doc.reference, {'isRead': true});
+        }
+
+        batch.update(chatRooms.doc(roomId), {
+          'unreadCount.$userId': 0
+        });
+
+        await batch.commit();
+        log('Marked ${unreadMessages.docs.length} messages as read');
+      }
+    } catch (e) {
+      log('Error marking messages as read: $e');
     }
-
-    batch.update(chatRooms.doc(roomId), {'unreadCount.$userId': 0});
-    await batch.commit();
   }
-
-  Future<EmployeeModal?> getEmployeeById(String id) async {
-    final doc = await employees.doc(id).get();
-    if (doc.exists) {
-      return EmployeeModal.fromJson(doc.data() as Map<String, dynamic>);
-    }
-    return null;
-  }
-  // Future<String> createChatRoom(
-  //     String currentUserId,
-  //     String otherUserId,
-  //     ) async {
-  //   final roomId = _generateRoomId(currentUserId, otherUserId);
-  //   final participants = [currentUserId, otherUserId]..sort();
-  //   await chatRooms.doc(roomId).set({
-  //     'participants': participants,
-  //     'createdAt': FieldValue.serverTimestamp(),
-  //     'lastMessage': '',
-  //     'lastMessageTime': FieldValue.serverTimestamp(),
-  //     'lastMessageSenderId': '',
-  //     'unreadCount': {currentUserId: 1, otherUserId: 1},
-  //   }, SetOptions(merge: true));
-  //   return roomId;
-  // }
-  //
-  // String _generateRoomId(String id1, String id2) {
-  //   final ids = [id1, id2]..sort();
-  //   log("Generating room ID: ${ids[0]}_${ids[1]}");
-  //   return '${ids[0]}_Chat_With_${ids[1]}';
-  // }
-  //
-  // Future<void> sendMessage(ChatMessage message) async {
-  //   final roomId = _generateRoomId(message.senderId, message.receiverId);
-  //   final messageRef = chatMessages.doc();
-  //
-  //   await chatRooms.doc(roomId).update({
-  //     'lastMessage': message.content,
-  //     'lastMessageTime': FieldValue.serverTimestamp(),
-  //     'lastMessageSenderId': message.senderId,
-  //     'unreadCount.${message.receiverId}': FieldValue.increment(1),
-  //   });
-  //
-  //   await messageRef.set({
-  //     'id': messageRef.id,
-  //     'roomId': roomId,
-  //     'senderId': message.senderId,
-  //     'receiverId': message.receiverId,
-  //     'content': message.content,
-  //     'timestamp': FieldValue.serverTimestamp(),
-  //     'status': 'sent',
-  //     'isRead': false,
-  //   });
-  // }
-  //
-  // Stream<List<ChatRoom>> getChatRooms(String userId) {
-  //   return chatRooms
-  //       .where('participants', arrayContains: userId)
-  //       .orderBy('lastMessageTime', descending: true)
-  //       .snapshots()
-  //       .map(
-  //         (snapshot) =>
-  //         snapshot.docs
-  //             .map(
-  //               (doc) =>
-  //               ChatRoom.fromMap(doc.data() as Map<String, dynamic>),
-  //         )
-  //             .toList(),
-  //   );
-  // }
-  //
-  // Stream<List<ChatMessage>> getChatMessages(String roomId) {
-  //   return chatMessages
-  //       .where('roomId', isEqualTo: roomId)
-  //       .orderBy('timestamp', descending: true)
-  //       .snapshots()
-  //       .map(
-  //         (snapshot) =>
-  //         snapshot.docs
-  //             .map(
-  //               (doc) =>
-  //               ChatMessage.fromMap(doc.data() as Map<String, dynamic>),
-  //         )
-  //             .toList(),
-  //   );
-  // }
-  //
-  // Future<void> markMessagesAsRead(String roomId, String userId) async {
-  //   final unreadMessages =
-  //   await chatMessages
-  //       .where('roomId', isEqualTo: roomId)
-  //       .where('receiverId', isEqualTo: userId)
-  //       .where('isRead', isEqualTo: false)
-  //       .get();
-  //
-  //   final batch = firestore.batch();
-  //   for (final doc in unreadMessages.docs) {
-  //     batch.update(doc.reference, {'isRead': true});
-  //   }
-  //
-  //   batch.update(chatRooms.doc(roomId), {'unreadCount.$userId': 0});
-  //
-  //   await batch.commit();
-  // }
 
   Future<void> updateMessageStatus(
       String messageId,
       MessageStatus status,
       ) async {
-    await chatMessages.doc(messageId).update({
-      'status': status.toString().split('.').last,
-    });
+    try {
+      await chatMessages.doc(messageId).update({
+        'status': status.toString().split('.').last,
+      });
+    } catch (e) {
+      log('Error updating message status: $e');
+    }
   }
 
   Future<void> deleteMessage(String messageId, String roomId) async {
-    await chatMessages.doc(messageId).delete();
+    try {
+      await chatMessages.doc(messageId).delete();
+    } catch (e) {
+      log('Error deleting message: $e');
+    }
   }
-
-  Stream<List<UserContact>> getUserContacts(String userId) {
-    return users.snapshots().map(
-          (snapshot) =>
-          snapshot.docs
-              .where((doc) => doc.id != userId)
-              .map(
-                (doc) =>
-                UserContact.fromMap(doc.data() as Map<String, dynamic>),
-          )
-              .toList(),
-    );
-  }
-
-  Future<void> startTyping(String roomId, String userId) async {
-    await chatRooms.doc(roomId).update({
-      'typing.$userId': true,
-      'typingLastUpdated': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> stopTyping(String roomId, String userId) async {
-    await chatRooms.doc(roomId).update({
-      'typing.$userId': false,
-      'typingLastUpdated': FieldValue.serverTimestamp(),
-    });
-  }
-
-
-  Future<void> updateOnlineStatus(String userId, bool isOnline) async {
-    await users.doc(userId).update({
-      'isOnline': isOnline,
-      'lastSeen': isOnline ? null : FieldValue.serverTimestamp(),
-    });
-  }
-
-
-  // Future<UserContact?> getEmployeeById(String id) async {
-  //   final doc = await employees.doc(id).get();
-  //   if (doc.exists) {
-  //     return UserContact.fromMap(doc.data() as Map<String, dynamic>);
-  //   }
-  //   return null;
-  // }
 
 
   Future<void> updateFCMToken(String userId, String token) async {
-    await users.doc(userId).update({
-      'fcmToken': token,
-      'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
-    });
+    try {
+      await employees.doc(userId).update({
+        'fcmToken': token,
+        'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+      });
+      log('FCM token updated for user: $userId');
+    } catch (e) {
+      log('Error updating FCM token: $e');
+    }
   }
-  // ==================== SYSTEM METHODS ====================
+
+  Future<String?> getFCMToken(String userId) async {
+    try {
+      final doc = await employees.doc(userId).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data['fcmToken'] as String?;
+      }
+    } catch (e) {
+      log('Error getting FCM token: $e');
+    }
+    return null;
+  }
+
+  // Online status management
+  Future<void> updateOnlineStatus(String userId, bool isOnline) async {
+    try {
+      await employees.doc(userId).update({
+        'isOnline': isOnline,
+        'lastSeen': isOnline ? null : FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      log('Error updating online status: $e');
+    }
+  }
+
+  // Typing indicators
+  Future<void> startTyping(String roomId, String userId) async {
+    try {
+      await chatRooms.doc(roomId).update({
+        'typing.$userId': true,
+        'typingLastUpdated': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      log('Error starting typing: $e');
+    }
+  }
+// In FirebaseDbHelper class
+
+
+  Future<void> stopTyping(String roomId, String userId) async {
+    try {
+      await chatRooms.doc(roomId).update({
+        'typing.$userId': false,
+        'typingLastUpdated': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      log('Error stopping typing: $e');
+    }
+  }
+  Future<void> sendPushNotification(ChatMessage message) async {
+    try {
+      // Get receiver's FCM token
+      final receiverDoc = await employees.doc(message.receiverId).get();
+
+      if (receiverDoc.exists) {
+        final receiverData = receiverDoc.data() as Map<String, dynamic>;
+        final fcmToken = receiverData['fcmToken'] as String?;
+
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          // Call your cloud function to send the notification
+          await firestore.collection('notifications').add({
+            'to': fcmToken,
+            'notification': {
+              'title': 'New message from ${message.senderName}',
+              'body': message.content,
+              'sound': 'default',
+            },
+            'data': {
+              'type': 'chat',
+              'roomId': message.roomId,
+              'senderId': message.senderId,
+              'senderName': message.senderName,
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            },
+            'priority': 'high',
+          });
+        }
+      }
+    } catch (e) {
+      log('Error sending push notification: $e');
+    }
+  }
+
+
 
   Future<void> createSystem(SystemModal system) async {
     final docRef = systems.doc();

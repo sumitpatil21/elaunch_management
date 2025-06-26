@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,6 +10,7 @@ import '../Dashboard/dashboard_view.dart';
 import '../Employee/employee_bloc.dart';
 import '../Employee/employee_event.dart';
 import '../Employee/employee_state.dart';
+import '../Service/firebase_database.dart';
 import '../SuperAdminLogin/admin_bloc.dart';
 import '../SuperAdminLogin/admin_event.dart';
 import '../SuperAdminLogin/admin_state.dart';
@@ -67,8 +69,12 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
     return MultiBlocListener(
       listeners: [
         BlocListener<AdminBloc, AdminState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state.isLogin && state.adminModal != null) {
+              final fcmToken = await FirebaseMessaging.instance.getToken();
+              if (fcmToken != null) {
+                await FirebaseDbHelper.firebase.updateFCMToken(state.adminModal!.id, fcmToken);
+              }
               log('Admin login successful: ${state.adminModal!.name}');
               Navigator.pushReplacementNamed(
                 context,
@@ -85,8 +91,12 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
           },
         ),
         BlocListener<EmployeeBloc, EmployeeState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state.isLogin && state.loggedInEmployee != null) {
+              final fcmToken = await FirebaseMessaging.instance.getToken();
+              if (fcmToken != null) {
+                await FirebaseDbHelper.firebase.updateFCMToken(state.loggedInEmployee!.id, fcmToken);
+              }
               log('Employee login successful: ${state.loggedInEmployee!.name}');
               Navigator.pushReplacementNamed(
                 context,

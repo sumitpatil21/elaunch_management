@@ -39,7 +39,7 @@ class DashboardView extends StatefulWidget {
           create: (context) => EmployeeBloc()..add(FetchEmployees()),
         ),
         BlocProvider(create: (context) => LeaveBloc()..add(FetchLeaves())),
-        BlocProvider(create: (context) => ChatBloc(firebaseDbHelper: FirebaseDbHelper.firebase)),
+        BlocProvider(create: (context) => ChatBloc()),
       ],
       child: const DashboardView(),
     );

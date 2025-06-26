@@ -10,6 +10,8 @@ class EmployeeModal {
   final String departmentName;
   final String managerName;
   final String managerId;
+  final String? fcmToken;
+  final DateTime? fcmTokenUpdatedAt;
 
   EmployeeModal({
     required this.id,
@@ -23,6 +25,8 @@ class EmployeeModal {
     required this.departmentName,
     required this.managerName,
     required this.managerId,
+    this.fcmToken,
+    this.fcmTokenUpdatedAt,
   });
 
   Map<String, dynamic> toJson() {
@@ -38,6 +42,8 @@ class EmployeeModal {
       'departmentName': departmentName,
       'managerName': managerName,
       'managerId': managerId,
+      'fcmToken': fcmToken,
+      'fcmTokenUpdatedAt': fcmTokenUpdatedAt?.toIso8601String(),
     };
   }
 
@@ -55,6 +61,10 @@ class EmployeeModal {
       departmentName: json['departmentName']??"",
       managerName: json['managerName']??"",
       managerId: json['managerId']??"",
+      fcmToken: json['fcmToken'],
+      fcmTokenUpdatedAt: json['fcmTokenUpdatedAt'] != null
+          ? DateTime.parse(json['fcmTokenUpdatedAt'])
+          : null,
     );
   }
 }

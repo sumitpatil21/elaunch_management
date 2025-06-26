@@ -33,3 +33,11 @@ final List<String> statusFilters = [
   'maintenance',
   'retired',
 ];
+
+
+late TabController tabController;
+final Color primaryColor = const Color(0xff1a2a4d);
+final Color secondaryColor = const Color(0xFF00A884);
+final Color backgroundColor = const Color(0xFF111B21);
+final Color textColor = Colors.white;
+final Color unselectedTextColor = Colors.white70;

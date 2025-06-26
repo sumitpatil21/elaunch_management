@@ -101,7 +101,7 @@ class MarkMessagesAsRead extends ChatEvent {
   final String roomId;
   final String userId;
 
-  const MarkMessagesAsRead(this.roomId, this.userId);
+  const MarkMessagesAsRead({required this.roomId, required this.userId});
 
   @override
   List<Object> get props => [roomId, userId];
