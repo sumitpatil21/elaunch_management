@@ -41,3 +41,8 @@ final Color secondaryColor = const Color(0xFF00A884);
 final Color backgroundColor = const Color(0xFF111B21);
 final Color textColor = Colors.white;
 final Color unselectedTextColor = Colors.white70;
+
+
+final messageBubbleColorMe = const Color(0xFF005C4B);
+final messageBubbleColorOther = const Color(0xFF202C33);
+final messageInputColor = const Color(0xFF2A3942);

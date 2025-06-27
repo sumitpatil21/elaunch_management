@@ -15,17 +15,18 @@ android {
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     dependencies {
         coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-
+//        classpath 'com.android.tools.build:gradle:8.1.2'
+//        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20'
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -33,8 +34,8 @@ android {
         applicationId = "com.example.elaunch_management"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 23
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

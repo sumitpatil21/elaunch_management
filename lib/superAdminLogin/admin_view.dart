@@ -71,10 +71,7 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
         BlocListener<AdminBloc, AdminState>(
           listener: (context, state) async {
             if (state.isLogin && state.adminModal != null) {
-              final fcmToken = await FirebaseMessaging.instance.getToken();
-              if (fcmToken != null) {
-                await FirebaseDbHelper.firebase.updateFCMToken(state.adminModal!.id, fcmToken);
-              }
+
               log('Admin login successful: ${state.adminModal!.name}');
               Navigator.pushReplacementNamed(
                 context,
@@ -84,6 +81,10 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
                   selectedRole: "Admin",
                 ),
               );
+              final fcmToken = await FirebaseMessaging.instance.getToken();
+              if (fcmToken != null) {
+                await FirebaseDbHelper.firebase.updateFCMToken(state.adminModal!.id, fcmToken);
+              }
             }
             if (tabController.index != state.currentTabIndex) {
               tabController.animateTo(state.currentTabIndex);
@@ -93,10 +94,7 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
         BlocListener<EmployeeBloc, EmployeeState>(
           listener: (context, state) async {
             if (state.isLogin && state.loggedInEmployee != null) {
-              final fcmToken = await FirebaseMessaging.instance.getToken();
-              if (fcmToken != null) {
-                await FirebaseDbHelper.firebase.updateFCMToken(state.loggedInEmployee!.id, fcmToken);
-              }
+
               log('Employee login successful: ${state.loggedInEmployee!.name}');
               Navigator.pushReplacementNamed(
                 context,
@@ -106,6 +104,10 @@ class _AdminViewState extends State<AdminView> with TickerProviderStateMixin {
                   selectedRole: "Employee",
                 ),
               );
+              final fcmToken = await FirebaseMessaging.instance.getToken();
+              if (fcmToken != null) {
+                await FirebaseDbHelper.firebase.updateFCMToken(state.loggedInEmployee!.id, fcmToken);
+              }
             }
           },
         ),

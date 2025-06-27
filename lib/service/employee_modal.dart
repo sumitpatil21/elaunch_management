@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class EmployeeModal {
   final String id;
   final String name;
@@ -11,7 +13,7 @@ class EmployeeModal {
   final String managerName;
   final String managerId;
   final String? fcmToken;
-  final DateTime? fcmTokenUpdatedAt;
+  final Timestamp? fcmTokenUpdatedAt;
 
   EmployeeModal({
     required this.id,
@@ -43,7 +45,7 @@ class EmployeeModal {
       'managerName': managerName,
       'managerId': managerId,
       'fcmToken': fcmToken,
-      'fcmTokenUpdatedAt': fcmTokenUpdatedAt?.toIso8601String(),
+      'fcmTokenUpdatedAt': fcmTokenUpdatedAt,
     };
   }
 
@@ -62,9 +64,7 @@ class EmployeeModal {
       managerName: json['managerName']??"",
       managerId: json['managerId']??"",
       fcmToken: json['fcmToken'],
-      fcmTokenUpdatedAt: json['fcmTokenUpdatedAt'] != null
-          ? DateTime.parse(json['fcmTokenUpdatedAt'])
-          : null,
+      fcmTokenUpdatedAt: json['fcmTokenUpdatedAt'],
     );
   }
 }

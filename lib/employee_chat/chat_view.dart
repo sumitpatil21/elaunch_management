@@ -1,13 +1,14 @@
 
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 
 import '../ utils/status_color_utils.dart';
 import '../Employee/employee_bloc.dart';
 import '../Employee/employee_event.dart';
 import '../Employee/employee_state.dart';
-
 
 import '../SuperAdminLogin/admin_event.dart';
 import '../service/chart_room.dart';
@@ -45,7 +46,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
-
+  late TabController tabController;
 
   @override
   void initState() {
@@ -151,25 +152,28 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   }
 }
 
-class ChatRoomsList extends StatelessWidget {
+class ChatRoomsList extends StatefulWidget {
   const ChatRoomsList({super.key});
 
+  @override
+  State<ChatRoomsList> createState() => _ChatRoomsListState();
+}
 
+class _ChatRoomsListState extends State<ChatRoomsList> {
   @override
   Widget build(BuildContext context) {
     final selectRole = ModalRoute.of(context)!.settings.arguments as SelectRole;
-    final _primaryColor = const Color(0xff1a2a4d);
 
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
         if (state.isLoadingRooms) {
           return Center(
-            child: CircularProgressIndicator(color: _primaryColor),
+            child: CircularProgressIndicator(color: primaryColor),
           );
         }
 
         if (state.chatRooms.isEmpty) {
-          return Center(
+          return const Center(
             child: Text(
               'No chats available',
               style: TextStyle(color: Colors.white70),
@@ -177,36 +181,74 @@ class ChatRoomsList extends StatelessWidget {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.only(top: 8),
-          itemCount: state.chatRooms.length,
-          itemBuilder: (context, index) {
-            final room = state.chatRooms[index];
-            final otherUserId = room.participantIds.firstWhere(
-                  (id) => id != selectRole.employeeModal?.id,
-              orElse: () => '',
-            );
-
-            return FutureBuilder<EmployeeModal?>(
-              future: FirebaseDbHelper.firebase.getEmployeeById(otherUserId),
-              builder: (context, snapshot) {
-                final employee = snapshot.data;
-                return ChatRoomListItem(
-                  name: employee?.name ?? 'Unknown',
-                  lastMessage: room.lastMessage ?? "",
-                  time: _formatTime(room.lastMessageTime?.toDate()),
-                  unreadCount: 0,
-                  isOnline: false,
-                  onTap: () {
-                    _navigateToChatDetail(
-                      context,
-                      employee: employee,
-                      room: room,
-                      otherUserId: otherUserId,
-                      selectRole: selectRole,
-                    );
-                  },
+        return BlocBuilder<EmployeeBloc, EmployeeState>(
+          builder: (context, employeeState) {
+            return ListView.builder(
+              padding: const EdgeInsets.only(top: 8),
+              itemCount: state.chatRooms.length,
+              itemBuilder: (context, index) {
+                final room = state.chatRooms[index];
+                final otherUserId = room.participantIds.firstWhere(
+                      (id) => id != selectRole.employeeModal?.id,
                 );
+
+
+               final employee = employeeState.employees
+                    .where((emp) => emp.id == otherUserId).toList();
+
+                if (employee != null) {
+
+                  return ChatRoomListItem(
+                    name: employee[index].name,
+                    lastMessage: room.lastMessage ?? "",
+                    time: formatTime(room.lastMessageTime?.toDate()),
+                    unreadCount: 0,
+                    isOnline: false,
+                    onTap: () {
+                      navigateToChatDetail(
+                        context,
+                        employee: employee[index],
+                        room: room,
+                        otherUserId: otherUserId,
+                        selectRole: selectRole,
+                      );
+                    },
+                  );
+                } else {
+                  return FutureBuilder<EmployeeModal?>(
+                    future: FirebaseDbHelper.firebase.getEmployeeById(otherUserId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return ChatRoomListItem(
+                          name: 'Loading...',
+                          lastMessage: room.lastMessage ?? "",
+                          time: formatTime(room.lastMessageTime?.toDate()),
+                          unreadCount: 0,
+                          isOnline: false,
+                          onTap: () {},
+                        );
+                      }
+
+                      final fetchedEmployee = snapshot.data;
+                      return ChatRoomListItem(
+                        name: fetchedEmployee?.name ?? 'Unknown User',
+                        lastMessage: room.lastMessage ?? "",
+                        time: formatTime(room.lastMessageTime?.toDate()),
+                        unreadCount: 0,
+                        isOnline: false,
+                        onTap: () {
+                          navigateToChatDetail(
+                            context,
+                            employee: fetchedEmployee,
+                            room: room,
+                            otherUserId: otherUserId,
+                            selectRole: selectRole,
+                          );
+                        },
+                      );
+                    },
+                  );
+                }
               },
             );
           },
@@ -215,7 +257,8 @@ class ChatRoomsList extends StatelessWidget {
     );
   }
 
-  void _navigateToChatDetail(
+
+  void navigateToChatDetail(
       BuildContext context, {
         required EmployeeModal? employee,
         required ChatRoom room,
@@ -229,16 +272,15 @@ class ChatRoomsList extends StatelessWidget {
           return MultiBlocProvider(
             providers: [
               BlocProvider(
-                create: (context) => ChatBloc(
-
-                )..add(LoadChatRooms(selectRole.employeeModal?.id ?? "")),
+                create: (context) => ChatBloc()
+                  ..add(LoadChatRooms(selectRole.employeeModal?.id ?? "")),
               ),
               BlocProvider(
                 create: (context) => EmployeeBloc()..add(FetchEmployees()),
               ),
             ],
             child: ChatDetailScreen(
-              name: employee?.name ?? 'Unknown',
+              name: employee?.name ?? 'Unknown User',
               isOnline: false,
               roomId: room.id,
               otherUserId: otherUserId,
@@ -251,7 +293,7 @@ class ChatRoomsList extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime? time) {
+  String formatTime(DateTime? time) {
     if (time == null) return '';
     final now = DateTime.now();
     final difference = now.difference(time);
@@ -288,12 +330,9 @@ class ChatRoomListItem extends StatelessWidget {
     required this.onTap,
   });
 
-
   @override
   Widget build(BuildContext context) {
-    final _primaryColor = const Color(0xff1a2a4d);
-    final _secondaryColor = const Color(0xFF00A884);
-    final _textColor = Colors.white;
+
 
     return InkWell(
       onTap: onTap,
@@ -314,7 +353,7 @@ class ChatRoomListItem extends StatelessWidget {
                   child: Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
                     style: TextStyle(
-                      color: _textColor,
+                      color: textColor,
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
@@ -328,10 +367,10 @@ class ChatRoomListItem extends StatelessWidget {
                       width: 14,
                       height: 14,
                       decoration: BoxDecoration(
-                        color: _secondaryColor,
+                        color: secondaryColor,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: _primaryColor,
+                          color: primaryColor,
                           width: 2,
                         ),
                       ),
@@ -345,12 +384,14 @@ class ChatRoomListItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+
+
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         name,
                         style: TextStyle(
-                          color: _textColor,
+                          color: textColor,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -358,7 +399,7 @@ class ChatRoomListItem extends StatelessWidget {
                       Text(
                         time,
                         style: TextStyle(
-                          color: unreadCount > 0 ? _secondaryColor : Colors.white54,
+                          color: unreadCount > 0 ? secondaryColor : Colors.white54,
                           fontSize: 12,
                         ),
                       ),
@@ -386,15 +427,13 @@ class ChatRoomListItem extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _secondaryColor,
+                            color: secondaryColor,
                             shape: BoxShape.circle,
                           ),
                           child: Text(
                             unreadCount > 99 ? '99+' : '$unreadCount',
                             style: const TextStyle(
                               color: Colors.white,
-
-
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -438,10 +477,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
-  final _primaryColor = const Color(0xff1a2a4d);
-  final _secondaryColor = const Color(0xFF00A884);
-  final _backgroundColor = const Color(0xFF0B141A);
-  final _messageInputColor = const Color(0xFF202C33);
 
   @override
   void initState() {
@@ -473,12 +508,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: _primaryColor,
+        backgroundColor: primaryColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -506,7 +542,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 Text(
                   widget.isOnline ? 'Online' : 'Offline',
                   style: TextStyle(
-                    color: widget.isOnline ? _secondaryColor : Colors.white54,
+                    color: widget.isOnline ? secondaryColor : Colors.white54,
                     fontSize: 12,
                   ),
                 ),
@@ -530,20 +566,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 builder: (context, state) {
                   final messages = state.getMessagesForRoom(widget.roomId);
 
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-
-
                     if (_scrollController.hasClients && messages.isNotEmpty) {
-                    _scrollController.animateTo(
-                    _scrollController.position.minScrollExtent,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    );
+                      _scrollController.animateTo(
+                        _scrollController.position.minScrollExtent,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
                     }
-                  });
+
 
                   if (messages.isEmpty) {
-                    return Center(
+                    return const Center(
                       child: Text(
                         'No messages yet',
                         style: TextStyle(color: Colors.white70),
@@ -560,7 +593,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       final message = messages[index];
                       return MessageBubble(
                         message: message.content,
-                        time: _formatTime(message.timestamp.toDate()),
+                        time: formatTime(message.timestamp.toDate()),
                         isMe: message.senderId == widget.currentUserId,
                         isRead: message.isRead,
                       );
@@ -569,16 +602,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 },
               ),
             ),
-            _buildMessageInput(),
+            buildMessageInput(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMessageInput() {
+  Widget buildMessageInput() {
     return Container(
-      color: _messageInputColor,
+      color: messageInputColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
@@ -588,6 +621,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
           Expanded(
             child: TextField(
+
               controller: _messageController,
               focusNode: _focusNode,
               style: const TextStyle(color: Colors.white),
@@ -605,7 +639,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   vertical: 12,
                 ),
               ),
-              onSubmitted: (text) => _sendMessage(),
+              onSubmitted: (text) => sendMessage(),
             ),
           ),
           IconButton(
@@ -615,8 +649,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           const SizedBox(width: 4),
           FloatingActionButton(
             mini: true,
-            backgroundColor: _secondaryColor,
-            onPressed: _sendMessage,
+            backgroundColor: secondaryColor,
+            onPressed: sendMessage,
             child: const Icon(Icons.send, color: Colors.white, size: 20),
           ),
         ],
@@ -624,7 +658,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  void _sendMessage() {
+  void sendMessage() {
     if (_messageController.text.trim().isNotEmpty) {
       final message = ChatMessage(
         id: '',
@@ -643,7 +677,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  String _formatTime(DateTime time) {
+  String formatTime(DateTime time) {
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
   }
 }
@@ -662,64 +696,59 @@ class MessageBubble extends StatelessWidget {
     this.isRead = false,
   });
 
-
   @override
   Widget build(BuildContext context) {
-    final _secondaryColor = const Color(0xFF00A884);
-    final _messageBubbleColorMe = const Color(0xFF005C4B);
-    final
-
-    _messageBubbleColorOther = const Color(0xFF202C33);
 
     return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Align(
-    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-    child: ConstrainedBox(
-    constraints: BoxConstraints(
-    maxWidth: MediaQuery.of(context).size.width * 0.75,
-    ),
-    child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    decoration: BoxDecoration(
-    color: isMe ? _messageBubbleColorMe : _messageBubbleColorOther,
-    borderRadius: BorderRadius.only(
-    topLeft: const Radius.circular(18),
-    topRight: const Radius.circular(18),
-    bottomLeft: Radius.circular(isMe ? 18 : 4),
-    bottomRight: Radius.circular(isMe ? 4 : 18),
-    ),
-    ),
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    Text(
-    message,
-    style: const TextStyle(color: Colors.white, fontSize: 16),
-    ),
-    const SizedBox(height: 4),
-    Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-    Text(
-    time,
-    style: const TextStyle(color: Colors.white60, fontSize: 12),
-    ),
-    if (isMe) ...[
-    const SizedBox(width: 4),
-    Icon(
-    isRead ? Icons.done_all : Icons.done,
-    size: 16,
-    color: isRead ? _secondaryColor : Colors.white60,
-    ),
-    ],
-    ],
-    ),
-    ],
-    ),
-    ),
-    ),
-    ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isMe ? messageBubbleColorMe : messageBubbleColorOther,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(isMe ? 18 : 4),
+                bottomRight: Radius.circular(isMe ? 4 : 18),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      time,
+                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    ),
+
+                    if (isMe) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        isRead ? Icons.done_all : Icons.done,
+                        size: 16,
+                        color: isRead ?secondaryColor : Colors.white60,
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -742,7 +771,7 @@ class ContactsList extends StatelessWidget {
         }
 
         if (state.employees.isEmpty) {
-          return Center(
+          return const Center(
             child: Text(
               'No contacts available',
               style: TextStyle(color: Colors.white70),
@@ -774,7 +803,6 @@ class ContactsList extends StatelessWidget {
                 style: TextStyle(color: _textColor),
               ),
               subtitle: Text(
-
                 employee.departmentName ?? '',
                 style: const TextStyle(color: Colors.white70),
               ),
@@ -787,13 +815,12 @@ class ContactsList extends StatelessWidget {
                 );
 
                 // Create chat room if it doesn't exist
-              context.read<ChatBloc>().add(
-                CreateChatRoom(
-
-                  currentUserId: selectRole.employeeModal?.id ?? "",
-                  otherUserId: employee.id,
-                ),
-              );
+                context.read<ChatBloc>().add(
+                  CreateChatRoom(
+                    currentUserId: selectRole.employeeModal?.id ?? "",
+                    otherUserId: employee.id,
+                  ),
+                );
 
                 Navigator.push(
                   context,
@@ -802,12 +829,18 @@ class ContactsList extends StatelessWidget {
                       return MultiBlocProvider(
                         providers: [
                           BlocProvider(
-                            create: (context) => ChatBloc(
-
-                            )..add(LoadChatRooms(selectRole.employeeModal?.id ?? "")),
+                            create:
+                                (context) =>
+                                    ChatBloc()..add(
+                                      LoadChatRooms(
+                                        selectRole.employeeModal?.id ?? "",
+                                      ),
+                                    ),
                           ),
                           BlocProvider(
-                            create: (context) => EmployeeBloc()..add(FetchEmployees()),
+                            create:
+                                (context) =>
+                                    EmployeeBloc()..add(FetchEmployees()),
                           ),
                         ],
                         child: ChatDetailScreen(

@@ -12,39 +12,21 @@ import 'package:elaunch_management/SuperAdminLogin/admin_view.dart';
 import 'package:flutter/material.dart';
 import 'Dashboard/dashboard_view.dart';
 import 'Employee/employee_view.dart';
+
 // main.dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Initialize Firebase Messaging
-  final messagingService = FirebaseMessagingService();
-  await messagingService.initialize();
-
-  runApp(MyApp(messagingService: messagingService));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final FirebaseMessagingService messagingService;
-
-  const MyApp({super.key, required this.messagingService});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     // Set up notification tap handler
-    messagingService.onNotificationTap = (data) {
-      if (data['type'] == 'chat') {
-        Navigator.pushNamed(
-          context,
-          ChatScreen.routeName,
-          arguments: {
-            'otherUserId': data['senderId'],
-            'otherUserName': data['senderName'],
-            'roomId': data['roomId'],
-          },
-        );
-      }
-    };
 
     return MaterialApp(
       darkTheme: ThemeData.dark(useMaterial3: true),
@@ -54,7 +36,6 @@ class MyApp extends StatelessWidget {
       initialRoute: SplashScreen.routeName,
     );
   }
-
 
   Map<String, WidgetBuilder> get routes => {
     SplashScreen.routeName: SplashScreen.builder,

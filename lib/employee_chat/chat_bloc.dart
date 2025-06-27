@@ -15,16 +15,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc()
     :
       super(const ChatState()) {
-    on<LoadChatRooms>(_onLoadChatRooms);
-    on<ChatRoomsUpdated>(_onChatRoomsUpdated);
-    on<CreateChatRoom>(_onCreateChatRoom);
-    on<LoadChatMessages>(_onLoadChatMessages);
-    on<ChatMessagesUpdated>(_onChatMessagesUpdated);
-    on<SendMessage>(_onSendMessage);
-    on<MarkMessagesAsRead>(_onMarkMessagesAsRead);
+    on<LoadChatRooms>(loadChatRooms);
+    on<ChatRoomsUpdated>(chatRoomsUpdated);
+    on<CreateChatRoom>(createChatRoom);
+    on<LoadChatMessages>(loadChatMessages);
+    on<ChatMessagesUpdated>(chatMessagesUpdated);
+    on<SendMessage>(sendMessage);
+    on<MarkMessagesAsRead>(markMessagesAsRead);
   }
 
-  Future<void> _onLoadChatRooms(
+  Future<void> loadChatRooms(
     LoadChatRooms event,
     Emitter<ChatState> emit,
   ) async {
@@ -56,7 +56,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         );
   }
 
-  void _onChatRoomsUpdated(ChatRoomsUpdated event, Emitter<ChatState> emit) {
+  void chatRoomsUpdated(ChatRoomsUpdated event, Emitter<ChatState> emit) {
     emit(
       state.copyWith(
         chatRooms: event.chatRooms,
@@ -66,7 +66,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
-  Future<void> _onCreateChatRoom(
+  Future<void> createChatRoom(
     CreateChatRoom event,
     Emitter<ChatState> emit,
   ) async {
@@ -86,7 +86,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
   }
 
-  Future<void> _onLoadChatMessages(
+  Future<void> loadChatMessages(
     LoadChatMessages event,
     Emitter<ChatState> emit,
   ) async {
@@ -123,7 +123,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         );
   }
 
-  void _onChatMessagesUpdated(
+  void chatMessagesUpdated(
     ChatMessagesUpdated event,
     Emitter<ChatState> emit,
   ) {
@@ -151,7 +151,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   // In your ChatBloc
-  Future<void> _onSendMessage(
+  Future<void> sendMessage(
       SendMessage event,
       Emitter<ChatState> emit,
       ) async {
@@ -197,7 +197,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  Future<void> _onMarkMessagesAsRead(
+  Future<void> markMessagesAsRead(
     MarkMessagesAsRead event,
     Emitter<ChatState> emit,
   ) async {
