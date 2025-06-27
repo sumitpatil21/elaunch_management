@@ -26,7 +26,6 @@ class FirebaseDbHelper {
   CollectionReference get chatRooms => firestore.collection('chat_rooms');
   CollectionReference get users => firestore.collection('users');
 
-  // Existing admin methods...
   Future<void> createAdmin(AdminModal admin) async {
     final doc = await admins.add(admin.toMap());
     log("Admin created with ID: ${doc.id}");

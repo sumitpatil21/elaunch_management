@@ -34,6 +34,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
       appBar: AppBar(
         backgroundColor: Colors.blue.withOpacity(0.2),
         title: Text("Departments"),
+        leading: Center(),
       ),
       body: BlocBuilder<DepartmentBloc, DepartmentState>(
         builder: (context, state) {

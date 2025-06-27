@@ -36,13 +36,14 @@ final List<String> statusFilters = [
 
 
 late TabController tabController;
-final Color primaryColor = const Color(0xff1a2a4d);
-final Color secondaryColor = const Color(0xFF00A884);
-final Color backgroundColor = const Color(0xFF111B21);
-final Color textColor = Colors.white;
-final Color unselectedTextColor = Colors.white70;
+// Modern Color Scheme
+const Color primaryDark = Color(0xFF1F2C34);
+const Color primaryLight = Color(0xFF00A884);
 
+const Color backgroundDark = Color(0xFF121B22);
 
-final messageBubbleColorMe = const Color(0xFF005C4B);
-final messageBubbleColorOther = const Color(0xFF202C33);
-final messageInputColor = const Color(0xFF2A3942);
+const Color textDark = Colors.green;
+const Color bubbleMe = Color(0xFFDCF8C6);
+const Color bubbleOther = Color(0xFF1F2C34);
+const Color onlineIndicator = Color(0xFF4ADB84);
+const Color unreadIndicator = Color(0xFFF55353);

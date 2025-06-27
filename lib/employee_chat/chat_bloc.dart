@@ -4,17 +4,16 @@ import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:elaunch_management/service/chat_message.dart';
 import 'package:elaunch_management/service/firebase_database.dart';
+import '../Employee/employee_event.dart';
+import '../Employee/employee_state.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-
   StreamSubscription? _messagesSubscription;
   StreamSubscription? _roomsSubscription;
 
-  ChatBloc()
-    :
-      super(const ChatState()) {
+  ChatBloc() : super(const ChatState()) {
     on<LoadChatRooms>(loadChatRooms);
     on<ChatRoomsUpdated>(chatRoomsUpdated);
     on<CreateChatRoom>(createChatRoom);
@@ -123,10 +122,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         );
   }
 
-  void chatMessagesUpdated(
-    ChatMessagesUpdated event,
-    Emitter<ChatState> emit,
-  ) {
+  void chatMessagesUpdated(ChatMessagesUpdated event, Emitter<ChatState> emit) {
     final Map<String, List<ChatMessage>> messagesByRoom = {};
 
     for (final message in event.messages) {
@@ -151,10 +147,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }
 
   // In your ChatBloc
-  Future<void> sendMessage(
-      SendMessage event,
-      Emitter<ChatState> emit,
-      ) async {
+  Future<void> sendMessage(SendMessage event, Emitter<ChatState> emit) async {
     emit(state.copyWith(isSendingMessage: true));
 
     final messageToSend = event.message.copyWith(
@@ -174,11 +167,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
     updatedMessagesByRoom[messageToSend.roomId]!.insert(0, messageToSend);
 
-    emit(state.copyWith(
-      messages: currentMessages,
-      messagesByRoom: updatedMessagesByRoom,
-      isSendingMessage: true,
-    ));
+    emit(
+      state.copyWith(
+        messages: currentMessages,
+        messagesByRoom: updatedMessagesByRoom,
+        isSendingMessage: true,
+      ),
+    );
 
     try {
       // Send message to Firebase
@@ -189,11 +184,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       emit(state.copyWith(isSendingMessage: false));
     } catch (e) {
-      emit(state.copyWith(
-        isSendingMessage: false,
-        status: ChatStatus.failure,
-        errorMessage: 'Failed to send message',
-      ));
+      emit(
+        state.copyWith(
+          isSendingMessage: false,
+          status: ChatStatus.failure,
+          errorMessage: 'Failed to send message',
+        ),
+      );
     }
   }
 
@@ -201,7 +198,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     MarkMessagesAsRead event,
     Emitter<ChatState> emit,
   ) async {
-    await FirebaseDbHelper.firebase.markMessagesAsRead(event.roomId, event.userId);
+    await FirebaseDbHelper.firebase.markMessagesAsRead(
+      event.roomId,
+      event.userId,
+    );
     final updatedMessages =
         state.messages.map((msg) {
           if (msg.roomId == event.roomId && msg.receiverId == event.userId) {
@@ -230,4 +230,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ),
     );
   }
+
+
 }
